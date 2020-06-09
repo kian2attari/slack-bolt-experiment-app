@@ -12,4 +12,4 @@ jobs:
         with:
           project: Test 2
           column: Needs Triage
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.TOKEN }}
