@@ -54,12 +54,29 @@ expressReceiver.router.use(express.json())
 
 // Receive github webhooks here!
 expressReceiver.router.post('/webhook', (req, res) => {
-  // You're working with an express req and res now.
-  var github_event_issue_body = req.body;
+
+  var github_event_issue_body = req.body.issue.body;
+
+
+  try {
+    // Call the chat.postMessage method with a token
+    const result = app.client.chat.postMessage({
+      // Since there is no context we just use the original token
+      token: process.env.SLACK_BOT_TOKEN,
+      // The channel is currently hardcoded
+      channel: 'C015CESLGF3',
+      text: github_event_issue_body
+    });
+  }
+
+  catch (error) {
+    console.error(error);
+  }
+
 
   console.log(github_event_issue_body);
 
-  res.send('Webhook received successfully yeehaw');
+  res.send('Webhook received successfully');
 });
 
 
