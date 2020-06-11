@@ -91,7 +91,7 @@ app.action('connect_account', async ({body, ack, say}) => {
 
   console.log(body);
 
-  gh_slack_username_map[body.user] = body.actions.value;
+  gh_slack_username_map[body.user.id] = body.actions[0].value;
 
   console.log(gh_slack_username_map);
 
