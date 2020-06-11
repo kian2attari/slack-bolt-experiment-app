@@ -64,6 +64,8 @@ expressReceiver.router.post('/webhook', (req, res) => {
       let issue_creator = req.body.issue.user.login;
       let creator_avatar_url = req.body.issue.user.avatar_url;
       let issue_create_date = new Date(req.body.issue.created_at);
+
+      console.log(req.body.issue.created_at);
   
       // Call the chat.postMessage method with a token
       const result = app.client.chat.postMessage({
