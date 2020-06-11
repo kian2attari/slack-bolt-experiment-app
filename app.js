@@ -11,13 +11,19 @@ const app = new App({
   receiver: expressReceiver
 });
 
-let gh_slack_username_map =
-{};
+// State object to map GH usernames to Slack usernames
+let gh_slack_username_map = {};
 
+// Temporary hardcoding of channel id
 const temp_channel_id = 'C015FH00GVA';
 
 
-// Listens to incoming messages that contain 'yo bot'
+
+
+/* Portion of app that listens for events */
+
+
+// Listens to incoming messages that contain 'yo bot' and responds. This is just for testing.
 app.message('yo bot', async ({ message, say}) => {
 
 // note: say() sends a message to the channel where the event was triggered
@@ -35,13 +41,14 @@ app.message('yo bot', async ({ message, say}) => {
             "type": "plain_text",
             "text": "Click Me"
           },
-          "action_id": "button_click"
+          "action_id": "test_click"
         }
       }
     ]
   });
 });
 
+// Listens for instances where the bot is mentioned, beginning step for mapping GH -> Slack usernames
 app.event('app_mention', async ({ event, context }) => {
   try {
 
@@ -62,7 +69,12 @@ app.event('app_mention', async ({ event, context }) => {
 });
 
 
-app.action('button_click', async ({body, ack, say}) => {
+
+
+/* Portion of app that listens for actions (notably, button clicks) */
+
+
+app.action('test_click', async ({body, ack, say}) => {
   
   // Here we acknowledge receipt
 
@@ -79,16 +91,15 @@ app.action('connect_account', async ({body, ack, say}) => {
 
   gh_slack_username_map[body.user.id] = body.actions.value;
 
+  console.log(gh_slack_username_map);
+
   await say(`<@${body.user.id}>, your slack and github usernames were associated successfully!`);
 });
 
 
 
-
-
 // Parsing JSON Middleware
 expressReceiver.router.use(express.json())
-
 
 // Receive github webhooks here!
 expressReceiver.router.post('/webhook', (req, res) => {
@@ -200,7 +211,7 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": `Hi @${slackusername}! :wave:`
+				"text": `Hi <@${slackusername}>! :wave:`
 			}
 		},
 		{
