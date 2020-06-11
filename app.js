@@ -65,17 +65,15 @@ expressReceiver.router.post('/webhook', (req, res) => {
       let creator_avatar_url = req.body.issue.user.avatar_url;
       let issue_create_date = new Date(req.body.issue.created_at);
 
-      console.log(req.body.issue.created_at);
+      const contains_mention = issue_body.match(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi);
+
+      // Checks to see if the body mentions a username
+      if (contains_mention) {
+        contains_mention.array.forEach(username => {
+          mention_message('C015FH00GVA', issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date)     
+        });
+      }
   
-      // Call the chat.postMessage method with a token
-      const result = app.client.chat.postMessage({
-        // Since there is no context we just use the original token
-        token: process.env.SLACK_BOT_TOKEN,
-        // The channel is currently hardcoded
-        channel: 'C015FH00GVA',
-        blocks: githubBlock(issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date),
-        text: `${issue_title} posted by ${issue_creator} on ${issue_create_date}. Link: ${issue_url}`
-      });
     }
   
     catch (error) {
@@ -93,10 +91,18 @@ expressReceiver.router.post('/webhook', (req, res) => {
 })();
 
 
-
+// TODO: Once the Slack and GitHub usernames database is made, remove the @person hardcoding
 function githubBlock(title, body, url, creator, avatar_url, date) {
 
   return [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": `*@person!*`
+      }
+    },
+    
     {
       "type": "divider"
     },
@@ -151,5 +157,18 @@ function githubBlock(title, body, url, creator, avatar_url, date) {
 ]
 }
   
+
+
+function mention_message(channel_id, title, body, url, creator, avatar_url, create_date) {
+  app.client.chat.postMessage({
+    // Since there is no context we just use the original token
+    token: process.env.SLACK_BOT_TOKEN,
+    // The channel is currently hardcoded
+    channel: channel_id,
+    blocks: githubBlock(title, body, url, creator, avatar_url, create_date),
+    text: `${title} posted by ${creator} on ${create_date}. Link: ${url}`
+  });
+
+} 
 
 
