@@ -102,7 +102,7 @@ function githubBlock(title, body, url, creator, avatar_url, date) {
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": `* ${title} *`
+        "text": `*${title}*`
       }
     },
     {
