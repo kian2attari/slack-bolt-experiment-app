@@ -99,7 +99,7 @@ function githubBlock(title, body, url, creator, avatar_url, date, mentioned_user
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": `*@${mentioned_username}!*`
+        "text": `*${mentioned_username}!*`
       }
     },
     
