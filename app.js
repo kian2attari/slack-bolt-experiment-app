@@ -69,8 +69,8 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
       // Checks to see if the body mentions a username
       if (contains_mention) {
-        contains_mention.forEach(username => {
-          mention_message('C015FH00GVA', issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date)     
+        contains_mention.forEach(mentioned_username => {
+          mention_message('C015FH00GVA', issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date, mentioned_username)     
         });
       }
   
@@ -92,14 +92,14 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
 
 // TODO: Once the Slack and GitHub usernames database is made, remove the @person hardcoding
-function githubBlock(title, body, url, creator, avatar_url, date) {
+function githubBlock(title, body, url, creator, avatar_url, date, mentioned_username) {
 
   return [
     {
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": `*@person!*`
+        "text": `*@${mentioned_username}!*`
       }
     },
     
@@ -159,13 +159,13 @@ function githubBlock(title, body, url, creator, avatar_url, date) {
   
 
 
-function mention_message(channel_id, title, body, url, creator, avatar_url, create_date) {
+function mention_message(channel_id, title, body, url, creator, avatar_url, create_date, mentioned_username) {
   app.client.chat.postMessage({
     // Since there is no context we just use the original token
     token: process.env.SLACK_BOT_TOKEN,
     // The channel is currently hardcoded
     channel: channel_id,
-    blocks: githubBlock(title, body, url, creator, avatar_url, create_date),
+    blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_username),
     text: `${title} posted by ${creator} on ${create_date}. Link: ${url}`
   });
 
