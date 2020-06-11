@@ -72,7 +72,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
         // Since there is no context we just use the original token
         token: process.env.SLACK_BOT_TOKEN,
         // The channel is currently hardcoded
-        channel: 'C015CESLGF3',
+        channel: 'C015FH00GVA',
         blocks: githubBlock(issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date),
         text: `${issue_title} posted by ${issue_creator} on ${issue_create_date}. Link: ${issue_url}`
       });
