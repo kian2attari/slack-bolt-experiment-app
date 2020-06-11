@@ -69,7 +69,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
       // Checks to see if the body mentions a username
       if (contains_mention) {
-        contains_mention.array.forEach(username => {
+        contains_mention.forEach(username => {
           mention_message('C015FH00GVA', issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date)     
         });
       }
