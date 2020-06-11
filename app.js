@@ -57,33 +57,29 @@ expressReceiver.router.use(express.json())
 // Receive github webhooks here!
 expressReceiver.router.post('/webhook', (req, res) => {
 
-  let issue_body = req.body.issue.body;
-  let issue_url = req.body.issue.html_url;
-  let issue_title = req.body.issue.title;
-  let issue_creator = req.body.issue.user.login;
-  let creator_avatar_url = req.body.issue.user.avatar_url;
-  let issue_create_date = req.body.issue.created_at;
-
-
   try {
-    // Call the chat.postMessage method with a token
-    const result = app.client.chat.postMessage({
-      // Since there is no context we just use the original token
-      token: process.env.SLACK_BOT_TOKEN,
-      // The channel is currently hardcoded
-      channel: 'C015CESLGF3',
-      text: githubBlock(issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date)
-    });
-  }
-
-  catch (error) {
-    console.error(error);
-  }
-
-
-  console.log(req.body);
-
-  res.send('Webhook received successfully');
+      let issue_body = req.body.issue.body;
+      let issue_url = req.body.issue.html_url;
+      let issue_title = req.body.issue.title;
+      let issue_creator = req.body.issue.user.login;
+      let creator_avatar_url = req.body.issue.user.avatar_url;
+      let issue_create_date = new Date(req.body.issue.created_at);
+  
+      // Call the chat.postMessage method with a token
+      const result = app.client.chat.postMessage({
+        // Since there is no context we just use the original token
+        token: process.env.SLACK_BOT_TOKEN,
+        // The channel is currently hardcoded
+        channel: 'C015CESLGF3',
+        blocks: githubBlock(issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date),
+        text: `${issue_title} posted by ${issue_creator} on ${issue_create_date}. Link: ${issue_url}`
+      });
+    }
+  
+    catch (error) {
+      console.error(error);
+    }
+    res.send('Webhook initial test was received');
 });
 
 
@@ -98,61 +94,59 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
 function githubBlock(title, body, url, creator, avatar_url, date) {
 
-  return {
-    "blocks": [
-      {
-        "type": "divider"
+  return [
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": `* ${title} *`
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "accessory": {
+        "type": "image",
+        "image_url": avatar_url,
+        "alt_text": `${creator}'s GitHub avatar`
       },
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": `* ${title} *`
+      "text": {
+        "type": "plain_text",
+        "text": body,
+        "emoji": true
+      }
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Visit issue page",
+            "emoji": true
+          },
+          "url": url,
+          "action_id" : "button_link"
         }
-      },
-      {
-        "type": "divider"
-      },
-      {
-        "type": "section",
-        "accessory": {
-          "type": "image",
-          "image_url": avatar_url,
-          "alt_text": `${creator}'s GitHub avatar`
-        },
-        "text": {
+      ]
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
           "type": "plain_text",
-          "text": body,
+          "text": `Date: ${date}`,
           "emoji": true
         }
-      },
-      {
-        "type": "actions",
-        "elements": [
-          {
-            "type": "button",
-            "text": {
-              "type": "plain_text",
-              "text": "Visit issue page",
-              "emoji": true
-            },
-            "url": url,
-            "action_id" : "button_link"
-          }
-        ]
-      },
-      {
-        "type": "context",
-        "elements": [
-          {
-            "type": "plain_text",
-            "text": `Date: ${new Date(date)}`,
-            "emoji": true
-          }
-        ]
-      }
-    ]
-  }
+      ]
+    }
+]
 }
   
 
