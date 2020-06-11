@@ -47,15 +47,22 @@ app.action('button_click', async ({body, ack, say}) => {
   await say(`<@${body.user.id}>, thanks for clicking my button bro. That's respect :100:`);
 });
 
-// Parsing JSON Middleware?
 
+
+
+// Parsing JSON Middleware?
 expressReceiver.router.use(express.json())
 
 
 // Receive github webhooks here!
 expressReceiver.router.post('/webhook', (req, res) => {
 
-  var github_event_issue_body = req.body.issue.body;
+  let issue_body = req.body.issue.body;
+  let issue_url = req.body.issue.html_url;
+  let issue_title = req.body.issue.title;
+  let issue_creator = req.body.issue.user.login;
+  let creator_avatar_url = req.body.issue.user.avatar_url;
+  let issue_create_date = req.body.issue.created_at;
 
 
   try {
@@ -65,7 +72,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
       token: process.env.SLACK_BOT_TOKEN,
       // The channel is currently hardcoded
       channel: 'C015CESLGF3',
-      text: github_event_issue_body
+      text: githubBlock(issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date)
     });
   }
 
@@ -74,7 +81,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
   }
 
 
-  console.log(github_event_issue_body);
+  console.log(req.body);
 
   res.send('Webhook received successfully');
 });
@@ -89,6 +96,64 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
 
 
+function githubBlock(title, body, url, creator, avatar_url, date) {
 
+  return {
+    "blocks": [
+      {
+        "type": "divider"
+      },
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": `* ${title} *`
+        }
+      },
+      {
+        "type": "divider"
+      },
+      {
+        "type": "section",
+        "accessory": {
+          "type": "image",
+          "image_url": avatar_url,
+          "alt_text": `${creator}'s GitHub avatar`
+        },
+        "text": {
+          "type": "plain_text",
+          "text": body,
+          "emoji": true
+        }
+      },
+      {
+        "type": "actions",
+        "elements": [
+          {
+            "type": "button",
+            "text": {
+              "type": "plain_text",
+              "text": "Visit issue page",
+              "emoji": true
+            },
+            "url": url,
+            "action_id" : "button_link"
+          }
+        ]
+      },
+      {
+        "type": "context",
+        "elements": [
+          {
+            "type": "plain_text",
+            "text": `Date: ${new Date(date)}`,
+            "emoji": true
+          }
+        ]
+      }
+    ]
+  }
+}
+  
 
 
