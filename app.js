@@ -11,12 +11,16 @@ const app = new App({
   receiver: expressReceiver
 });
 
+let gh_slack_username_map =
+{};
+
+const temp_channel_id = 'C015FH00GVA';
+
 
 // Listens to incoming messages that contain 'yo bot'
 app.message('yo bot', async ({ message, say}) => {
 
-// note: say() send a message to the channel where the event was triggered
-
+// note: say() sends a message to the channel where the event was triggered
   await say({
     blocks: [
       {
@@ -38,6 +42,26 @@ app.message('yo bot', async ({ message, say}) => {
   });
 });
 
+app.event('app_mention', async ({ event, context }) => {
+  try {
+
+    // The first word is the mention, the second should be the username
+    let github_username = event.text.split(" ")[1];
+
+    const result = await app.client.chat.postMessage({
+      token: context.botToken,
+      channel: temp_channel_id,
+      blocks: map_ghusername_to_slack_message(event.user.id,github_username),
+      text: `Hey there <@${event.user.id}>! Please make sure that GitHub username is right!`
+    });
+    console.log(result);
+  }
+  catch (error) {
+    console.error(error);
+  }
+});
+
+
 app.action('button_click', async ({body, ack, say}) => {
   
   // Here we acknowledge receipt
@@ -47,10 +71,22 @@ app.action('button_click', async ({body, ack, say}) => {
   await say(`<@${body.user.id}>, thanks for clicking my button bro. That's respect :100:`);
 });
 
+app.action('connect_account', async ({body, ack, say}) => {
+  
+  // Here we acknowledge receipt
+
+  await ack();
+
+  gh_slack_username_map[body.user.id] = body.actions.value;
+
+  await say(`<@${body.user.id}>, your slack and github usernames were associated successfully!`);
+});
 
 
 
-// Parsing JSON Middleware?
+
+
+// Parsing JSON Middleware
 expressReceiver.router.use(express.json())
 
 
@@ -70,7 +106,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
       // Checks to see if the body mentions a username
       if (contains_mention) {
         contains_mention.forEach(mentioned_username => {
-          mention_message('C015FH00GVA', issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date, mentioned_username)     
+          mention_message(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date, mentioned_username)     
         });
       }
   
@@ -155,6 +191,48 @@ function githubBlock(title, body, url, creator, avatar_url, date, mentioned_user
       ]
     }
 ]
+}
+
+
+function map_ghusername_to_slack_message(slackusername, githubusername) {
+  return [
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": `Hi @${slackusername}! :wave:`
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "Make sure you spelled your GitHub username correctly. The correct format is: \n \n `@githelper <your github username>`"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": `I think you GitHub username is *${githubusername}*, if that's correct, press the button. If not, check that you followed the format above and retry`
+			}
+		},
+		{
+			"type": "actions",
+			"elements": [
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "Connect account",
+						"emoji": true
+					},
+          "action_id": "connect_account",
+          "value": githubusername
+				}
+			]
+		}
+	]
 }
   
 
