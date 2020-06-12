@@ -234,11 +234,30 @@ function githubBlock(title, body, url, creator, avatar_url, date, mentioned_user
 
 function map_ghusername_to_slack_message(slackusername, githubusername) {
 
-  let block_message = "if that's correct, press the button. If not, check that you followed the format above and retry.";
+  let block_message = "if that looks right, press the button. If not, check that you followed the format above and retry.";
+
+  let button_block = 	{
+
+    "type": "actions",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Connect account",
+          "emoji": true
+        },
+        "action_id": "connect_account",
+        "value": githubusername
+      }
+    ]
+  };
   
   if (githubusername === undefined) {
     block_message = "You forgot to give me a username silly! Make sure you follow the format described above!"
+    button_block = {};
   }
+  
 
   return [
 		{
@@ -262,21 +281,7 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
 				"text": `Your GitHub username is *${githubusername}*. ${block_message}`
 			}
 		},
-		{
-			"type": "actions",
-			"elements": [
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "Connect account",
-						"emoji": true
-					},
-          "action_id": "connect_account",
-          "value": githubusername
-				}
-			]
-		}
+    button_block
 	]
 }
   
