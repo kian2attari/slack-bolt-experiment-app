@@ -91,7 +91,11 @@ app.action('connect_account', async ({body, ack, say}) => {
 
   console.log(body);
 
-  gh_slack_username_map[body.user.id] = body.actions[0].value;
+  let github_username = body.actions[0].value;
+  let slack_username = body.user.id;
+
+  // We map the github username to that Slack username
+  gh_slack_username_map[github_username] = slack_username;
 
   console.log(gh_slack_username_map);
 
@@ -119,7 +123,15 @@ expressReceiver.router.post('/webhook', (req, res) => {
       // Checks to see if the body mentions a username
       if (contains_mention) {
         contains_mention.forEach(mentioned_username => {
-          mention_message(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date, mentioned_username)     
+          
+          console.log(mentioned_username);
+
+          let mentioned_slack_user = gh_slack_username_map[mentioned_username];
+
+          // If the mentioned usernmae is associated with a Slack username, mention that perosn
+          if (mentioned_slack_user) {
+            mention_message(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date, mentioned_username, mentioned_slack_user)     
+          }
         });
       }
   
@@ -141,14 +153,14 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
 
 // TODO: Once the Slack and GitHub usernames database is made, remove the @person hardcoding
-function githubBlock(title, body, url, creator, avatar_url, date, mentioned_username) {
+function githubBlock(title, body, url, creator, avatar_url, date, mentioned_username, mentioned_slack_user) {
 
   return [
     {
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": `*${mentioned_username}!*`
+        "text": `*<@${mentioned_slack_user}>*`
       }
     },
     
@@ -250,14 +262,14 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
   
 
 
-function mention_message(channel_id, title, body, url, creator, avatar_url, create_date, mentioned_username) {
+function mention_message(channel_id, title, body, url, creator, avatar_url, create_date, mentioned_username, mentioned_slack_user) {
   app.client.chat.postMessage({
     // Since there is no context we just use the original token
     token: process.env.SLACK_BOT_TOKEN,
     // The channel is currently hardcoded
     channel: channel_id,
-    blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_username),
-    text: `${title} posted by ${creator} on ${create_date}. Link: ${url}`
+    blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_username, mentioned_slack_user),
+    text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`
   });
 
 } 
