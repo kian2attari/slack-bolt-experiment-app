@@ -255,7 +255,13 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
   
   if (githubusername === undefined) {
     block_message = "You forgot to give me a username silly! Make sure you follow the format described above!"
-    button_block = {};
+    button_block = {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "The correct format is: \n \n `@githelper <your github username>`"
+      }
+    }
   }
   
 
