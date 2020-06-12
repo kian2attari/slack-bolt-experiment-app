@@ -118,15 +118,28 @@ expressReceiver.router.post('/webhook', (req, res) => {
       let creator_avatar_url = req.body.issue.user.avatar_url;
       let issue_create_date = new Date(req.body.issue.created_at);
 
+      /* There two ways of matching the GitHub usernames and storing them in the mapping. 
+      The regular expression is matching @github username.  */
+
+      /* Since the regex contains a global operator, matchAll can used to get all the matches & the groups as an iterable.
+      In this first version, we don't need to use split() to drop the @ since contains_mention would also have just the usernames. */
+      // const contains_mention = [... issue_body.matchAll(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi)];
+
+      /* This version only matches to all the mentions, so rather than just get the GH username, contains_mention elements are of form @username 
+      so we need to drop the @ */
       const contains_mention = issue_body.match(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi);
 
       // Checks to see if the body mentions a username
       if (contains_mention) {
         contains_mention.forEach(mentioned_username => {
+
+          mentioned_username.split();
           
-          console.log(mentioned_username);
+          console.log(`mentioned gh username: ${mentioned_username}`);
 
           let mentioned_slack_user = gh_slack_username_map[mentioned_username];
+
+          console.log(`mentioned slack user: ${mentioned_slack_user}`);
 
           // If the mentioned usernmae is associated with a Slack username, mention that perosn
           if (mentioned_slack_user) {
