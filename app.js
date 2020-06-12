@@ -122,7 +122,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
       The regular expression is matching @github username.  */
 
       /* Since the regex contains a global operator, matchAll can used to get all the matches & the groups as an iterable.
-      In this first version, we don't need to use shift() to drop the @ since contains_mention would also have just the usernames. */
+      In this first version, we don't need to use substring(1) to drop the @ since contains_mention would also have just the usernames. */
       // const contains_mention = [... issue_body.matchAll(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi)];
 
       /* This version only matches to all the mentions, so rather than just get the GH username, contains_mention elements are of form @username 
@@ -133,7 +133,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
       if (contains_mention) {
         contains_mention.forEach(mentioned_username => {
 
-          mentioned_username.shift();
+          mentioned_username.substring(1);
           
           console.log(`mentioned gh username: ${mentioned_username}`);
 
