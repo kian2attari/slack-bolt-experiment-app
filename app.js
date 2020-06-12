@@ -133,17 +133,17 @@ expressReceiver.router.post('/webhook', (req, res) => {
       if (contains_mention) {
         contains_mention.forEach(mentioned_username => {
 
-          mentioned_username.substring(1);
+          let github_username = mentioned_username.substring(1);
           
-          console.log(`mentioned gh username: ${mentioned_username}`);
+          console.log(`mentioned gh username: ${github_username}`);
 
-          let mentioned_slack_user = gh_slack_username_map[mentioned_username];
+          let mentioned_slack_user = gh_slack_username_map[github_username];
 
           console.log(`mentioned slack user: ${mentioned_slack_user}`);
 
           // If the mentioned usernmae is associated with a Slack username, mention that perosn
           if (mentioned_slack_user) {
-            mention_message(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date, mentioned_username, mentioned_slack_user)     
+            mention_message(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date, mentioned_slack_user)     
           }
         });
       }
@@ -166,7 +166,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
 
 // TODO: Once the Slack and GitHub usernames database is made, remove the @person hardcoding
-function githubBlock(title, body, url, creator, avatar_url, date, mentioned_username, mentioned_slack_user) {
+function githubBlock(title, body, url, creator, avatar_url, date, mentioned_slack_user) {
 
   return [
     {
@@ -295,13 +295,13 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
   
 
 
-function mention_message(channel_id, title, body, url, creator, avatar_url, create_date, mentioned_username, mentioned_slack_user) {
+function mention_message(channel_id, title, body, url, creator, avatar_url, create_date, mentioned_slack_user) {
   app.client.chat.postMessage({
     // Since there is no context we just use the original token
     token: process.env.SLACK_BOT_TOKEN,
     // The channel is currently hardcoded
     channel: channel_id,
-    blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_username, mentioned_slack_user),
+    blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_slack_user),
     text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`
   });
 } 
