@@ -233,6 +233,13 @@ function githubBlock(title, body, url, creator, avatar_url, date, mentioned_user
 
 
 function map_ghusername_to_slack_message(slackusername, githubusername) {
+
+  let block_message = "if that's correct, press the button. If not, check that you followed the format above and retry.";
+  
+  if (githubusername === undefined) {
+    block_message = "You forgot to give me a username silly! Make sure you follow the format described above!"
+  }
+
   return [
 		{
 			"type": "section",
@@ -252,7 +259,7 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": `I think you GitHub username is *${githubusername}*, if that's correct, press the button. If not, check that you followed the format above and retry`
+				"text": `Your GitHub username is *${githubusername}*. ${block_message}`
 			}
 		},
 		{
