@@ -122,7 +122,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
       The regular expression is matching @github username.  */
 
       /* Since the regex contains a global operator, matchAll can used to get all the matches & the groups as an iterable.
-      In this first version, we don't need to use split() to drop the @ since contains_mention would also have just the usernames. */
+      In this first version, we don't need to use shift() to drop the @ since contains_mention would also have just the usernames. */
       // const contains_mention = [... issue_body.matchAll(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi)];
 
       /* This version only matches to all the mentions, so rather than just get the GH username, contains_mention elements are of form @username 
@@ -133,7 +133,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
       if (contains_mention) {
         contains_mention.forEach(mentioned_username => {
 
-          mentioned_username.split();
+          mentioned_username.shift();
           
           console.log(`mentioned gh username: ${mentioned_username}`);
 
@@ -236,6 +236,8 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
 
   let block_message = "if that looks right, press the button. If not, check that you followed the format above and retry.";
 
+
+  // The button_block is a variable so that it won't be rendered if the username is undefined!
   let button_block = 	{
 
     "type": "actions",
@@ -244,7 +246,7 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
         "type": "button",
         "text": {
           "type": "plain_text",
-          "text": "Connect account",
+          "text": "Map usernames",
           "emoji": true
         },
         "action_id": "connect_account",
@@ -302,7 +304,9 @@ function mention_message(channel_id, title, body, url, creator, avatar_url, crea
     blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_username, mentioned_slack_user),
     text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`
   });
-
 } 
+
+
+// TODO: Function that lets user see all the username mappings with a slash command
 
 
