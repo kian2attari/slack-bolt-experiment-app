@@ -59,7 +59,7 @@ app.event('app_mention', async ({ event, context }) => {
       token: context.botToken,
       channel: temp_channel_id,
       blocks: map_ghusername_to_slack_message(event.user,github_username),
-      text: `Hey there <@${event.user.id}>! Please make sure that GitHub username is right!`
+      text: `Hey there <@${event.user}>! Please make sure that GitHub username is right!`
     });
     console.log(result);
   }
