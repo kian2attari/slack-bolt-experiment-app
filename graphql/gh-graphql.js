@@ -1,19 +1,32 @@
-const { request, GraphQLClient } = require('graphql-request')
-// Not sure if this is required, but testing the app locally raises an error if fetch is not there
-fetch = require("node-fetch");
+const { createAppAuth } = require("@octokit/auth-app");
+const { graphql } = require("@octokit/graphql");
 
-const endpoint = 'https://api.github.com/graphql'
- 
-const graphQLClient = new GraphQLClient(endpoint, {
-  headers: {
-    Authorization: "bearer " + process.env.GH_PA_TOKEN,
+
+// TODO: Installation ID
+const auth = createAppAuth({
+  id: process.env.APP_ID,
+  privateKey: process.env.PRIVATE_KEY,
+  installationId: 9783180,
+});
+
+const graphqlWithAuth = graphql.defaults({
+  request: {
+    hook: auth.hook,
   },
-})
+});
+
+
+ 
+// const graphQLClient = new GraphQLClient(endpoint, {
+//   headers: {
+//     Authorization: "bearer " + process.env.GH_PA_TOKEN,
+//   },
+// })
 
 const call_gh_graphql = async function call_gh_graphql_api(query, variables) {
     try {
 
-        const data = await graphQLClient.request(query, variables);
+        const data = await graphqlWithAuth(query, variables);
 
         let response = JSON.stringify(data, undefined, 2);
 
@@ -30,6 +43,6 @@ const call_gh_graphql = async function call_gh_graphql_api(query, variables) {
 
 
 module.exports = {
-    call_gh_graphql,
-    graphQLClient
+    call_gh_graphql
   }
+
