@@ -1,5 +1,7 @@
 const { App, ExpressReceiver } = require('@slack/bolt');
 const express  = require('express');
+const graphql = require('./graphql/gh-graphql')
+const query = require('./graphql/query')
 
 
 // Create a Bolt Receiver
@@ -18,6 +20,15 @@ let gh_slack_username_map = {};
 const temp_channel_id = 'C015FH00GVA';
 
 
+
+const variables = {
+  owner: 'kian2attari',
+  name: 'slack-bolt-experiment-app',
+  number: 2
+}
+
+
+graphql.call_gh_graphql(query.getCardByProjColumn, variables);
 
 
 /* Portion of app that listens for events */
@@ -71,6 +82,17 @@ app.event('app_mention', async ({ event, context }) => {
 
 
 
+// TODO: Create project cards directly from slack
+
+// TODO: Delete project cards directly from slack
+
+// TODO: Move project cards directly from slack
+
+// TODO: View all the project cards in Needs Triage directly on slack
+// graphql.call_gh_graphql_api();
+
+
+
 /* Portion of app that listens for actions (notably, button clicks) */
 
 
@@ -110,50 +132,59 @@ expressReceiver.router.use(express.json())
 // Receive github webhooks here!
 expressReceiver.router.post('/webhook', (req, res) => {
 
+  if (req.headers['content-type'] !== 'application/json') {
+    return res.send('Send webhook as application/json');
+  }
+
   try {
-      let issue_body = req.body.issue.body;
-      let issue_url = req.body.issue.html_url;
-      let issue_title = req.body.issue.title;
-      let issue_creator = req.body.issue.user.login;
-      let creator_avatar_url = req.body.issue.user.avatar_url;
-      let issue_create_date = new Date(req.body.issue.created_at);
+      // TODO: Handle other event types. Currently, it's just issue-related events
+      if (req.headers['x-github-event'] == 'issues' ) {
+        let issue_body = req.body.issue.body;
+        let issue_url = req.body.issue.html_url;
+        let issue_title = req.body.issue.title;
+        let issue_creator = req.body.issue.user.login;
+        let creator_avatar_url = req.body.issue.user.avatar_url;
+        let issue_create_date = new Date(req.body.issue.created_at);
 
-      /* There two ways of matching the GitHub usernames and storing them in the mapping. 
-      The regular expression is matching @github username.  */
+        /* There two ways of matching the GitHub usernames and storing them in the mapping. 
+        The regular expression is matching @github username.  */
 
-      /* Since the regex contains a global operator, matchAll can used to get all the matches & the groups as an iterable.
-      In this first version, we don't need to use substring(1) to drop the @ since contains_mention would also have just the usernames. */
-      // const contains_mention = [... issue_body.matchAll(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi)];
+        /* Since the regex contains a global operator, matchAll can used to get all the matches & the groups as an iterable.
+        In this first version, we don't need to use substring(1) to drop the @ since contains_mention would also have just the usernames. */
+        // const contains_mention = [... issue_body.matchAll(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi)];
 
-      /* This version only matches to all the mentions, so rather than just get the GH username, contains_mention elements are of form @username 
-      so we need to drop the @ */
-      const contains_mention = issue_body.match(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi);
+        /* This version only matches to all the mentions, so rather than just get the GH username, contains_mention elements are of form @username 
+        so we need to drop the @ */
+        const contains_mention = issue_body.match(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi);
 
-      // Checks to see if the body mentions a username
-      if (contains_mention) {
-        contains_mention.forEach(mentioned_username => {
+        // Checks to see if the body mentions a username
+        if (contains_mention) {
+          contains_mention.forEach(mentioned_username => {
 
-          let github_username = mentioned_username.substring(1);
-          
-          console.log(`mentioned gh username: ${github_username}`);
+            let github_username = mentioned_username.substring(1);
+            
+            console.log(`mentioned gh username: ${github_username}`);
 
-          let mentioned_slack_user = gh_slack_username_map[github_username];
+            let mentioned_slack_user = gh_slack_username_map[github_username];
 
-          console.log(`mentioned slack user: ${mentioned_slack_user}`);
+            console.log(`mentioned slack user: ${mentioned_slack_user}`);
 
-          // If the mentioned usernmae is associated with a Slack username, mention that perosn
-          if (mentioned_slack_user) {
-            mention_message(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date, mentioned_slack_user)     
-          }
-        });
+            // If the mentioned usernmae is associated with a Slack username, mention that perosn
+            if (mentioned_slack_user) {
+              mention_message(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date, mentioned_slack_user)     
+            }
+          });
+        }
       }
-  
     }
   
     catch (error) {
       console.error(error);
     }
     res.send('Webhook initial test was received');
+
+
+
 });
 
 
@@ -294,6 +325,7 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
 }
   
 
+// TODO: Get user's timezone and display the date/time with respect to it
 
 function mention_message(channel_id, title, body, url, creator, avatar_url, create_date, mentioned_slack_user) {
   app.client.chat.postMessage({

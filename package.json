@@ -10,6 +10,8 @@
   "author": "kattari",
   "license": "ISC",
   "dependencies": {
-    "@slack/bolt": "^2.1.1"
+    "@slack/bolt": "^2.1.1",
+    "graphql-request": "^2.0.0",
+    "node-fetch": "^2.6.0"
   }
 }
