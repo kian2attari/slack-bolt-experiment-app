@@ -1,6 +1,6 @@
 const { request, GraphQLClient } = require('graphql-request')
 // Not sure if this is required, but testing the app locally raises an error if fetch is not there
-fetch = require("node-fetch");
+// fetch = require("node-fetch");
 
 const endpoint = 'https://api.github.com/graphql'
  
