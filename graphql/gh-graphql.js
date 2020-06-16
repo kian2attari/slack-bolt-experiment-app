@@ -18,9 +18,8 @@ const { graphql } = require("@octokit/graphql");
 // TODO: Installation ID
 const auth = createAppAuth({
   id: process.env.APP_ID,
-  privateKey: process.env.PRIVATE_KEY,
-  clientId: process.env.CLIENT_ID,
-  clientSecret: process.env.CLIENT_SECRET
+  installationId: '9784854',
+  privateKey: process.env.PRIVATE_KEY
 });
 
 
@@ -36,7 +35,6 @@ const graphqlWithAuth = graphql.defaults({
 
 const call_gh_graphql = async function call_gh_graphql_api(query, variables) {
     try {
-
 
         const data = await graphqlWithAuth(query, variables);
 
