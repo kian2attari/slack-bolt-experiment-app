@@ -331,10 +331,14 @@ function mention_message(channel_id, title, body, url, creator, avatar_url, crea
   app.client.chat.postMessage({
     // Since there is no context we just use the original token
     token: process.env.SLACK_BOT_TOKEN,
-    // We concat the @ symbol to the user ID here
-    channel: channel_id,
-    ...(is_special_mention && { blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_slack_user) }),
-    ...(!is_special_mention  && { blocks: githubBlock(title, body, url, creator, avatar_url, create_date, `@${mentioned_slack_user}`) }),
+    // Conditional on whether the message should go to channel or just to a user as a DM
+    ...(is_special_mention && { channel: mentioned_slack_user, 
+                                blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_slack_user) 
+                              }),
+
+    ...(!is_special_mention && { channel: channel_id,
+                                 blocks: githubBlock(title, body, url, creator, avatar_url, create_date, `@${mentioned_slack_user}`) 
+                               }),
     text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`
   });
 } 
