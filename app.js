@@ -169,7 +169,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
         // TODO: New comment on closed issue!
         if (req.body.issue.state == 'closed') {
-          mention_message(temp_channel_id, `Comment on closed issue: ${issue_title}`, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date, temp_channel_id)
+          mention_message(temp_channel_id, `Comment on closed issue: ${issue_title}`, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date, '!channel')
         }
 
 
@@ -196,7 +196,9 @@ expressReceiver.router.post('/webhook', (req, res) => {
 })();
 
 
-// TODO: Once the Slack and GitHub usernames database is made, remove the @person hardcoding
+/* The @ symbol for mentions is not concated here because the convention for mentioning is different 
+between mentioning users/groups/channels. To mention the channel, say when a closed issue is commented
+on, the special convention is <!channel>. */
 function githubBlock(title, body, url, creator, avatar_url, date, mentioned_slack_user) {
 
   return [
@@ -204,7 +206,7 @@ function githubBlock(title, body, url, creator, avatar_url, date, mentioned_slac
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": `*<@${mentioned_slack_user}>*`
+        "text": `*<${mentioned_slack_user}>*`
       }
     },
     
@@ -330,9 +332,9 @@ function mention_message(channel_id, title, body, url, creator, avatar_url, crea
   app.client.chat.postMessage({
     // Since there is no context we just use the original token
     token: process.env.SLACK_BOT_TOKEN,
-    // The channel is currently hardcoded
+    // We concat the @ symbol to the user ID here
     channel: channel_id,
-    blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_slack_user),
+    blocks: githubBlock(title, body, url, creator, avatar_url, create_date, `@${mentioned_slack_user}`),
     text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`
   });
 } 
