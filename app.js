@@ -126,6 +126,12 @@ app.action('connect_account', async ({body, ack, say}) => {
 
 
 
+// Acknowledges button clicks
+// TODO: Possibly change the Bolt library so that link buttons dont have to be responded to
+app.action('link_button', ({ ack }) => ack());
+
+
+
 // Parsing JSON Middleware
 expressReceiver.router.use(express.json())
 
@@ -137,35 +143,25 @@ expressReceiver.router.post('/webhook', (req, res) => {
   }
 
   try {
+      let request = req.body;
+      let issue_url = request.issue.html_url;
+      let issue_title = request.issue.title;
+
       // TODO: Handle other event types. Currently, it's just issue-related events
       if (req.headers['x-github-event'] == 'issues' ) {
-        let issue_body = req.body.issue.body;
-        let issue_url = req.body.issue.html_url;
-        let issue_title = req.body.issue.title;
-        let issue_creator = req.body.issue.user.login;
-        let creator_avatar_url = req.body.issue.user.avatar_url;
-        let issue_create_date = new Date(req.body.issue.created_at);
-
-        /* There two ways of matching the GitHub usernames and storing them in the mapping. 
-        The regular expression is matching @github username.  */
-
-        /* Since the regex contains a global operator, matchAll can used to get all the matches & the groups as an iterable.
-        In this first version, we don't need to use substring(1) to drop the @ since contains_mention would also have just the usernames. */
-        // const contains_mention = [... issue_body.matchAll(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi)];
-
-        /* This version only matches to all the mentions, so rather than just get the GH username, contains_mention elements are of form @username 
-        so we need to drop the @ */
+        let issue_body = request.issue.body;
+        let issue_creator = request.issue.user.login;
+        let creator_avatar_url = request.issue.user.avatar_url;
+        let issue_create_date = new Date(request.issue.created_at);
 
         check_for_mentions(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date);
         }
 
       else if (req.headers['x-github-event'] == 'issue_comment') {
-        let comment_body = req.body.comment.body;
-        let issue_url = req.body.issue.html_url;
-        let issue_title = req.body.issue.title;
-        let comment_creator = req.body.comment.user.login;
-        let creator_avatar_url = req.body.comment.user.avatar_url;
-        let comment_create_date = new Date(req.body.comment.created_at);
+        let comment_body = request.comment.body;
+        let comment_creator = request.comment.user.login;
+        let creator_avatar_url = request.comment.user.avatar_url;
+        let comment_create_date = new Date(request.comment.created_at);
 
         // TODO: New comment on closed issue!
         if (req.body.issue.state == 'closed') {
@@ -245,7 +241,8 @@ function githubBlock(title, body, url, creator, avatar_url, date, mentioned_slac
             "text": "Visit issue page",
             "emoji": true
           },
-          "url": url
+          "url": url,
+          "action_id": "link_button"
         }
       ]
     },
@@ -352,6 +349,10 @@ function view_username_mappings (username_mappings) {
 
 // Function that checks for github username mentions in a body of text
 function check_for_mentions(temp_channel_id, title, text_body, content_url,content_creator, creator_avatar_url, content_create_date) {
+
+  /* Since the regex contains a global operator, matchAll can used to get all the matches & the groups as an iterable.
+  In this first version, we don't need to use substring(1) to drop the @ since contains_mention would also have just the usernames. */
+
   const contains_mention = text_body.match(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi);
 
   // Checks to see if the body mentions a username
