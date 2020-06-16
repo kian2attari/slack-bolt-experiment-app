@@ -172,7 +172,6 @@ expressReceiver.router.post('/webhook', (req, res) => {
           mention_message(temp_channel_id, `Comment on closed issue: ${issue_title}`, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date, '!channel', true)
         }
 
-
         check_for_mentions(temp_channel_id, `New comment on issue: ${issue_title}`, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date);
 
       }
@@ -363,7 +362,8 @@ function check_for_mentions(temp_channel_id, title, text_body, content_url,conte
 
       console.log(`mentioned slack user: ${mentioned_slack_user}`);
 
-      // If the mentioned usernmae is associated with a Slack username, mention that perosn
+      // If the mentioned usernmae is associated with a Slack username, mention that person
+      // TODO: DM the person rather than posting the message to the channel
       if (mentioned_slack_user) {
         mention_message(temp_channel_id, title, text_body, content_url, content_creator, creator_avatar_url, content_create_date, mentioned_slack_user, false)     
       }
