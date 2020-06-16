@@ -155,26 +155,21 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
         /* This version only matches to all the mentions, so rather than just get the GH username, contains_mention elements are of form @username 
         so we need to drop the @ */
-        const contains_mention = issue_body.match(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi);
 
-        // Checks to see if the body mentions a username
-        if (contains_mention) {
-          contains_mention.forEach(mentioned_username => {
-
-            let github_username = mentioned_username.substring(1);
-            
-            console.log(`mentioned gh username: ${github_username}`);
-
-            let mentioned_slack_user = gh_slack_username_map[github_username];
-
-            console.log(`mentioned slack user: ${mentioned_slack_user}`);
-
-            // If the mentioned usernmae is associated with a Slack username, mention that perosn
-            if (mentioned_slack_user) {
-              mention_message(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date, mentioned_slack_user)     
-            }
-          });
+        check_for_mentions(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date);
         }
+
+      else if (req.headers['x-github-event'] == 'issue_comment') {
+        let comment_body = req.body.comment.body;
+        let issue_url = req.body.issue.html_url;
+        let issue_title = req.body.issue.title;
+        let comment_creator = req.body.comment.user.login;
+        let creator_avatar_url = req.body.comment.user.avatar_url;
+        let comment_create_date = new Date(req.body.comment.created_at);
+
+
+        check_for_mentions(temp_channel_id, issue_title, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date);
+
       }
     }
   
@@ -292,7 +287,7 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "The correct format is: \n \n `@githelper <your github username>`"
+        "text": "The correct format is: \n \n `@gitwave <your github username>`"
       }
     }
   }
@@ -310,7 +305,7 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "Make sure you spelled your GitHub username correctly. The correct format is: \n \n `@githelper <your github username>`"
+				"text": "Make sure you spelled your GitHub username correctly. The correct format is: \n \n `@gitwave <your github username>`"
 			}
 		},
 		{
@@ -342,3 +337,28 @@ function mention_message(channel_id, title, body, url, creator, avatar_url, crea
 // TODO: Function that lets user see all the username mappings with a slash command
 
 
+
+// Function that checks for github username mentions in a body of text
+function check_for_mentions(temp_channel_id, title, text_body, content_url,content_creator, creator_avatar_url, content_create_date) {
+  const contains_mention = text_body.match(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi);
+
+  // Checks to see if the body mentions a username
+  if (contains_mention) {
+    contains_mention.forEach(mentioned_username => {
+
+      let github_username = mentioned_username.substring(1);
+      
+      console.log(`mentioned gh username: ${github_username}`);
+
+      let mentioned_slack_user = gh_slack_username_map[github_username];
+
+      console.log(`mentioned slack user: ${mentioned_slack_user}`);
+
+      // If the mentioned usernmae is associated with a Slack username, mention that perosn
+      if (mentioned_slack_user) {
+        mention_message(temp_channel_id, title, text_body, content_url, content_creator, creator_avatar_url, content_create_date, mentioned_slack_user)     
+      }
+    });
+  }
+  
+}
