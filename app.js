@@ -339,7 +339,9 @@ function mention_message(channel_id, title, body, url, creator, avatar_url, crea
 
 
 // TODO: Function that lets user see all the username mappings with a slash command
-
+function view_username_mappings (username_mappings) {
+  console.log(username_mappings)
+}
 
 
 // Function that checks for github username mentions in a body of text
