@@ -1,7 +1,6 @@
 const { App, ExpressReceiver } = require('@slack/bolt');
 const express  = require('express');
-const graphql = require('./graphql/gh-graphql')
-const query = require('./graphql/query')
+const { query, mutation, graphql } = require('./graphql')
 
 
 // Create a Bolt Receiver
@@ -21,15 +20,21 @@ const temp_channel_id = 'C015FH00GVA';
 
 
 
-const variables = {
-  owner: 'kian2attari',
-  name: 'slack-bolt-experiment-app',
-  number: 2
+const variables_getCardsByProj = {
+  owner: 'slackapi',
+  name: 'dummy-kian-test-repo',
+  number: 1
+}
+
+const variables_addLabelToIssue = {
+  element_node_id: 'MDU6SXNzdWU2Mzk4ODI4Mzk=',
+  label_id: 'MDU6TGFiZWwyMTM5MzcwODk5',
 }
 
 
-graphql.call_gh_graphql(query.getCardByProjColumn, variables);
+graphql.call_gh_graphql(query.getCardByProjColumn, variables_getCardsByProj);
 
+graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue);
 
 /* Portion of app that listens for events */
 
@@ -146,6 +151,10 @@ expressReceiver.router.post('/webhook', (req, res) => {
       let request = req.body;
       let issue_url = request.issue.html_url;
       let issue_title = request.issue.title;
+
+      // TODO: use issue number to query for a specific issue
+      let issue_number = request.issue.number;
+      let issue_id = request.issue.node_id;
 
       // TODO: Handle other event types. Currently, it's just issue-related events
       if (req.headers['x-github-event'] == 'issues' ) {
