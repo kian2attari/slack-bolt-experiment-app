@@ -168,7 +168,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
         let comment_create_date = new Date(req.body.comment.created_at);
 
 
-        check_for_mentions(temp_channel_id, issue_title, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date);
+        check_for_mentions(temp_channel_id, `New comment on issue: ${issue_title}`, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date);
 
       }
     }
