@@ -239,8 +239,7 @@ function githubBlock(title, body, url, creator, avatar_url, date, mentioned_slac
             "text": "Visit issue page",
             "emoji": true
           },
-          "url": url,
-          "action_id" : "button_link"
+          "url": url
         }
       ]
     },
