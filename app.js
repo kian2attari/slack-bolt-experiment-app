@@ -169,7 +169,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
         // TODO: New comment on closed issue!
         if (req.body.issue.state == 'closed') {
-          mention_message(temp_channel_id, `Comment on closed issue: ${issue_title}`, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date, '!channel')
+          mention_message(temp_channel_id, `Comment on closed issue: ${issue_title}`, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date, '!channel', true)
         }
 
 
@@ -328,13 +328,14 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
 
 // TODO: Get user's timezone and display the date/time with respect to it
 
-function mention_message(channel_id, title, body, url, creator, avatar_url, create_date, mentioned_slack_user) {
+function mention_message(channel_id, title, body, url, creator, avatar_url, create_date, mentioned_slack_user, is_special_mention) {
   app.client.chat.postMessage({
     // Since there is no context we just use the original token
     token: process.env.SLACK_BOT_TOKEN,
     // We concat the @ symbol to the user ID here
     channel: channel_id,
-    blocks: githubBlock(title, body, url, creator, avatar_url, create_date, `@${mentioned_slack_user}`),
+    ...(is_special_mention && { blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_slack_user) }),
+    ...(!is_special_mention  && { blocks: githubBlock(title, body, url, creator, avatar_url, create_date, `@${mentioned_slack_user}`) }),
     text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`
   });
 } 
@@ -364,7 +365,7 @@ function check_for_mentions(temp_channel_id, title, text_body, content_url,conte
 
       // If the mentioned usernmae is associated with a Slack username, mention that perosn
       if (mentioned_slack_user) {
-        mention_message(temp_channel_id, title, text_body, content_url, content_creator, creator_avatar_url, content_create_date, mentioned_slack_user)     
+        mention_message(temp_channel_id, title, text_body, content_url, content_creator, creator_avatar_url, content_create_date, mentioned_slack_user, false)     
       }
     });
   }
