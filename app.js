@@ -167,6 +167,11 @@ expressReceiver.router.post('/webhook', (req, res) => {
         let creator_avatar_url = req.body.comment.user.avatar_url;
         let comment_create_date = new Date(req.body.comment.created_at);
 
+        // TODO: New comment on closed issue!
+        if (req.body.issue.state == 'closed') {
+          mention_message(temp_channel_id, issue_title, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date, 'channel')
+        }
+
 
         check_for_mentions(temp_channel_id, `New comment on issue: ${issue_title}`, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date);
 

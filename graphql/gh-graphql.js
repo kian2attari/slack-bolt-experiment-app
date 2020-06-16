@@ -16,13 +16,6 @@ const graphqlWithAuth = graphql.defaults({
 });
 
 
- 
-// const graphQLClient = new GraphQLClient(endpoint, {
-//   headers: {
-//     Authorization: "bearer " + process.env.GH_PA_TOKEN,
-//   },
-// })
-
 const call_gh_graphql = async function call_gh_graphql_api(query, variables) {
     try {
 
