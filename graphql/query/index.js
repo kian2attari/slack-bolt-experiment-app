@@ -1,3 +1,4 @@
 module.exports = {
-    getCardByProjColumn: require('./getCardsByProjColumn')
+    getCardByProjColumn: require('./getCardsByProjColumn'),
+    getIdUntriagedLabel: require('./getIdUntriagedLabel')
   }

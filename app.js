@@ -16,6 +16,10 @@ const app = new App({
 let gh_slack_username_map = {};
 
 // Temporary hardcoding of channel id
+// TODO: Remove this hardcoding
+/* The data object for this could be a mapping from '{repo_owner}/{repo_name} -> [Array of channel ID's]
+Everytime someone subscribes to a owner/repo, add their channel to the array with the key of that owner/repo
+When any sort of event concerns that repo, post the message to all channels in the array */
 const temp_channel_id = 'C015FH00GVA';
 
 const gh_variables_init = {
@@ -30,24 +34,17 @@ const variables_getCardsByProj = {
   number: 1
 }
 
-const variables_addLabelToIssue = {
-  element_node_id: 'MDU6SXNzdWU2Mzk4ODI4Mzk=',
-  label_id: 'MDU6TGFiZWwyMTM5MzcwODk5'
-}
+// TODO: get label_ID for the untriaged label without hardcoding
+const untriaged_label_id = 'MDU6TGFiZWwyMTQxNDQyNzk1';
 
 
 
-// (async() => {
-//   await call_gh_graphql(query.getCardByProjColumn, variables_getCardsByProj)
-
-//   await call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue)
-// })();
 
 // Call GraphQL GH
 
-graphql.call_gh_graphql(query.getCardByProjColumn, variables_getCardsByProj, gh_variables_init).then(() => {
-  graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue)
-})
+// graphql.call_gh_graphql(query.getCardByProjColumn, variables_getCardsByProj, gh_variables_init).then(() => {
+//   graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue)
+// })
 
 
 
@@ -171,7 +168,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
       // TODO: use issue number to query for a specific issue
       let issue_number = request.issue.number;
-      let issue_id = request.issue.node_id;
+      let issue_node_id = request.issue.node_id;
 
       // TODO: Handle other event types. Currently, it's just issue-related events
       if (req.headers['x-github-event'] == 'issues' ) {
@@ -180,6 +177,13 @@ expressReceiver.router.post('/webhook', (req, res) => {
         let creator_avatar_url = request.issue.user.avatar_url;
         let issue_create_date = new Date(request.issue.created_at);
 
+        const variables_addLabelToIssue = {
+          element_node_id: issue_node_id,
+          label_id: untriaged_label_id
+        }
+
+        graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue);
+        
         check_for_mentions(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date);
         }
 
