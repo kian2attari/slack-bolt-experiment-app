@@ -28,6 +28,10 @@ const gh_variables_init = {
 }
 
 // TODO: remove hardcoding on proj number!
+
+
+// Declaring some variables to be passed to the GraphQL APIs
+
 const variables_getCardsByProj = Object.assign({ number: 1 }, gh_variables_init);
 
 
@@ -35,15 +39,16 @@ const variables_getCardsByProj = Object.assign({ number: 1 }, gh_variables_init)
 const variables_get_untriaged_label_id = Object.assign({label_name: "untriaged"}, gh_variables_init)
 
 
-const untriaged_label_id = graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id, gh_variables_init).then((response) => {
+let untriaged_label_id;
+
+graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id, gh_variables_init).then((response) => {
   const extracted_label_id = response.repository.label.id;
-  console.log('untriaged_label_id: ' + extracted_label_id);
-  return extracted_label_id
+    console.log('untriaged_label_id: ' + extracted_label_id);
+    untriaged_label_id =  extracted_label_id
   }
 ).catch((error) => {
   console.error(error)
 })
-
 
 
 // Call GraphQL GH
@@ -181,7 +186,8 @@ expressReceiver.router.post('/webhook', (req, res) => {
         let issue_creator = request.issue.user.login;
         let creator_avatar_url = request.issue.user.avatar_url;
         let issue_create_date = new Date(request.issue.created_at);
-
+        
+        // QUESTION: Should editing the issue also cause the untriaged label to be added?
         if (action == "opened" || action == "reopened") {
 
           const variables_addLabelToIssue = {
@@ -190,10 +196,12 @@ expressReceiver.router.post('/webhook', (req, res) => {
           }
 
           graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, gh_variables_init);
+
+          check_for_mentions(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date);
         }
+      
         
-        check_for_mentions(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date);
-        }
+      }
 
       else if (req.headers['x-github-event'] == 'issue_comment') {
         let comment_body = request.comment.body;
