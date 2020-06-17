@@ -3,6 +3,7 @@ const { graphql } = require("@octokit/graphql");
 const { githubAppJwt } = require('universal-github-app-jwt')
 const axios = require('axios').default;
 
+// Generates the JWT token needed to get the installation_id in init()
 const jwt_token = async() => {
   const { token } = await githubAppJwt({
     id: process.env.APP_ID,
@@ -11,14 +12,14 @@ const jwt_token = async() => {
     return token
 }
 
+
 let graphqlWithAuth;
 
 let has_init_run = false;
 
+// Call github API endpoint to get installation_id for that specific installation
 const init = async (gh_variables) => {
   let jwt_obj = await jwt_token();
-  
-  // call github api endpoint to get installation_id 
 
   const response = await axios.get(`https://api.github.com/repos/${gh_variables.owner}/${gh_variables.repo_name}/installation`, {
     headers: {
