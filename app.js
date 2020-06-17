@@ -18,6 +18,10 @@ let gh_slack_username_map = {};
 // Temporary hardcoding of channel id
 const temp_channel_id = 'C015FH00GVA';
 
+const gh_variables_init = {
+  owner: 'slackapi',
+  repo_name: 'dummy-kian-test-repo'
+}
 
 
 const variables_getCardsByProj = {
@@ -28,13 +32,26 @@ const variables_getCardsByProj = {
 
 const variables_addLabelToIssue = {
   element_node_id: 'MDU6SXNzdWU2Mzk4ODI4Mzk=',
-  label_id: 'MDU6TGFiZWwyMTM5MzcwODk5',
+  label_id: 'MDU6TGFiZWwyMTM5MzcwODk5'
 }
 
 
-graphql.call_gh_graphql(query.getCardByProjColumn, variables_getCardsByProj);
 
-graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue);
+// (async() => {
+//   await call_gh_graphql(query.getCardByProjColumn, variables_getCardsByProj)
+
+//   await call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue)
+// })();
+
+// Call GraphQL GH
+
+graphql.call_gh_graphql(query.getCardByProjColumn, variables_getCardsByProj, gh_variables_init).then(() => {
+  graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue)
+})
+
+
+
+
 
 /* Portion of app that listens for events */
 
