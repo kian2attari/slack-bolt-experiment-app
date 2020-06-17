@@ -1,4 +1,5 @@
 module.exports = {
     getCardByProjColumn: require('./getCardsByProjColumn'),
-    getIdLabel: require('./getIdLabel')
+    getIdLabel: require('./getIdLabel'),
+    getFirstColumnInProject: require('./getFirstColumnInProject')
   }

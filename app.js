@@ -19,7 +19,10 @@ let gh_slack_username_map = {};
 // TODO: Remove this hardcoding
 /* The data object for this could be a mapping from '{repo_owner}/{repo_name} -> [Array of channel ID's]
 Everytime someone subscribes to a owner/repo, add their channel to the array with the key of that owner/repo
-When any sort of event concerns that repo, post the message to all channels in the array */
+When any sort of event concerns that repo, post the message to all channels in the array 
+
+
+A similar thing can be done to map to map repos to project boards */
 const temp_channel_id = 'C015FH00GVA';
 
 const gh_variables_init = {
