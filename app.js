@@ -42,9 +42,7 @@ const untriaged_label_id = 'MDU6TGFiZWwyMTQxNDQyNzk1';
 
 // Call GraphQL GH
 
-// graphql.call_gh_graphql(query.getCardByProjColumn, variables_getCardsByProj, gh_variables_init).then(() => {
-//   graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue)
-// })
+// graphql.call_gh_graphql(query.getCardByProjColumn, variables_getCardsByProj, gh_variables_init)
 
 
 
@@ -182,7 +180,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
           label_id: untriaged_label_id
         }
 
-        graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue);
+        graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, gh_variables_init);
         
         check_for_mentions(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date);
         }
