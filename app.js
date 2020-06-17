@@ -23,19 +23,22 @@ When any sort of event concerns that repo, post the message to all channels in t
 const temp_channel_id = 'C015FH00GVA';
 
 const gh_variables_init = {
-  owner: 'slackapi',
+  repo_owner: 'slackapi',
   repo_name: 'dummy-kian-test-repo'
 }
 
+// TODO: remove hardcoding on proj number!
+const variables_getCardsByProj = Object.assign({ number: 1 }, gh_variables_init);
 
-const variables_getCardsByProj = {
-  owner: 'slackapi',
-  name: 'dummy-kian-test-repo',
-  number: 1
-}
 
-// TODO: get label_ID for the untriaged label without hardcoding
-const untriaged_label_id = 'MDU6TGFiZWwyMTQxNDQyNzk1';
+
+const variables_get_untriaged_label_id = Object.assign({label_name: "untriaged"}, gh_variables_init)
+
+
+const untriaged_label_id = graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id).then((response) => {
+  return response.label.id
+  }
+)
 
 
 
@@ -161,6 +164,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
   try {
       let request = req.body;
+      let action = request.action;
       let issue_url = request.issue.html_url;
       let issue_title = request.issue.title;
 
@@ -175,12 +179,15 @@ expressReceiver.router.post('/webhook', (req, res) => {
         let creator_avatar_url = request.issue.user.avatar_url;
         let issue_create_date = new Date(request.issue.created_at);
 
-        const variables_addLabelToIssue = {
-          element_node_id: issue_node_id,
-          label_id: untriaged_label_id
-        }
+        if (action == "opened" || action == "reopened") {
 
-        graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, gh_variables_init);
+          const variables_addLabelToIssue = {
+            element_node_id: issue_node_id,
+            label_id: untriaged_label_id
+          }
+
+          graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, gh_variables_init);
+        }
         
         check_for_mentions(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date);
         }
