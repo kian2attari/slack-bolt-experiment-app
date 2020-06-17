@@ -57,7 +57,10 @@ const call_gh_graphql = async(query, variables, gh_variables = undefined) => {
           if (gh_variables === undefined) {
             throw 'You must provide an object with an owner and repository value for the init(gh_variables) function!'
           }
-          await init(gh_variables)
+
+          else {
+            await init(gh_variables)
+          }
         }
         const data = await graphqlWithAuth(query, variables);
 

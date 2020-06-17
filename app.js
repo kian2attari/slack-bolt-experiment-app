@@ -35,10 +35,11 @@ const variables_getCardsByProj = Object.assign({ number: 1 }, gh_variables_init)
 const variables_get_untriaged_label_id = Object.assign({label_name: "untriaged"}, gh_variables_init)
 
 
-const untriaged_label_id = graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id).then((response) => {
+const untriaged_label_id = graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id, gh_variables_init).then((response) => {
   return response.label.id
   }
 )
+
 
 
 
