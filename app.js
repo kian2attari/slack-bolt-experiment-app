@@ -36,11 +36,13 @@ const variables_get_untriaged_label_id = Object.assign({label_name: "untriaged"}
 
 
 const untriaged_label_id = graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id, gh_variables_init).then((response) => {
-  return response.label.id
+  const extracted_label_id = response.repository.label.id;
+  console.log('untriaged_label_id: ' + extracted_label_id);
+  return extracted_label_id
   }
-)
-
-
+).catch((error) => {
+  console.error(error)
+})
 
 
 

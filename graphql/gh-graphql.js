@@ -21,7 +21,7 @@ let has_init_run = false;
 const init = async (gh_variables) => {
   let jwt_obj = await jwt_token();
 
-  const response = await axios.get(`https://api.github.com/repos/${gh_variables.owner}/${gh_variables.repo_name}/installation`, {
+  const response = await axios.get(`https://api.github.com/repos/${gh_variables.repo_owner}/${gh_variables.repo_name}/installation`, {
     headers: {
       authorization: `bearer ${jwt_obj}`,
       accept: "application/vnd.github.machine-man-preview+json"
@@ -55,7 +55,7 @@ const call_gh_graphql = async(query, variables, gh_variables = undefined) => {
     try {
         if (!has_init_run) {
           if (gh_variables === undefined) {
-            throw 'You must provide an object with an owner and repository value for the init(gh_variables) function!'
+            throw 'You must provide an object with a repo owner and repository value for the init(gh_variables) function!'
           }
 
           else {
@@ -68,7 +68,7 @@ const call_gh_graphql = async(query, variables, gh_variables = undefined) => {
 
         console.log(response);
 
-        return response;
+        return data;
     }
 
     catch(error) {
