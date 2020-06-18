@@ -200,8 +200,13 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
   try {
 
-    let project_number = body.actions[0].value
-    let project_name = body.actions[0].text.text
+    let action_body = body.actions[0]
+
+    let project_number = action_body.selected_option.value
+
+    console.log(action_body)
+
+    let project_name = action_body.selected_option.text.text
 
     console.log("proj number")
     console.log(project_number);
