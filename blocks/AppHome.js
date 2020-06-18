@@ -1,5 +1,5 @@
 module.exports = 
-{{
+{
 	"type": "home",
 	"blocks": [
 		{
