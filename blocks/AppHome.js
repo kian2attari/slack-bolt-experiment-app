@@ -9,38 +9,13 @@ module.exports =
 				"text": "*Find some new issues to triage*"
 			},
 			"accessory": {
-				"type": "static_select",
+				"action_id": "project_list",
+				"type": "multi_external_select",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select a GitHub project",
 					"emoji": true
-				},
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "*Name of GH proj*",
-							"emoji": true
-						},
-						"value": "value-0"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "*this is plain_text text*",
-							"emoji": true
-						},
-						"value": "value-1"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "*this is plain_text text*",
-							"emoji": true
-						},
-						"value": "value-2"
-					}
-				]
+				}
 			}
 		},
 		{

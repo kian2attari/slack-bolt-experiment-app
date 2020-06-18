@@ -57,11 +57,6 @@ graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id, gh_v
 })
 
 
-// Call GraphQL GH
-
-// graphql.call_gh_graphql(query.getCardByProjColumn, variables_getCardsByProj, gh_variables_init)
-
-
 
 
 
@@ -199,6 +194,38 @@ app.action('connect_account', async ({body, ack, say}) => {
   console.log(gh_slack_username_map);
 
   await say(`<@${body.user.id}>, your slack and github usernames were associated successfully!`);
+});
+
+/* ----------------------- SECTION Listen for options ----------------------- */
+
+// Responding to an project_list options request with a list of projects
+app.options('project_list', async ({ options, ack }) => {
+  // Get information specific to a team or channel
+  const results = await graphql.call_gh_graphql(query.getProjectList, gh_variables_init);
+
+  if (results) {
+    console.log(results)
+
+    const projects = results.repository.projects.nodes
+    let options = [];
+    // Collect information in options array to send in Slack ack response
+    
+    for (const result in results) {
+      options.push({
+        "text": {
+          "type": "plain_text",
+          "text": result.name
+        },
+        "value": result.name
+      });
+    }
+
+    await ack({
+      "options": options
+    });
+  } else {
+    await ack();
+  }
 });
 
 
