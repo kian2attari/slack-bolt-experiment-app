@@ -1,7 +1,7 @@
 const { App, ExpressReceiver } = require('@slack/bolt');
 const express  = require('express');
 const { query, mutation, graphql } = require('./graphql')
-const { AppHome } = require('./blocks')
+const { AppHome, AppHomeProjectSelected } = require('./blocks')
 
 
 // Create a Bolt Receiver
@@ -152,9 +152,6 @@ app.event('app_home_opened', async ({ event, context, client }) => {
 
 
 
-
-
-
 // TODO: Create project cards directly from slack
 
 // TODO: Delete project cards directly from slack
@@ -196,35 +193,62 @@ app.action('connect_account', async ({body, ack, say}) => {
   await say(`<@${body.user.id}>, your slack and github usernames were associated successfully!`);
 });
 
+/* ------------- ANCHOR Responding to the project name selection ------------ */
+
+app.action('project_list', async ({ ack, body, context, client }) => {
+  await ack();
+
+  try {
+
+    let project_number = body.actions[0].value
+    let project_name = body.actions[0].text.text
+
+    console.log("proj number")
+    console.log(project_number);
+
+    console.log("proj name")
+    console.log(project_name);
+
+    /* view.publish is the method that your app uses to push a view to the Home tab */
+    const result = await client.views.update({
+
+      /* retrieves your xoxb token from context */
+      token: context.botToken,
+
+      /* View to be updaed */
+      view_id: body.view.id,
+
+      /* the view payload that appears in the app home*/
+      view: AppHomeProjectSelected(project_name, project_number)
+    });
+  }
+  catch (error) {
+    console.error(error);
+  }
+  
+  
+});
+
 /* ----------------------- SECTION Listen for options ----------------------- */
 
 // Responding to an project_list options request with a list of projects
 app.options('project_list', async ({ options, ack }) => {
   // Get information specific to a team or channel
   const results = await graphql.call_gh_graphql(query.getProjectList, gh_variables_init);
-  console.log("results")
-  console.log(results)
-  console.log("options")
-  console.log(options)
+
   if (results) {
-    console.log("results post if")
-    console.log(results)
 
     const projects = results.repository.projects.nodes
-    console.log("projects")
-    console.log(projects)
     let options_response = [];
 
     // Collect information in options array to send in Slack ack response
     projects.forEach((project) => {
-      console.log("project")
-      console.log(project)
       options_response.push({
         "text": {
           "type": "plain_text",
           "text": project.name
         },
-        "value": project.name
+        "value": project.number
       });
     })
 
@@ -257,8 +281,6 @@ expressReceiver.router.post('/webhook', (req, res) => {
   try {
       let request = req.body;
       let action = request.action;
-      let issue_url = request.issue.html_url;
-      let issue_title = request.issue.title;
 
       // TODO: use issue number to query for a specific issue
       let issue_number = request.issue.number;
@@ -266,6 +288,8 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
       // TODO: Handle other event types. Currently, it's just issue-related events
       if (req.headers['x-github-event'] == 'issues' ) {
+        let issue_url = request.issue.html_url;
+        let issue_title = request.issue.title;  
         let issue_body = request.issue.body;
         let issue_creator = request.issue.user.login;
         let creator_avatar_url = request.issue.user.avatar_url;
@@ -288,6 +312,8 @@ expressReceiver.router.post('/webhook', (req, res) => {
       }
 
       else if (req.headers['x-github-event'] == 'issue_comment') {
+        let issue_url = request.issue.html_url;
+        let issue_title = request.issue.title;  
         let comment_body = request.comment.body;
         let comment_creator = request.comment.user.login;
         let creator_avatar_url = request.comment.user.avatar_url;

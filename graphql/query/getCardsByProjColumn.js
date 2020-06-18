@@ -1,8 +1,8 @@
 module.exports = `
-query getCardByProjColumn($repo_owner: String!, $repo_name: String!, $number: Int!) {
+query getCardByProjColumn($repo_owner: String!, $repo_name: String!, $project_number: Int!) {
     repository(name: $repo_name, owner: $repo_owner) {
         id
-        project(number: $number) {
+        project(number: $project_number) {
             name
             columns(first: 1) {
             edges {

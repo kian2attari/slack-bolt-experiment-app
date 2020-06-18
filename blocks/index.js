@@ -1,4 +1,5 @@
 module.exports = {
-    AppHome: require('./AppHome'),
-    Options: require('./options')
+    AppHome: require('./AppHomeBase'),
+    Options: require('./options'),
+    AppHomeProjectSelected: require('./AppHomeProjectSelected')
   }
