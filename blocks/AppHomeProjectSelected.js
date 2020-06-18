@@ -1,4 +1,4 @@
-module.exports = (selected_element) => { 
+module.exports = (selected_option) => { 
     return {
         "type": "home",
         "blocks": [
@@ -8,8 +8,9 @@ module.exports = (selected_element) => {
                     "type": "mrkdwn",
                     "text": "*Find some new issues to triage*"
                 },
-                "initial_option": selected_element,
+   
                 "accessory": {
+                    "initial_option": selected_option,
                     "action_id": "project_list",
                     "type": "external_select",
                     "placeholder": {
