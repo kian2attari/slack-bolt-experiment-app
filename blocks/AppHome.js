@@ -176,11 +176,6 @@ module.exports =
 					"text": "Submitted by"
 				},
 				{
-					"type": "image",
-					"image_url": "https://api.slack.com/img/blocks/bkb_template_images/profile_3.png",
-					"alt_text": "{github user}"
-				},
-				{
 					"type": "mrkdwn",
 					"text": "*{github username}*"
 				}
@@ -202,7 +197,7 @@ module.exports =
 			"fields": [
 				{
 					"type": "mrkdwn",
-					"text": "*On Triage Duty*\n {@username of people on triage}"
+					"text": "*On Triage Duty*\n {username of people on triage}"
 				},
 				{
 					"type": "mrkdwn",
