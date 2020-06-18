@@ -1,3 +1,3 @@
 module.exports = {
-    projectListOptions = require('./projectListOptions')
+    projectListOptions: require('./projectListOptions')
 }
