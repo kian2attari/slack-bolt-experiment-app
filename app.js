@@ -233,30 +233,36 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
 // Responding to an project_list options request with a list of projects
 app.options('project_list', async ({ options, ack }) => {
-  // Get information specific to a team or channel
-  const results = await graphql.call_gh_graphql(query.getProjectList, gh_variables_init);
+  try {
+    // Get information specific to a team or channel
+    const results = await graphql.call_gh_graphql(query.getProjectList, gh_variables_init);
 
-  if (results) {
+    if (results) {
 
-    const projects = results.repository.projects.nodes
-    let options_response = [];
+      const projects = results.repository.projects.nodes
+      let options_response = [];
 
-    // Collect information in options array to send in Slack ack response
-    projects.forEach((project) => {
-      options_response.push({
-        "text": {
-          "type": "plain_text",
-          "text": project.name
-        },
-        "value": project.number
+      // Collect information in options array to send in Slack ack response
+      projects.forEach((project) => {
+        options_response.push({
+          "text": {
+            "type": "plain_text",
+            "text": project.name
+          },
+          "value": `${project.number}`
+        });
+      })
+
+      await ack({
+        "options": options_response
       });
-    })
+    } else {
+      await ack();
+    }
 
-    await ack({
-      "options": options_response
-    });
-  } else {
-    await ack();
+  }
+  catch(error) {
+    console.error(error)
   }
 });
 
