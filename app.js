@@ -1,6 +1,7 @@
 const { App, ExpressReceiver } = require('@slack/bolt');
 const express  = require('express');
 const { query, mutation, graphql } = require('./graphql')
+const { AppHome } = require('./blocks')
 
 
 // Create a Bolt Receiver
@@ -20,8 +21,6 @@ let gh_slack_username_map = {};
 /* The data object for this could be a mapping from '{repo_owner}/{repo_name} -> [Array of channel ID's]
 Everytime someone subscribes to a owner/repo, add their channel to the array with the key of that owner/repo
 When any sort of event concerns that repo, post the message to all channels in the array 
-
-
 A similar thing can be done to map to map repos to project boards */
 const temp_channel_id = 'C015FH00GVA';
 
@@ -66,8 +65,12 @@ graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id, gh_v
 
 
 
-/* Portion of app that listens for events */
+/* -------------------------------------------------------------------------- */
+/*                         ANCHOR Listening for events                        */
+/* -------------------------------------------------------------------------- */
 
+
+/* --------------------- SECTION LISTENING FOR MESSAGES --------------------- */
 
 // Listens to incoming messages that contain 'yo bot' and responds. This is just for testing.
 app.message('yo bot', async ({ message, say}) => {
@@ -94,6 +97,15 @@ app.message('yo bot', async ({ message, say}) => {
   });
 });
 
+
+
+
+
+
+/* ---------------------- SECTION LISTENING FOR EVENTS ---------------------- */
+
+
+
 // Listens for instances where the bot is mentioned, beginning step for mapping GH -> Slack usernames
 app.event('app_mention', async ({ event, context }) => {
   try {
@@ -116,6 +128,35 @@ app.event('app_mention', async ({ event, context }) => {
 
 
 
+/* -------------------------- ANCHOR App Home View -------------------------- */
+
+// Loads the app home when the app home is opened!
+
+app.event('app_home_opened', async ({ event, context }) => {
+  try {
+    /* view.publish is the method that your app uses to push a view to the Home tab */
+    const result = await app.client.views.publish({
+
+      /* retrieves your xoxb token from context */
+      token: context.botToken,
+
+      /* the user that opened your app's app home */
+      user_id: event.user,
+
+      /* the view payload that appears in the app home*/
+      view: AppHome
+    });
+  }
+  catch (error) {
+    console.error(error);
+  }
+});
+
+
+
+
+
+
 
 // TODO: Create project cards directly from slack
 
@@ -127,7 +168,7 @@ app.event('app_mention', async ({ event, context }) => {
 
 
 
-/* Portion of app that listens for actions (notably, button clicks) */
+/* ------------- SECTION Portion of app that listens for actions ------------ */
 
 
 app.action('test_click', async ({body, ack, say}) => {
