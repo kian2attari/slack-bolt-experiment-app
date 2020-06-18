@@ -30,16 +30,20 @@ const gh_variables_init = {
   repo_name: 'dummy-kian-test-repo'
 }
 
-// TODO: remove hardcoding on proj number!
-
 
 // Declaring some variables to be passed to the GraphQL APIs
 
 const variables_getCardsByProj = Object.assign({ number: 1 }, gh_variables_init);
 
 
+const variables_getFirstColumnInProject = Object.assign({ project_name: "Slack dummy-test"}, gh_variables_init);
+
 
 const variables_get_untriaged_label_id = Object.assign({label_name: "untriaged"}, gh_variables_init)
+
+
+// TODO: Add cards automatically to Needs Traige when they are labelled with the unlabelled tag
+// graphql.call_gh_graphql(query.getFirstColumnInProject, variables_getFirstColumnInProject);
 
 
 let untriaged_label_id;
@@ -120,7 +124,6 @@ app.event('app_mention', async ({ event, context }) => {
 // TODO: Move project cards directly from slack
 
 // TODO: View all the project cards in Needs Triage directly on slack
-// graphql.call_gh_graphql_api();
 
 
 
