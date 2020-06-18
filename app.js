@@ -214,13 +214,14 @@ app.options('project_list', async ({ options, ack }) => {
     let options = [];
     // Collect information in options array to send in Slack ack response
     
-    for (const result in results) {
+    for (const project in projects) {
+      console.log(project)
       options.push({
         "text": {
           "type": "plain_text",
-          "text": projects.name
+          "text": project.name
         },
-        "value": projects.name
+        "value": project.name
       });
     }
 
