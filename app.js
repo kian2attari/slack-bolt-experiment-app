@@ -147,7 +147,7 @@ app.event('app_home_opened', async ({ event, context, client }) => {
       user_id: event.user,
 
       /* the view payload that appears in the app home*/
-      view: { AppHome }
+      view: AppHome 
     });
   }
   catch (error) {
