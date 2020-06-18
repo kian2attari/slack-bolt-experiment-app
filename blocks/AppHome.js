@@ -10,7 +10,7 @@ module.exports =
 			},
 			"accessory": {
 				"action_id": "project_list",
-				"type": "multi_external_select",
+				"type": "external_select",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select a GitHub project to triage"
