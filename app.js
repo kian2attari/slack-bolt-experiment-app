@@ -202,17 +202,8 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
     let action_body = body.actions[0]
 
-    let project_number = action_body.selected_option.value
+    let selected_option = action_body.selected_option
 
-    console.log(action_body)
-
-    let project_name = action_body.selected_option.text.text
-
-    console.log("proj number")
-    console.log(project_number);
-
-    console.log("proj name")
-    console.log(project_name);
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.update({
@@ -224,7 +215,7 @@ app.action('project_list', async ({ ack, body, context, client }) => {
       view_id: body.view.id,
 
       /* the view payload that appears in the app home*/
-      view: AppHomeProjectSelected(project_name, project_number)
+      view: AppHomeProjectSelected(selected_option)
     });
   }
   catch (error) {
