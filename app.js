@@ -202,10 +202,10 @@ app.action('connect_account', async ({body, ack, say}) => {
 app.options('project_list', async ({ options, ack }) => {
   // Get information specific to a team or channel
   const results = await graphql.call_gh_graphql(query.getProjectList, gh_variables_init);
-  console.log(results)
-  console.log(options)
+  console.log("results \n" + results)
+  console.log("options \n" + options)
   if (results) {
-    console.log(results)
+    console.log("results post if\n" +results)
 
     const projects = results.repository.projects.nodes
     let options = [];
