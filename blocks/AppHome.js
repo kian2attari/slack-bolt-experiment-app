@@ -176,6 +176,11 @@ module.exports =
 					"text": "Submitted by"
 				},
 				{
+					"type": "image",
+					"image_url": "https://api.slack.com/img/blocks/bkb_template_images/profile_3.png",
+					"alt_text": "{github user}"
+				},
+				{
 					"type": "mrkdwn",
 					"text": "*{github username}*"
 				}
@@ -185,11 +190,10 @@ module.exports =
 			"type": "divider"
 		},
 		{
-			"type": "header",
+			"type": "section",
 			"text": {
-				"type": "plain_text",
-				"text": "Info about selected project",
-				"emoji": true
+				"type": "mrkdwn",
+				"text": "*More info about this repo...*"
 			}
 		},
 		{
@@ -197,7 +201,7 @@ module.exports =
 			"fields": [
 				{
 					"type": "mrkdwn",
-					"text": "*On Triage Duty*\n {username of people on triage}"
+					"text": "*On Triage Duty*\n {@username of people on triage}"
 				},
 				{
 					"type": "mrkdwn",
