@@ -132,10 +132,12 @@ app.event('app_mention', async ({ event, context }) => {
 
 // Loads the app home when the app home is opened!
 
-app.event('app_home_opened', async ({ event, context }) => {
+app.event('app_home_opened', async ({ event, context, client }) => {
   try {
+    console.log(event); 
+
     /* view.publish is the method that your app uses to push a view to the Home tab */
-    const result = await app.client.views.publish({
+    const result = await client.views.publish({
 
       /* retrieves your xoxb token from context */
       token: context.botToken,
@@ -144,7 +146,19 @@ app.event('app_home_opened', async ({ event, context }) => {
       user_id: event.user,
 
       /* the view payload that appears in the app home*/
-      view: AppHome
+      view: { 
+        "type":"home",
+        "blocks":[
+          {
+            "type": "section",
+            "block_id": "section678",
+            "text": {
+              "type": "mrkdwn",
+              "text": "Auth Successful"
+            },
+          }
+        ]
+      }
     });
   }
   catch (error) {
