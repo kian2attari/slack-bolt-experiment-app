@@ -13,8 +13,7 @@ module.exports =
 				"type": "multi_external_select",
 				"placeholder": {
 					"type": "plain_text",
-					"text": "Select a GitHub project",
-					"emoji": true
+					"text": "Select a GitHub project to triage"
 				}
 			}
 		},
