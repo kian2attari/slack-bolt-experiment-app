@@ -151,6 +151,7 @@ app.event('app_home_opened', async ({ event, context, client }) => {
   }
   catch (error) {
     console.error(error);
+    console.error(error.response_metadata);
   }
 });
 
