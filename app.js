@@ -202,10 +202,13 @@ app.action('connect_account', async ({body, ack, say}) => {
 app.options('project_list', async ({ options, ack }) => {
   // Get information specific to a team or channel
   const results = await graphql.call_gh_graphql(query.getProjectList, gh_variables_init);
-  console.log("results \n" + results)
-  console.log("options \n" + options)
+  console.log("results")
+  console.log(results)
+  console.log("options")
+  console.log(options)
   if (results) {
-    console.log("results post if\n" +results)
+    console.log("results post if")
+    console.log(results)
 
     const projects = results.repository.projects.nodes
     let options = [];
@@ -215,9 +218,9 @@ app.options('project_list', async ({ options, ack }) => {
       options.push({
         "text": {
           "type": "plain_text",
-          "text": result.name
+          "text": projects.name
         },
-        "value": result.name
+        "value": projects.name
       });
     }
 
