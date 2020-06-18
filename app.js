@@ -135,6 +135,7 @@ app.event('app_mention', async ({ event, context }) => {
 app.event('app_home_opened', async ({ event, context, client }) => {
   try {
     console.log(event); 
+    console.log(AppHome);
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.publish({
@@ -146,19 +147,7 @@ app.event('app_home_opened', async ({ event, context, client }) => {
       user_id: event.user,
 
       /* the view payload that appears in the app home*/
-      view: { 
-        "type":"home",
-        "blocks":[
-          {
-            "type": "section",
-            "block_id": "section678",
-            "text": {
-              "type": "mrkdwn",
-              "text": "Auth Successful"
-            },
-          }
-        ]
-      }
+      view: { AppHome }
     });
   }
   catch (error) {
