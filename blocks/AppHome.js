@@ -1,7 +1,7 @@
 module.exports = 
-{
+{{
 	"type": "home",
-	"blocks":[
+	"blocks": [
 		{
 			"type": "section",
 			"text": {
@@ -105,36 +105,7 @@ module.exports =
 					"type": "button",
 					"text": {
 						"type": "plain_text",
-						"text": "Assign to yourself",
-						"emoji": true
-					},
-					"style": "primary",
-					"value": "approve"
-				},
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
 						"text": "View Issue",
-						"emoji": true
-					},
-					"value": "details"
-				},
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "Mark as done",
-						"emoji": true
-					},
-					"style": "danger",
-					"value": "decline"
-				},
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "Backlog issue",
 						"emoji": true
 					},
 					"value": "details"
