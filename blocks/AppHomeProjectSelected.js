@@ -1,6 +1,7 @@
 const AppHomeIssue  = require('./AppHomeIssue')
 
-module.exports = (selected_option, issue_array) => { 
+module.exports = (selected_option, issue_array, project_number) => { 
+
     return {
         "type": "home",
         "blocks": [
@@ -25,8 +26,32 @@ module.exports = (selected_option, issue_array) => {
             {
                 "type": "divider"
             },
-            ...AppHomeIssue(issue_array)
+            // Returns a block with a section for each issue
+            ...AppHomeIssue(issue_array),
 
+            {
+                "type": "divider"
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "*View some more info about this project...*"
+                },
+                "accessory": {
+                    "action_id": "column_card_count_info",
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "See number of cards by column",
+                        "emoji": true
+                    },
+                    "value": project_number
+                }
+            },
+            {
+                "type": "divider"
+            }
         ]
     } 
 }

@@ -1,7 +1,7 @@
 const { App, ExpressReceiver } = require('@slack/bolt');
 const express  = require('express');
 const { query, mutation, graphql } = require('./graphql')
-const { AppHome, AppHomeProjectSelected } = require('./blocks')
+const { AppHome, AppHomeProjectSelected, AppHomeMoreInfoIssueModal } = require('./blocks')
 
 
 // Create a Bolt Receiver
@@ -161,20 +161,19 @@ app.event('app_home_opened', async ({ event, context, client }) => {
 
 /* ------------- ANCHOR Portion of app that listens for actions ------------ */
 
-
+// Responds to the test button
 app.action('test_click', async ({body, ack, say}) => {
   
   // Here we acknowledge receipt
-
   await ack();
 
   await say(`<@${body.user.id}>, thanks for clicking my button bro. That's respect :100:`);
 });
 
+// Responds to the Map usernames button 
 app.action('connect_account', async ({body, ack, say}) => {
   
   // Here we acknowledge receipt
-
   await ack();
 
   console.log(body);
@@ -190,8 +189,37 @@ app.action('connect_account', async ({body, ack, say}) => {
   await say(`<@${body.user.id}>, your slack and github usernames were associated successfully!`);
 });
 
+
+// Responds to the 'See number of cards by column' button on the home page
+app.action('column_card_count_info', async ({ ack, body, context, client}) => {
+
+  // Here we acknowledge receipt
+  await ack();
+
+  const trigger_id = body.trigger_id
+  const project_number = parseInt(body.actions[0].value);
+  const variables_getCardsByProjColumn = Object.assign({ project_number: project_number }, gh_variables_init);
+  const num_cards_per_column = await graphql.call_gh_graphql(query.getNumOfCardsPerColumn, variables_getCardsByProjColumn)
+
+  console.log(num_cards_per_column)
+  const array_column_info = num_cards_per_column.repository.project.columns.nodes
+
+
+  const result = await client.views.open({
+
+    /* retrieves your xoxb token from context */
+    token: context.botToken,
+
+    trigger_id: trigger_id,
+
+    /* the view payload that appears in the app home*/
+    view:  AppHomeMoreInfoIssueModal(array_column_info)
+  });
+  
+})
+
 // Acknowledges button clicks
-// TODO: Possibly change the Bolt library so that link buttons dont have to be responded to
+// TODO: Possibly change the Bolt library so that link buttons don't have to be responded to
 app.action('link_button', ({ ack }) => ack());
 
 /* ------------- ANCHOR Responding to the project name selection ------------ */
@@ -205,15 +233,16 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
     let selected_option = action_body.selected_option
 
-    let project_number = parseInt(selected_option.value)
+    const project_number = selected_option.value
 
-    const variables_getCardsByProjColumn = Object.assign({ project_number: project_number }, gh_variables_init);
+    const variables_getCardsByProjColumn = Object.assign({ project_number: parseInt(project_number) }, gh_variables_init);
 
 
     let issue_response = await graphql.call_gh_graphql(query.getCardsByProjColumn, variables_getCardsByProjColumn)
 
+
     // The actually array of issues extracted from the graphQL query
-    let issue_array = issue_response.repository.project.columns.edges[0].node.cards.edges
+    let issue_array =  issue_response.repository.project.columns.edges[0].node.cards.edges
 
     console.log(issue_array)
 
@@ -223,11 +252,11 @@ app.action('project_list', async ({ ack, body, context, client }) => {
       /* retrieves your xoxb token from context */
       token: context.botToken,
 
-      /* View to be updaed */
+      /* View to be updated */
       view_id: body.view.id,
 
       /* the view payload that appears in the app home*/
-      view: AppHomeProjectSelected(selected_option, issue_array)
+      view: AppHomeProjectSelected(selected_option, issue_array, project_number)
     });
 
 
@@ -239,7 +268,7 @@ app.action('project_list', async ({ ack, body, context, client }) => {
   
 });
 
-/* ----------------------- ANCHOR Listen for options ----------------------- */
+/* ----------------------- SECTION Listen for options ----------------------- */
 
 // Responding to an project_list options request with a list of projects
 app.options('project_list', async ({ options, ack }) => {
@@ -372,7 +401,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
 /* -------------------------------------------------------------------------- */
 
 
-/* The @ symbol for mentions is not concated here because the convention for mentioning is different 
+/* The @ symbol for mentions is not concatenated here because the convention for mentioning is different 
 between mentioning users/groups/channels. To mention the channel, say when a closed issue is commented
 on, the special convention is <!channel>. */
 function githubBlock(title, body, url, creator, avatar_url, date, mentioned_slack_user) {
@@ -548,7 +577,7 @@ function check_for_mentions(temp_channel_id, title, text_body, content_url,conte
 
       console.log(`mentioned slack user: ${mentioned_slack_user}`);
 
-      // If the mentioned usernmae is associated with a Slack username, mention that person
+      // If the mentioned username is associated with a Slack username, mention that person
       // TODO: DM the person rather than posting the message to the channel
       if (mentioned_slack_user) {
         mention_message(temp_channel_id, title, text_body, content_url, content_creator, creator_avatar_url, content_create_date, mentioned_slack_user, false)     

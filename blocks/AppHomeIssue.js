@@ -94,7 +94,7 @@ module.exports = (issue_array) => {
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": "Submitted by"
+                        "text": "Opened by"
                     },
                     {
                         "type": "image",
