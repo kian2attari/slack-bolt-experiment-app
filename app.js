@@ -200,8 +200,9 @@ app.action('column_card_count_info', async ({ ack, body, context, client}) => {
   const project_number = parseInt(body.actions[0].value);
   const variables_getCardsByProjColumn = Object.assign({ project_number: project_number }, gh_variables_init);
   const num_cards_per_column = await graphql.call_gh_graphql(query.getNumOfCardsPerColumn, variables_getCardsByProjColumn)
-
-  console.log(num_cards_per_column)
+  
+  const project_name = num_cards_per_column.repository.project.name
+  
   const array_column_info = num_cards_per_column.repository.project.columns.nodes
 
 
@@ -213,7 +214,7 @@ app.action('column_card_count_info', async ({ ack, body, context, client}) => {
     trigger_id: trigger_id,
 
     /* the view payload that appears in the app home*/
-    view:  AppHomeMoreInfoIssueModal(array_column_info)
+    view:  AppHomeMoreInfoIssueModal(array_column_info, project_name)
   });
   
 })

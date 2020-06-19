@@ -1,4 +1,4 @@
-module.exports = (array_column_info) => {
+module.exports = (array_column_info, project_name) => {
     
     let column_info = ""
 
@@ -16,7 +16,7 @@ module.exports = (array_column_info) => {
         },
         "title": {
             "type": "plain_text",
-            "text": "More Information",
+            "text": "More information",
             "emoji": true
         },
         "blocks": [
@@ -24,7 +24,7 @@ module.exports = (array_column_info) => {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": ":tada: Here's a summary of your project"
+                    "text": `Project: ${project_name}`
                 }
             },
             {
