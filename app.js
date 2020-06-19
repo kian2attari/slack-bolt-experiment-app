@@ -32,8 +32,6 @@ const gh_variables_init = {
 
 // Declaring some variables to be passed to the GraphQL APIs
 
-const variables_getCardsByProj = Object.assign({ number: 1 }, gh_variables_init);
-
 
 const variables_getFirstColumnInProject = Object.assign({ project_name: "Slack dummy-test"}, gh_variables_init);
 
@@ -61,11 +59,11 @@ graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id, gh_v
 
 
 /* -------------------------------------------------------------------------- */
-/*                         ANCHOR Listening for events                        */
+/*                    SECTION Listening for events/options/actions            */
 /* -------------------------------------------------------------------------- */
 
 
-/* --------------------- SECTION LISTENING FOR MESSAGES --------------------- */
+/* --------------------- ANCHOR LISTENING FOR MESSAGES --------------------- */
 
 // Listens to incoming messages that contain 'yo bot' and responds. This is just for testing.
 app.message('yo bot', async ({ message, say}) => {
@@ -97,9 +95,8 @@ app.message('yo bot', async ({ message, say}) => {
 
 
 
-/* ---------------------- SECTION LISTENING FOR EVENTS ---------------------- */
 
-
+/* ----------------------- ANCHOR Listening for events ---------------------- */
 
 // Listens for instances where the bot is mentioned, beginning step for mapping GH -> Slack usernames
 app.event('app_mention', async ({ event, context }) => {
@@ -162,7 +159,7 @@ app.event('app_home_opened', async ({ event, context, client }) => {
 
 
 
-/* ------------- SECTION Portion of app that listens for actions ------------ */
+/* ------------- ANCHOR Portion of app that listens for actions ------------ */
 
 
 app.action('test_click', async ({body, ack, say}) => {
@@ -193,6 +190,10 @@ app.action('connect_account', async ({body, ack, say}) => {
   await say(`<@${body.user.id}>, your slack and github usernames were associated successfully!`);
 });
 
+// Acknowledges button clicks
+// TODO: Possibly change the Bolt library so that link buttons dont have to be responded to
+app.action('link_button', ({ ack }) => ack());
+
 /* ------------- ANCHOR Responding to the project name selection ------------ */
 
 app.action('project_list', async ({ ack, body, context, client }) => {
@@ -204,6 +205,17 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
     let selected_option = action_body.selected_option
 
+    let project_number = parseInt(selected_option.value)
+
+    const variables_getCardsByProjColumn = Object.assign({ project_number: project_number }, gh_variables_init);
+
+
+    let issue_response = await graphql.call_gh_graphql(query.getCardsByProjColumn, variables_getCardsByProjColumn)
+
+    // The actually array of issues extracted from the graphQL query
+    let issue_array = issue_response.repository.project.columns.edges[0].node.cards.edges
+
+    console.log(issue_array)
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.update({
@@ -215,8 +227,10 @@ app.action('project_list', async ({ ack, body, context, client }) => {
       view_id: body.view.id,
 
       /* the view payload that appears in the app home*/
-      view: AppHomeProjectSelected(selected_option)
+      view: AppHomeProjectSelected(selected_option, issue_array)
     });
+
+
   }
   catch (error) {
     console.error(error);
@@ -225,7 +239,7 @@ app.action('project_list', async ({ ack, body, context, client }) => {
   
 });
 
-/* ----------------------- SECTION Listen for options ----------------------- */
+/* ----------------------- ANCHOR Listen for options ----------------------- */
 
 // Responding to an project_list options request with a list of projects
 app.options('project_list', async ({ options, ack }) => {
@@ -263,11 +277,9 @@ app.options('project_list', async ({ options, ack }) => {
 });
 
 
-
-// Acknowledges button clicks
-// TODO: Possibly change the Bolt library so that link buttons dont have to be responded to
-app.action('link_button', ({ ack }) => ack());
-
+/* -------------------------------------------------------------------------- */
+/*                     SECTION Where webhooks are received                    */
+/* -------------------------------------------------------------------------- */
 
 
 // Parsing JSON Middleware
@@ -341,12 +353,23 @@ expressReceiver.router.post('/webhook', (req, res) => {
 });
 
 
+/* -------------------------------------------------------------------------- */
+/*                          SECTION Where app starts                          */
+/* -------------------------------------------------------------------------- */
+
+
 (async () => {
   // Start your app
   await app.start(process.env.PORT || 3000);
 
   console.log('⚡️ Bolt app is running!');
 })();
+
+
+
+/* -------------------------------------------------------------------------- */
+/*                        SECTION Function definitions                        */
+/* -------------------------------------------------------------------------- */
 
 
 /* The @ symbol for mentions is not concated here because the convention for mentioning is different 

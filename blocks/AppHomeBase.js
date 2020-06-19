@@ -15,7 +15,7 @@ module.exports =
 					"type": "plain_text",
 					"text": "Select a GitHub project to triage"
 				},
-				"min_query_length": 1
+				"min_query_length": 0
 			}
 		},
 		{

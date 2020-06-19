@@ -15,6 +15,11 @@ query getCardByProjColumn($repo_owner: String!, $repo_name: String!, $project_nu
                         ... on Issue {
                             title
                             url
+                            body
+                            author {
+                              login
+                              avatarUrl(size: 40)
+                            }
                         }
                         }
                     }
