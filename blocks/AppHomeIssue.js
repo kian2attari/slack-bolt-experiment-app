@@ -40,38 +40,13 @@ module.exports = (issue_array) => {
                     "text": "Label this issue"
                 },
                 "accessory": {
-                    "type": "static_select",
+                    "action_id": "label_list",
+                    "type": "external_select",
                     "placeholder": {
                         "type": "plain_text",
-                        "text": "Select an item",
-                        "emoji": true
+                        "text": "Select a label"
                     },
-                    "options": [
-                        {
-                            "text": {
-                                "type": "plain_text",
-                                "text": "*Bug*",
-                                "emoji": true
-                            },
-                            "value": "value-0"
-                        },
-                        {
-                            "text": {
-                                "type": "plain_text",
-                                "text": "*Discussion*",
-                                "emoji": true
-                            },
-                            "value": "value-1"
-                        },
-                        {
-                            "text": {
-                                "type": "plain_text",
-                                "text": "*this is plain_text text*",
-                                "emoji": true
-                            },
-                            "value": "value-2"
-                        }
-                    ]
+                    "min_query_length": 0
                 }
             },
             {

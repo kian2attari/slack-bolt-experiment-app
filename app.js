@@ -289,7 +289,7 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
 /* ----------------------- SECTION Listen for options ----------------------- */
 
-// Responding to an project_list options request with a list of projects
+// Responding to a project_list options request with a list of projects
 app.options('project_list', async ({ options, ack }) => {
   try {
     // Get information specific to a team or channel
@@ -318,6 +318,35 @@ app.options('project_list', async ({ options, ack }) => {
     } else {
       await ack();
     }
+
+  }
+  catch(error) {
+    console.error(error)
+  }
+});
+
+// TODO Potentially return the label_description info here as well
+// Responding to a label_list options request with a list of labels
+app.options('label_list', async ({ options, ack }) => {
+  try {
+    // Get information specific to a team or channel
+      let options_response = [];
+
+      // Collect information in options array to send in Slack ack response
+      repo_label_list.forEach((label) => {
+        options_response.push({
+          "text": {
+            "type": "plain_text",
+            "text": label.name
+          },
+          "value": label.id
+        });
+      })
+
+      await ack({
+        "options": options_response
+      });
+
 
   }
   catch(error) {
