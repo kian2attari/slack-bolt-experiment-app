@@ -38,21 +38,39 @@ const variables_getFirstColumnInProject = Object.assign({ project_name: "Slack d
 
 const variables_get_untriaged_label_id = Object.assign({label_name: "untriaged"}, gh_variables_init)
 
+// TODO Possible remove the hardcoding on this
+const untriaged_label_name = 'untriaged'
+
+
+let repo_label_list
+;
+let untriaged_label_id;
+
+// Get list of all the labels in the repo
+graphql.call_gh_graphql(query.getRepoLabelsList, gh_variables_init, gh_variables_init).then((response) => {
+  repo_label_list = response.repository.labels.nodes
+  untriaged_label_id = repo_label_list.find(label => label.name == untriaged_label_name).id
+})
+
+
+
+
+
 
 // TODO: Add cards automatically to Needs Traige when they are labelled with the unlabelled tag
 // graphql.call_gh_graphql(query.getFirstColumnInProject, variables_getFirstColumnInProject);
 
 
-let untriaged_label_id;
+// let untriaged_label_id;
 
-graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id, gh_variables_init).then((response) => {
-  const extracted_label_id = response.repository.label.id;
-    console.log('untriaged_label_id: ' + extracted_label_id);
-    untriaged_label_id =  extracted_label_id
-  }
-).catch((error) => {
-  console.error(error)
-})
+// graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id, gh_variables_init).then((response) => {
+//   const extracted_label_id = response.repository.label.id;
+//     console.log('untriaged_label_id: ' + extracted_label_id);
+//     untriaged_label_id =  extracted_label_id
+//   }
+// ).catch((error) => {
+//   console.error(error)
+// })
 
 
 
@@ -296,6 +314,7 @@ app.options('project_list', async ({ options, ack }) => {
       await ack({
         "options": options_response
       });
+
     } else {
       await ack();
     }

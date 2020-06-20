@@ -3,5 +3,6 @@ module.exports = {
     getIdLabel: require('./getIdLabel'),
     getFirstColumnInProject: require('./getFirstColumnInProject'),
     getProjectList: require('./getProjectList'),
-    getNumOfCardsPerColumn: require('./getNumOfCardsPerColumn')
+    getNumOfCardsPerColumn: require('./getNumOfCardsPerColumn'),
+    getRepoLabelsList: require('./getRepoLabelsList')
   }

@@ -78,7 +78,7 @@ module.exports = (issue_array) => {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "Assign the issue to someone else"
+                    "text": "Assign the issue"
                 },
                 "accessory": {
                     "type": "users_select",
