@@ -1,4 +1,5 @@
-module.exports = (issue_array) => { 
+module.exports = (issue_array) => 
+    {
     let issues_block = [];
 
     // For every issue we push a block representing it!

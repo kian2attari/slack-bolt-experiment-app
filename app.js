@@ -1,7 +1,7 @@
 const { App, ExpressReceiver } = require('@slack/bolt');
 const express  = require('express');
 const { query, mutation, graphql } = require('./graphql')
-const { AppHome, AppHomeProjectSelected, AppHomeMoreInfoIssueModal } = require('./blocks')
+const { AppHomeBase, AppHomeProjectSelected, AppHomeMoreInfoIssueModal, AppHomeIssue } = require('./blocks')
 
 
 // Create a Bolt Receiver
@@ -145,7 +145,7 @@ app.event('app_mention', async ({ event, context }) => {
 app.event('app_home_opened', async ({ event, context, client }) => {
   try {
     console.log(event); 
-    console.log(AppHome)
+    console.log(AppHomeBase())
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.publish({
 
@@ -156,7 +156,7 @@ app.event('app_home_opened', async ({ event, context, client }) => {
       user_id: event.user,
 
       /* the view payload that appears in the app home*/
-      view: AppHome
+      view: AppHomeBase()
     });
   }
   catch (error) {
@@ -265,6 +265,10 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
     console.log(issue_array)
 
+    const home_view = AppHomeBase(AppHomeIssue(issue_array), AppHomeProjectSelected(selected_option, project_number))
+
+    console.log(home_view)
+
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.update({
 
@@ -275,7 +279,7 @@ app.action('project_list', async ({ ack, body, context, client }) => {
       view_id: body.view.id,
 
       /* the view payload that appears in the app home*/
-      view: AppHomeProjectSelected(selected_option, issue_array, project_number)
+      view: home_view
     });
 
 
