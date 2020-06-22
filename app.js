@@ -295,6 +295,7 @@ app.action('label_list', async ({ ack, body, context, client }) => {
 
     const label_id = action_body.selected_option.value
 
+    // In AppHomeIssue.js, I set the block_id of each of the issue blocks as the id of the issue 
     const issue_id = action_body.block_id
 
     const variables_addLabelToIssue = {

@@ -37,6 +37,10 @@ module.exports = (issue_array) =>
                     }
                 ]
             },
+            /* The GitHub GraphQL API needs both the issue ID and 
+            the label id to assign a label. The block_id is set as 
+            the id of the issue so that the unique issue id is sent over 
+            with the label id when a label is selected. */
             {
                 "type": "section",
                 "block_id": issue_id,
