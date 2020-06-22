@@ -1,7 +1,7 @@
 const { App, ExpressReceiver } = require('@slack/bolt');
 const express  = require('express');
 const { query, mutation, graphql } = require('./graphql')
-const { AppHomeBase, AppHomeProjectSelected, AppHomeMoreInfoIssueModal, AppHomeIssue } = require('./blocks')
+const { AppHomeBase, AppHomeMoreInfoSection, AppHomeMoreInfoIssueModal, AppHomeIssue } = require('./blocks')
 
 
 // Create a Bolt Receiver
@@ -265,9 +265,11 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
     console.log(issue_array)
 
-    const home_view = AppHomeBase(AppHomeIssue(issue_array), AppHomeProjectSelected(project_number), selected_option)
-
-    console.log(home_view)
+    /* The blocks that should be rendered as the Home Page. The new page is 
+    based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
+    const home_view = AppHomeBase(issue_blocks = AppHomeIssue(issue_array),
+                                  more_info_blocks = AppHomeMoreInfoSection(project_number), 
+                                  selected_option = selected_option)
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.update({
