@@ -265,7 +265,7 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
     console.log(issue_array)
 
-    const home_view = AppHomeBase(AppHomeIssue(issue_array), AppHomeProjectSelected(selected_option, project_number))
+    const home_view = AppHomeBase(AppHomeIssue(issue_array), AppHomeProjectSelected(project_number), selected_option)
 
     console.log(home_view)
 

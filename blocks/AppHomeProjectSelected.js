@@ -1,4 +1,4 @@
-module.exports = (selected_option, project_number) => { 
+module.exports = (project_number) => { 
 
     return [
             {
