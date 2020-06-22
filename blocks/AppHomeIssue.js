@@ -8,8 +8,11 @@ module.exports = (issue_array) =>
         console.log("issue in AppHomeIssue.js")
         console.log(issue)
 
-        let issue_info = issue.node.content
-        let issue_author_info = issue_info.author
+        const issue_info = issue.node.content
+
+        const issue_id = issue_info.id
+    
+        const issue_author_info = issue_info.author
 
         issues_block.push(  
             {
@@ -36,6 +39,7 @@ module.exports = (issue_array) =>
             },
             {
                 "type": "section",
+                "block_id": issue_id,
                 "text": {
                     "type": "mrkdwn",
                     "text": "Label this issue"

@@ -61,18 +61,6 @@ graphql.call_gh_graphql(query.getRepoLabelsList, gh_variables_init, gh_variables
 // graphql.call_gh_graphql(query.getFirstColumnInProject, variables_getFirstColumnInProject);
 
 
-// let untriaged_label_id;
-
-// graphql.call_gh_graphql(query.getIdLabel, variables_get_untriaged_label_id, gh_variables_init).then((response) => {
-//   const extracted_label_id = response.repository.label.id;
-//     console.log('untriaged_label_id: ' + extracted_label_id);
-//     untriaged_label_id =  extracted_label_id
-//   }
-// ).catch((error) => {
-//   console.error(error)
-// })
-
-
 
 
 
@@ -290,6 +278,37 @@ app.action('project_list', async ({ ack, body, context, client }) => {
     console.error(error);
   }
   
+});
+
+/* ------------- ANCHOR Responding to label assignment on issue ------------- */
+
+app.action('label_list', async ({ ack, body, context, client }) => {
+  await ack();
+
+  try {
+    console.log("body payload")
+
+    const action_body = body.actions[0]
+
+    console.log(action_body)
+    
+
+    const label_id = action_body.selected_option.value
+
+    const issue_id = action_body.block_id
+
+    const variables_addLabelToIssue = {
+      element_node_id: issue_id,
+      label_id: label_id
+    }
+
+    graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, gh_variables_init);
+
+
+  }
+  catch (error) {
+    console.error(error)
+  }
   
 });
 
