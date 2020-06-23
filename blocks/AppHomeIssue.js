@@ -14,11 +14,8 @@ module.exports = (issue_array, label_block) =>
     
         const issue_author_info = issue_info.author
 
+        // Flattens the array of label objects to extract their id's
         const current_issue_labels_array = issue_info.labels.nodes.map((label) => label.id)
-
-        console.log(current_issue_labels_array)
-
-
 
 
 /* --------------------- FIXME How to use stringify here -------------------- */
@@ -43,25 +40,23 @@ module.exports = (issue_array, label_block) =>
         // })
 
         /* ---- REVIEW slack-pde.slack.com/archives/D0152NV8TDF/p1592949687091600 --- */
-
+        
+        // The JSON string value of labels that the issue currently has 
         let stringified_current_labels = []
 
         const stringified_all_labels_value_block = label_block.map(function(label) {
             label.value.iss_id = issue_id;
-            console.log(label)
-            console.log(label.value)
             const stringified_value = JSON.stringify(label.value)
             const stringified_obj = {...label, value: stringified_value}
 
+            // Creates the block of labels that the issue already has
             if (current_issue_labels_array.includes(label.value.l_id)) {
                 stringified_current_labels.push(stringified_obj)
             }
+
             return stringified_obj;
         })
 
-
-        console.log(stringified_all_labels_value_block)
-        console.log(stringified_current_labels)
 
 
         issues_block.push(  
