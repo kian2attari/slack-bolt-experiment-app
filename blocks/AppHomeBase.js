@@ -1,4 +1,4 @@
-module.exports = (issue_blocks=undefined, more_info_blocks=undefined, selected_option=undefined) => { 
+module.exports = (issue_blocks=undefined, more_info_blocks=undefined, initial_option=undefined) => { 
 	return {
 		"type": "home",
 		"blocks": [
@@ -10,7 +10,7 @@ module.exports = (issue_blocks=undefined, more_info_blocks=undefined, selected_o
 				},
 				"accessory": {
 					// If an option has been selected, render this select box with that option already selected
-					...(typeof selected_option !== 'undefined' ? {"initial_option": selected_option} : {}),
+					...(typeof initial_option !== 'undefined' ? {"initial_option": initial_option} : {}),
 					"action_id": "project_list",
 					"type": "external_select",
 					"placeholder": {

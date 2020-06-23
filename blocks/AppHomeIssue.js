@@ -1,4 +1,4 @@
-module.exports = (issue_array) => 
+module.exports = (issue_array, label_block) => 
     {
     let issues_block = [];
 
@@ -8,11 +8,47 @@ module.exports = (issue_array) =>
         console.log("issue in AppHomeIssue.js")
         console.log(issue)
 
-        const issue_info = issue.node.content
+        const issue_info = issue.content
 
         const issue_id = issue_info.id
     
         const issue_author_info = issue_info.author
+
+
+/* --------------------- FIXME How to use stringify here -------------------- */
+/* This works, but it's cutting it close to the character count */
+
+        // label_block.forEach( (label) => {
+        //     console.log(label)
+
+        //     console.log("label value")
+
+        //     console.log(label.value)
+
+        //     let label_value = label.value
+
+        //     const new_obj = Object.assign(label_value, issue_obj)
+
+        //     console.log(new_obj)
+
+        //     label.value = JSON.stringify(new_obj, [''])
+
+        //     console.log(label.value)
+        // })
+
+        let stringified_value_block = label_block.map(function(label) {
+            label.value.iss_id = issue_id;
+            console.log(label)
+            console.log(label.value)
+            
+            const stringified_value = JSON.stringify(label.value)
+
+            return {...label, value: stringified_value};
+        })
+
+
+        console.log(stringified_value_block)
+
 
         issues_block.push(  
             {
@@ -41,21 +77,22 @@ module.exports = (issue_array) =>
             the label id to assign a label. The block_id is set as 
             the id of the issue so that the unique issue id is sent over 
             with the label id when a label is selected. */
+
             {
                 "type": "section",
-                "block_id": issue_id,
+                // "block_id": issue_id,
                 "text": {
                     "type": "mrkdwn",
                     "text": "Label this issue"
                 },
                 "accessory": {
                     "action_id": "label_list",
-                    "type": "external_select",
+                    "type": "multi_static_select",
                     "placeholder": {
                         "type": "plain_text",
                         "text": "Select a label"
                     },
-                    "min_query_length": 0
+                    "options": stringified_value_block
                 }
             },
             {

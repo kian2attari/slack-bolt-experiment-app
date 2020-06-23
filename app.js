@@ -42,7 +42,7 @@ const variables_get_untriaged_label_id = Object.assign({label_name: "untriaged"}
 const untriaged_label_name = 'untriaged'
 
 
-let repo_label_list
+let repo_label_list;
 ;
 let untriaged_label_id;
 
@@ -236,28 +236,47 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
   try {
 
-    let action_body = body.actions[0]
+    const action_body = body.actions[0]
 
-    let selected_option = action_body.selected_option
+    const selected_option = action_body.selected_option
 
     const project_number = selected_option.value
 
     const variables_getCardsByProjColumn = Object.assign({ project_number: parseInt(project_number) }, gh_variables_init);
 
 
-    let issue_response = await graphql.call_gh_graphql(query.getCardsByProjColumn, variables_getCardsByProjColumn)
+    const issue_response = await graphql.call_gh_graphql(query.getCardsByProjColumn, variables_getCardsByProjColumn)
+
+
+    
+    // The block that contains the possible label values
+    let label_block = [];
+
+    repo_label_list.forEach((label) => {
+      label_block.push({
+        "text": {
+          "type": "plain_text",
+          "text": label.name
+        },
+        "value": {"l_id": label.id }
+      });
+    })
 
 
     // The actually array of issues extracted from the graphQL query
-    let issue_array =  issue_response.repository.project.columns.edges[0].node.cards.edges
+    const issue_array =  issue_response.repository.project.columns.nodes[0].cards.nodes
 
     console.log(issue_array)
 
+    const column_id = issue_response.repository.project.columns.nodes[0].id
+    
+    console.log(column_id)
+
     /* The blocks that should be rendered as the Home Page. The new page is 
     based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
-    const home_view = AppHomeBase(issue_blocks = AppHomeIssue(issue_array),
+    const home_view = AppHomeBase(issue_blocks = AppHomeIssue(issue_array, label_block),
                                   more_info_blocks = AppHomeMoreInfoSection(project_number), 
-                                  selected_option = selected_option)
+                                  initial_option = selected_option)
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.update({
@@ -291,16 +310,18 @@ app.action('label_list', async ({ ack, body, context, client }) => {
     const action_body = body.actions[0]
 
     console.log(action_body)
-    
 
-    const label_id = action_body.selected_option.value
+    const id_values_array = action_body.selected_options.map((option) => {return JSON.parse(option.value)})
 
-    // In AppHomeIssue.js, I set the block_id of each of the issue blocks as the id of the issue 
-    const issue_id = action_body.block_id
+    // The issue ID is the same across the labels, so we just grab it from the first one
+    const issue_id = id_values_array[0].iss_id
+
+    // The GraphQL API needs an array of label IDs, so we extract just that
+    const label_ids_array = id_values_array.map(label_obj => label_obj.l_id)
 
     const variables_addLabelToIssue = {
       element_node_id: issue_id,
-      label_id: label_id
+      label_ids: label_ids_array
     }
 
     graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, gh_variables_init);
@@ -351,34 +372,36 @@ app.options('project_list', async ({ options, ack }) => {
   }
 });
 
-// TODO Potentially return the label_description info here as well
+
+/* ------------------------ REVIEW Labels as options ------------------------ */
+
 // Responding to a label_list options request with a list of labels
-app.options('label_list', async ({ options, ack }) => {
-  try {
-    // Get information specific to a team or channel
-      let options_response = [];
+// app.options('label_list', async ({ options, ack }) => {
+//   try {
+//     // Get information specific to a team or channel
+//       let options_response = [];
 
-      // Collect information in options array to send in Slack ack response
-      repo_label_list.forEach((label) => {
-        options_response.push({
-          "text": {
-            "type": "plain_text",
-            "text": label.name
-          },
-          "value": label.id
-        });
-      })
+//       // Collect information in options array to send in Slack ack response
+//       repo_label_list.forEach((label) => {
+//         options_response.push({
+//           "text": {
+//             "type": "plain_text",
+//             "text": label.name
+//           },
+//           "value": label.id
+//         });
+//       })
 
-      await ack({
-        "options": options_response
-      });
+//       await ack({
+//         "options": options_response
+//       });
 
 
-  }
-  catch(error) {
-    console.error(error)
-  }
-});
+//   }
+//   catch(error) {
+//     console.error(error)
+//   }
+// });
 
 
 /* -------------------------------------------------------------------------- */
@@ -396,12 +419,12 @@ expressReceiver.router.post('/webhook', (req, res) => {
     return res.send('Send webhook as application/json');
   }
 
+/* -------- TODO organize this to use swtich cases or modular design -------- */
+
   try {
       let request = req.body;
       let action = request.action;
 
-      // TODO: use issue number to query for a specific issue
-      let issue_number = request.issue.number;
       let issue_node_id = request.issue.node_id;
 
       // TODO: Handle other event types. Currently, it's just issue-related events
@@ -425,6 +448,20 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
           check_for_mentions(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date);
         }
+
+/* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
+
+        else if (action == "labeled") {
+
+/* --------- TODO add a project card when issue is labeled untriaged -------- */
+
+        }
+
+        else if (action == "unlabeled") {
+
+/* -- TODO remove project from new issue column if untriaged label removed -- */
+
+        }
       
         
       }
@@ -437,7 +474,6 @@ expressReceiver.router.post('/webhook', (req, res) => {
         let creator_avatar_url = request.comment.user.avatar_url;
         let comment_create_date = new Date(request.comment.created_at);
 
-        // TODO: New comment on closed issue!
         if (req.body.issue.state == 'closed') {
           mention_message(temp_channel_id, `Comment on closed issue: ${issue_title}`, comment_body, issue_url, comment_creator, creator_avatar_url, comment_create_date, '!channel', true)
         }
