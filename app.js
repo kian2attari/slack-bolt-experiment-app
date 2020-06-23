@@ -44,12 +44,26 @@ const untriaged_label_name = 'untriaged'
 
 let repo_label_list;
 
+// The block that contains the possible label values
+let label_block = [];
+
 let untriaged_label_id;
 
 // Get list of all the labels in the repo
 graphql.call_gh_graphql(query.getRepoLabelsList, gh_variables_init, gh_variables_init).then((response) => {
   repo_label_list = response.repository.labels.nodes
   untriaged_label_id = repo_label_list.find(label => label.name == untriaged_label_name).id
+
+  // Create a block that contains a section for each label
+  repo_label_list.forEach((label) => {
+    label_block.push({
+      "text": {
+        "type": "plain_text",
+        "text": label.name
+      },
+      "value": {"l_id": label.id }
+    });
+  })
 })
 
 
@@ -248,21 +262,6 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
 
     const issue_response = await graphql.call_gh_graphql(query.getCardsByProjColumn, variables_getCardsByProjColumn)
-
-
-    
-    // The block that contains the possible label values
-    let label_block = [];
-
-    repo_label_list.forEach((label) => {
-      label_block.push({
-        "text": {
-          "type": "plain_text",
-          "text": label.name
-        },
-        "value": {"l_id": label.id }
-      });
-    })
 
 
     // The actually array of issues extracted from the graphQL query

@@ -14,6 +14,12 @@ module.exports = (issue_array, label_block) =>
     
         const issue_author_info = issue_info.author
 
+        const current_issue_labels_array = issue_info.labels.nodes.map((label) => label.id)
+
+        console.log(current_issue_labels_array)
+
+
+
 
 /* --------------------- FIXME How to use stringify here -------------------- */
 /* This works, but it's cutting it close to the character count */
@@ -36,18 +42,26 @@ module.exports = (issue_array, label_block) =>
         //     console.log(label.value)
         // })
 
-        let stringified_value_block = label_block.map(function(label) {
+        /* ---- REVIEW slack-pde.slack.com/archives/D0152NV8TDF/p1592949687091600 --- */
+
+        let stringified_current_labels = []
+
+        const stringified_all_labels_value_block = label_block.map(function(label) {
             label.value.iss_id = issue_id;
             console.log(label)
             console.log(label.value)
-            
             const stringified_value = JSON.stringify(label.value)
+            const stringified_obj = {...label, value: stringified_value}
 
-            return {...label, value: stringified_value};
+            if (current_issue_labels_array.includes(label.value.l_id)) {
+                stringified_current_labels.push(stringified_obj)
+            }
+            return stringified_obj;
         })
 
 
-        console.log(stringified_value_block)
+        console.log(stringified_all_labels_value_block)
+        console.log(stringified_current_labels)
 
 
         issues_block.push(  
@@ -85,6 +99,9 @@ module.exports = (issue_array, label_block) =>
                     "type": "mrkdwn",
                     "text": "Label this issue"
                 },
+
+/* -- TODO - set the labels that the issue currently has as initial_options - */
+
                 "accessory": {
                     "action_id": "label_list",
                     "type": "multi_static_select",
@@ -92,7 +109,8 @@ module.exports = (issue_array, label_block) =>
                         "type": "plain_text",
                         "text": "Select a label"
                     },
-                    "options": stringified_value_block
+                    "options": stringified_all_labels_value_block,
+                    "initial_options": stringified_current_labels
                 }
             },
             {

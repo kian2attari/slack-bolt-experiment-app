@@ -20,6 +20,11 @@ query getCardsByProjColumn($repo_owner: String!, $repo_name: String!, $project_n
                   body
                   url
                   title
+                  labels(first: 12) {
+                    nodes {
+                      id
+                    }
+                  }
                 }
               }
             }
