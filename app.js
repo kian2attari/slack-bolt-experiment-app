@@ -43,7 +43,7 @@ const untriaged_label_name = 'untriaged'
 
 
 let repo_label_list;
-;
+
 let untriaged_label_id;
 
 // Get list of all the labels in the repo
@@ -55,10 +55,12 @@ graphql.call_gh_graphql(query.getRepoLabelsList, gh_variables_init, gh_variables
 
 
 
+let untriaged_column_id = "";
 
-
-// TODO: Add cards automatically to Needs Traige when they are labelled with the unlabelled tag
-// graphql.call_gh_graphql(query.getFirstColumnInProject, variables_getFirstColumnInProject);
+// TODO: Add cards automatically to Needs Triage when they are labelled with the unlabelled tag
+graphql.call_gh_graphql(query.getFirstColumnInProject, variables_getFirstColumnInProject, gh_variables_init).then((response) => {
+  untriaged_column_id = response.repository.projects.nodes[0].columns.nodes[0].id;
+});
 
 
 
@@ -403,6 +405,7 @@ app.options('project_list', async ({ options, ack }) => {
 //   }
 // });
 
+// !SECTION
 
 /* -------------------------------------------------------------------------- */
 /*                     SECTION Where webhooks are received                    */
@@ -422,26 +425,25 @@ expressReceiver.router.post('/webhook', (req, res) => {
 /* -------- TODO organize this to use swtich cases or modular design -------- */
 
   try {
-      let request = req.body;
-      let action = request.action;
-
-      let issue_node_id = request.issue.node_id;
+      const request = req.body;
+      const action = request.action;
 
       // TODO: Handle other event types. Currently, it's just issue-related events
       if (req.headers['x-github-event'] == 'issues' ) {
-        let issue_url = request.issue.html_url;
-        let issue_title = request.issue.title;  
-        let issue_body = request.issue.body;
-        let issue_creator = request.issue.user.login;
-        let creator_avatar_url = request.issue.user.avatar_url;
-        let issue_create_date = new Date(request.issue.created_at);
+        const issue_url = request.issue.html_url;
+        const issue_title = request.issue.title;  
+        const issue_body = request.issue.body;
+        const issue_creator = request.issue.user.login;
+        const creator_avatar_url = request.issue.user.avatar_url;
+        const issue_create_date = new Date(request.issue.created_at);
+        const issue_node_id = request.issue.node_id;
         
         // QUESTION: Should editing the issue also cause the untriaged label to be added?
         if (action == "opened" || action == "reopened") {
 
           const variables_addLabelToIssue = {
             element_node_id: issue_node_id,
-            label_id: untriaged_label_id
+            label_ids: [untriaged_label_id]
           }
 
           graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, gh_variables_init);
@@ -452,6 +454,15 @@ expressReceiver.router.post('/webhook', (req, res) => {
 /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
 
         else if (action == "labeled") {
+          // const issue_label_array = request.issue.labels;
+
+          const label_id = request.label.node_id
+          console.log(label_id)
+          console.log(untriaged_label_id)
+          if (label_id == untriaged_label_id) {
+            const addCardToColumn_variables = {"issue": {"projectColumnId" : untriaged_column_id, "contentId": issue_node_id}}
+            graphql.call_gh_graphql(mutation.addCardToColumn, addCardToColumn_variables)
+          }
 
 /* --------- TODO add a project card when issue is labeled untriaged -------- */
 

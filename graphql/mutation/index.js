@@ -1,3 +1,4 @@
 module.exports = {
-    addLabelToIssue: require("./addLabelToIssue")
+    addLabelToIssue: require("./addLabelToIssue"),
+    addCardToColumn: require("./addCardToColumn")
 };
