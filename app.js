@@ -278,6 +278,7 @@ app.action('project_list', async ({ ack, body, context, client }) => {
     const home_view = AppHomeBase(issue_blocks = AppHomeIssue(issue_array, label_block),
                                   more_info_blocks = AppHomeMoreInfoSection(project_number), 
                                   initial_option = selected_option)
+    console.log(JSON.stringify(home_view.blocks, null, 4))
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.update({
@@ -302,6 +303,8 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
 /* ------------- ANCHOR Responding to label assignment on issue ------------- */
 
+/* ------ TODO - clear all the current labels before assigning new ones ----- */
+
 app.action('label_list', async ({ ack, body, context, client }) => {
   await ack();
 
@@ -312,20 +315,38 @@ app.action('label_list', async ({ ack, body, context, client }) => {
 
     console.log(action_body)
 
-    const id_values_array = action_body.selected_options.map((option) => {return JSON.parse(option.value)})
+    const selected_id_label_value = action_body.selected_options.map((option) => {return JSON.parse(option.value)})
 
-    // The issue ID is the same across the labels, so we just grab it from the first one
-    const issue_id = id_values_array[0].iss_id
+    const no_label_selected = selected_id_label_value.length == 0 ? true : false
 
-    // The GraphQL API needs an array of label IDs, so we extract just that
-    const label_ids_array = id_values_array.map(label_obj => label_obj.l_id)
+    let issue_id;
 
-    const variables_addLabelToIssue = {
-      element_node_id: issue_id,
-      label_ids: label_ids_array
+    
+    if (no_label_selected) {
+      const initial_id_label_value = action_body.initial_options.map((option) => {return JSON.parse(option.value)})
+      issue_id = initial_id_label_value[0].iss_id
     }
 
-    graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, gh_variables_init);
+    else {
+      // The issue ID is the same across the labels, so we just grab it from the first one
+      issue_id = selected_id_label_value[0].iss_id
+    }
+  
+
+    const variables_clearAllLabels = {
+      element_node_id: issue_id
+    }
+
+    // We await the clearing so that the new labels, if any, are added after clearing
+    await graphql.call_gh_graphql(mutation.clearAllLabels, variables_clearAllLabels);
+
+    // The GraphQL API needs an array of label IDs, so we extract just that
+    const label_ids_array = selected_id_label_value.map(label_obj => label_obj.l_id)
+
+    const variables_addLabelToIssue = Object.assign({ label_ids: label_ids_array }, variables_clearAllLabels) 
+
+    // Only call the addLabelToIssue mutation if the user selected a label
+    if (!no_label_selected) graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, gh_variables_init);
 
 
   }

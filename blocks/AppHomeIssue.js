@@ -57,6 +57,13 @@ module.exports = (issue_array, label_block) =>
             return stringified_obj;
         })
 
+        console.log(stringified_all_labels_value_block)
+
+        console.log("current_labels")
+
+        console.log(stringified_current_labels)
+
+        const initial_options = {"initial_options": stringified_current_labels}
 
 
         issues_block.push(  
@@ -95,8 +102,6 @@ module.exports = (issue_array, label_block) =>
                     "text": "Label this issue"
                 },
 
-/* -- TODO - set the labels that the issue currently has as initial_options - */
-
                 "accessory": {
                     "action_id": "label_list",
                     "type": "multi_static_select",
@@ -105,7 +110,7 @@ module.exports = (issue_array, label_block) =>
                         "text": "Select a label"
                     },
                     "options": stringified_all_labels_value_block,
-                    "initial_options": stringified_current_labels
+                    ...(stringified_current_labels.length !== 0 ? initial_options : [])
                 }
             },
             {
