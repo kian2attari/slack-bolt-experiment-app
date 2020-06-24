@@ -303,7 +303,7 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
 /* ------------- ANCHOR Responding to label assignment on issue ------------- */
 
-/* ------ TODO - clear all the current labels before assigning new ones ----- */
+/* ------ TODO - add a clear all labels button ----- */
 
 app.action('label_list', async ({ ack, body, context, client }) => {
   await ack();
