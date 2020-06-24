@@ -1,7 +1,9 @@
 const { App, ExpressReceiver } = require('@slack/bolt');
 const express  = require('express');
 const { query, mutation, graphql } = require('./graphql')
-const { AppHomeBase, AppHomeMoreInfoSection, AppHomeMoreInfoIssueModal, AppHomeIssue } = require('./blocks')
+const { AppHomeBase, AppHomeMoreInfoSection, 
+        AppHomeMoreInfoIssueModal, AppHomeIssue,
+        SetupShortcutModal } = require('./blocks')
 
 
 // Create a Bolt Receiver
@@ -85,7 +87,7 @@ graphql.call_gh_graphql(query.getFirstColumnInProject, variables_getFirstColumnI
 /* -------------------------------------------------------------------------- */
 
 
-/* --------------------- ANCHOR LISTENING FOR MESSAGES --------------------- */
+/* --------------------- SECTION LISTENING FOR MESSAGES --------------------- */
 
 // Listens to incoming messages that contain 'yo bot' and responds. This is just for testing.
 app.message('yo bot', async ({ message, say}) => {
@@ -114,11 +116,11 @@ app.message('yo bot', async ({ message, say}) => {
 
 
 
+//!SECTION
 
 
 
-
-/* ----------------------- ANCHOR Listening for events ---------------------- */
+/* ----------------------- SECTION Listening for events ---------------------- */
 
 // Listens for instances where the bot is mentioned, beginning step for mapping GH -> Slack usernames
 app.event('app_mention', async ({ event, context }) => {
@@ -140,9 +142,9 @@ app.event('app_mention', async ({ event, context }) => {
   }
 });
 
+//!SECTION
 
-
-/* -------------------------- ANCHOR App Home View -------------------------- */
+/* -------------------------- SECTION App Home View events -------------------------- */
 
 // Loads the app home when the app home is opened!
 
@@ -179,9 +181,9 @@ app.event('app_home_opened', async ({ event, context, client }) => {
 
 // TODO: View all the project cards in Needs Triage directly on slack
 
+//!SECTION
 
-
-/* ------------- ANCHOR Portion of app that listens for actions ------------ */
+/* ------------- SECTION Portion of app that listens for actions ------------ */
 
 // Responds to the test button
 app.action('test_click', async ({body, ack, say}) => {
@@ -244,6 +246,7 @@ app.action('column_card_count_info', async ({ ack, body, context, client}) => {
 // Acknowledges button clicks
 // TODO: Possibly change the Bolt library so that link buttons don't have to be responded to
 app.action('link_button', ({ ack }) => ack());
+
 
 /* ------------- ANCHOR Responding to the project name selection ------------ */
 
@@ -356,6 +359,8 @@ app.action('label_list', async ({ ack, body, context, client }) => {
   
 });
 
+//!SECTION
+
 /* ----------------------- SECTION Listen for options ----------------------- */
 
 // Responding to a project_list options request with a list of projects
@@ -394,6 +399,7 @@ app.options('project_list', async ({ options, ack }) => {
   }
 });
 
+// !SECTION
 
 /* ------------------------ REVIEW Labels as options ------------------------ */
 
@@ -425,7 +431,40 @@ app.options('project_list', async ({ options, ack }) => {
 //   }
 // });
 
-// !SECTION
+
+/* -------------------------------------------------------------------------- */
+/*                       SECTION Listening for shortcuts                       */
+/* -------------------------------------------------------------------------- */
+
+app.shortcut('setup_triage_workflow', async ({ shortcut, ack, context, client }) => {
+
+  try {
+    // Acknowledge shortcut request
+    await ack();
+
+    // Call the views.open method using one of the built-in WebClients
+    const result = await client.views.open({
+      // The token you used to initialize your app is stored in the `context` object
+      token: context.botToken,
+      trigger_id: shortcut.trigger_id,
+      view: SetupShortcutModal()
+    });
+
+    console.log(result);
+  }
+  catch (error) {
+    console.error(error);
+  }
+});
+
+
+
+
+// !SECTION Listening for shortcuts
+
+
+
+// !SECTION Listening for events/options/actions
 
 /* -------------------------------------------------------------------------- */
 /*                     SECTION Where webhooks are received                    */
@@ -523,6 +562,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
 });
 
+//!SECTION
 
 /* -------------------------------------------------------------------------- */
 /*                          SECTION Where app starts                          */
@@ -536,7 +576,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
   console.log('⚡️ Bolt app is running!');
 })();
 
-
+// !SECTION
 
 /* -------------------------------------------------------------------------- */
 /*                        SECTION Function definitions                        */
@@ -728,3 +768,5 @@ function check_for_mentions(temp_channel_id, title, text_body, content_url,conte
   }
   
 }
+
+//!SECTION
