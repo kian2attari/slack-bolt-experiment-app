@@ -3,7 +3,7 @@ const express  = require('express');
 const { query, mutation, graphql } = require('./graphql')
 const { AppHomeBase, AppHomeMoreInfoSection, 
         AppHomeMoreInfoIssueModal, AppHomeIssue,
-        SetupShortcutModal } = require('./blocks')
+        SetupShortcutModalStatic } = require('./blocks')
 
 
 // Create a Bolt Receiver
@@ -50,6 +50,9 @@ let repo_label_list;
 let label_block = [];
 
 let untriaged_label_id;
+
+// An array of users responsible for triaging
+let users_triage_team = []
 
 // Get list of all the labels in the repo
 graphql.call_gh_graphql(query.getRepoLabelsList, gh_variables_init, gh_variables_init).then((response) => {
@@ -447,7 +450,7 @@ app.shortcut('setup_triage_workflow', async ({ shortcut, ack, context, client })
       // The token you used to initialize your app is stored in the `context` object
       token: context.botToken,
       trigger_id: shortcut.trigger_id,
-      view: SetupShortcutModal()
+      view: SetupShortcutModalStatic
     });
 
     console.log(result);
@@ -461,6 +464,53 @@ app.shortcut('setup_triage_workflow', async ({ shortcut, ack, context, client })
 
 
 // !SECTION Listening for shortcuts
+
+/* -------------------------------------------------------------------------- */
+/*                   SECTION Listening for view submissions                   */
+/* -------------------------------------------------------------------------- */
+
+app.view('setup_triage_workflow_view', async ({ ack, body, view, context }) => {
+
+  // Acknowledge the view_submission event
+  await ack();
+
+  // Do whatever you want with the input data - here we're saving it to a DB then sending the user a verifcation of their submission
+
+  console.log(view.state.values)
+
+  const selected_users_array = view.state.values.users_select_input.triage_users.selected_users;
+  const user = body.user.id;
+
+  console.log(selected_users_array)
+
+  // Message to send user
+  let msg = '';
+
+  // Save triage users
+  users_triage_team = selected_users_array
+
+  // FIXME
+  if (selected_users_array.length !== 0) {
+    // DB save was successful
+    msg = 'Team members assigned successfully';
+  } else {
+    msg = 'There was an error with your submission';
+  }
+
+  // Message the user
+  try {
+    await app.client.chat.postMessage({
+      token: context.botToken,
+      channel: user,
+      text: msg
+    });
+  }
+  catch (error) {
+    console.error(error);
+  }
+});
+
+// !SECTION Listening for view submissions
 
 
 
@@ -712,7 +762,6 @@ function map_ghusername_to_slack_message(slackusername, githubusername) {
     button_block
 	]
 }
-  
 
 // TODO: Get user's timezone and display the date/time with respect to it
 

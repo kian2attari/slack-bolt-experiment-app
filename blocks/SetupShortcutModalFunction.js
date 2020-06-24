@@ -1,21 +1,25 @@
-module.exports = (user_group_list=["cool group", "hackers", "salad team 38", "yeeter skitter"]) => {
+module.exports = (user_group_list) => {
 
 
-    let user_group_option_element = (name) => {
-        return {
-            "text": {
-                "type": "plain_text",
-                "text": name,
-                "emoji": true
-            },
-            // No spaces in value
-            "value": name.replace(/\s/g , "-")
-        }
-    }
+    // let user_group_option_element = (name) => {
+    //     return {
+    //         "text": {
+    //             "type": "plain_text",
+    //             "text": name,
+    //             "emoji": true
+    //         },
+    //         // No spaces in value
+    //         "value": name.replace(/\s/g , "-")
+    //     }
+    // }
 
-    const user_group_option_block = user_group_list.map((user_group) => user_group_option_element(user_group))
+    // const user_group_option_block = user_group_list.map((user_group) => {
+    //     return user_group_option_element(user_group.name)
+    // })
 
-    console.log(user_group_option_block)
+    // console.log(user_group_option_block)
+
+    // const no_user_group_option_block = [user_group_option_element("No existing user groups")]
 
 return {
 	"title": {
@@ -44,7 +48,7 @@ return {
 		},
 		{
 			"type": "divider"
-		},
+        },
 		{
 			"type": "input",
 			"label": {
@@ -59,7 +63,7 @@ return {
 					"text": "Select an existing user group",
 					"emoji": true
 				},
-				"options": user_group_option_block
+				...(user_group_option_block.length !== 0 ? {"options": user_group_option_block} : {"options": no_user_group_option_block})
 			}
 		},
 		{
