@@ -3,6 +3,7 @@ const express  = require('express');
 const { query, mutation, graphql } = require('./graphql')
 const blocks = require('./blocks')
 const parseGH = require('parse-github-url');
+const safeAccess = require('./helper-functions/safeAccessUndefinedProperty')
 
 
 // Create a Bolt Receiver
@@ -517,7 +518,7 @@ app.shortcut('modify_repo_subscriptions', async ({ shortcut, ack, context, clien
       // The token you used to initialize your app is stored in the `context` object
       token: context.botToken,
       trigger_id: shortcut.trigger_id,
-      view: blocks.ModifyRepoSubscriptionsModal()
+      view: blocks.ModifyRepoSubscriptionsModal(Object.keys(subscribed_repo_list))
     });
 
     console.log(result);
@@ -533,12 +534,14 @@ app.shortcut('modify_github_username', async ({ shortcut, ack, context, client }
     // Acknowledge shortcut request
     await ack();
 
+    const user_id = shortcut.user.id
+
     // Call the views.open method using one of the built-in WebClients
-    const result = await client.views.open({
-      // The token you used to initialize your app is stored in the `context` object
+    client.chat.postMessage({
       token: context.botToken,
-      trigger_id: shortcut.trigger_id,
-      view: blocks.EditGithubUsername
+      channel: user_id,
+      text: `Hey <@${user_id}>! Click here to change your GitHub username`,
+      blocks: blocks.UsernameMapMessage(user_id)
     });
 
     console.log(result);
@@ -643,72 +646,79 @@ app.view("modify_repo_subscriptions", async ({ ack, body, view, context }) => {
   // Acknowledge the view_submission event
   await ack();
 
-  const view_values = view.state.values;
-
-  const subscribe_repo = view_values.subscribe_to_repo_block.subscribe_to_repo_input.value;
-
-  const unsubscribe_block = view_values.unsubscribe_repos_block
-
-  const unsubscribe_repo_list = unsubscribe_block
-    ? unsubscribe_block.unsubscribe_repos_input.selected_option.value
-    : [];
-
-
-  const repo_obj = new_repo_obj(subscribe_repo)
-
   const slack_user_id = body.user.id;
 
-  console.log("subscribe_repo: " + subscribe_repo);
+  const view_values = view.state.values;
 
-  console.log("subscribe repo obj:")
+  const subscribe_repo =
+    view_values.subscribe_to_repo_block.subscribe_to_repo_input.value;
 
-  console.log(repo_obj)
+  const unsubscribe_block = view_values.unsubscribe_repos_block;
+
+  /* safeAccess() is a try/catch utility function.
+  Since the unsubscribe repos input can be left blank */
+  const unsubscribe_repo = safeAccess(
+    () => unsubscribe_block.unsubscribe_repos_input.selected_option.value
+  );
+
+  if (typeof subscribe_repo === 'undefined' &&
+      unsubscribe_repo === null) {
+        console.error("No repos specified by user")
+        return;
+      }
+
+  console.log(unsubscribe_repo);
+
+  const subscribe_repo_obj = typeof subscribe_repo !== 'undefined' ? new_repo_obj(subscribe_repo) : null
+
+  console.log("subscribe repo obj:");
+
+  console.log(subscribe_repo_obj);
 
   console.log("unsubscribe repo");
 
-  console.log(unsubscribe_repo_list);
-
-  console.log(repo_obj)
+  console.log(unsubscribe_repo);
 
 
-  if(subscribed_repo_list.hasOwnProperty(repo_obj.repo_path)) {
+  if (subscribe_repo_obj !== null && subscribed_repo_list.hasOwnProperty(subscribe_repo_obj.repo_path)) {
     // TODO Error,
-    await app.client.chat.postMessage({
+    app.client.chat.postMessage({
       token: context.botToken,
       channel: slack_user_id,
       // TODO Check if mentions are setup and change the message based on that
-      text: `Whoops <@${slack_user_id}>, you're already subscribed to *${repo_obj.repo_path}*`,
+      text: `Whoops <@${slack_user_id}>, you're already subscribed to *${subscribe_repo_obj.repo_path}*`,
     });
-    
-  }
-
-  else if(unsubscribe_repo_list.includes(repo_obj.repo_path)) {
-    // TODO Error
-    await app.client.chat.postMessage({
+    console.error("User already subscribed to repo " + subscribe_repo_obj.repo_path)
+    return;
+  } 
+  else if (unsubscribe_repo !== null) {
+    delete subscribed_repo_list[unsubscribe_repo]
+    app.client.chat.postMessage({
       token: context.botToken,
       channel: slack_user_id,
       // TODO Check if mentions are setup and change the message based on that
-      text: `Whoops <@${slack_user_id}>, you tried to simultaneously subscribe to and unsubscribe from *${repo_obj.repo_path}*`,
+      text: `Hey <@${slack_user_id}>!, you are now unsubscribed from *${unsubscribe_repo}*`,
     });
-  }
+    console.error("User unsubscribed from repo: " + unsubscribe_repo)
+    return;
 
-  
-  else {
-    subscribed_repo_list[repo_obj.repo_path] = repo_obj
-      
+  } 
+    else {
+    subscribed_repo_list[subscribe_repo_obj.repo_path] = subscribe_repo_obj;
+    console.log(subscribed_repo_list);
     // Success! Message the user
     try {
       await app.client.chat.postMessage({
         token: context.botToken,
         channel: slack_user_id,
         // TODO Check if mentions are setup and change the message based on that
-        text: `<@${slack_user_id}>, you've successfully subscribed to ${repo_obj.repo_path}`,
+        text: `<@${slack_user_id}>, you've successfully subscribed to *${subscribe_repo_obj.repo_path}*`,
       });
     } catch (error) {
       console.error(error);
     }
   }
-  });
+});
 // !SECTION Listening for view submissions
 /* -------------------------------------------------------------------------- */
 /*                     SECTION Where webhooks are received                    */

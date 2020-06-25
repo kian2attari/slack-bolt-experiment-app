@@ -1,13 +1,13 @@
 module.exports = (subscribed_repos_list=[]) => {
 
-    let current_subscriptions_options = subscribed_repos_list.map((repo) => {
+    let current_subscriptions_options = subscribed_repos_list.map((repo_path) => {
         return {
             "text": {
                 "type": "plain_text",
-                "text": repo,
+                "text": repo_path,
                 "emoji": true
             },
-            "value": repo
+            "value": repo_path
         }
     })
 
@@ -88,6 +88,7 @@ module.exports = (subscribed_repos_list=[]) => {
 function unsubscribe_block(current_subscriptions_options) {
     return [{
         "type": "input",
+        "optional": true,
         "block_id": "unsubscribe_repos_block",
         "element": {
             "action_id": "unsubscribe_repos_input",
@@ -101,7 +102,7 @@ function unsubscribe_block(current_subscriptions_options) {
         },
         "label": {
             "type": "plain_text",
-            "text": ":remove:  Unsubscribe from a repo",
+            "text": ":put_litter_in_its_place:  Unsubscribe from a repo",
             "emoji": true
         }
     }]
