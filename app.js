@@ -2,6 +2,7 @@ const { App, ExpressReceiver } = require('@slack/bolt');
 const express  = require('express');
 const { query, mutation, graphql } = require('./graphql')
 const blocks = require('./blocks')
+const parseGH = require('parse-github-url');
 
 
 // Create a Bolt Receiver
@@ -12,6 +13,11 @@ const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   receiver: expressReceiver
 });
+
+
+/* -------------------------------------------------------------------------- */
+/*                             SECTION Data layer                             */
+/* -------------------------------------------------------------------------- */
 
 // State object to map GH usernames to Slack usernames
 let gh_slack_username_map = {};
@@ -24,38 +30,59 @@ When any sort of event concerns that repo, post the message to all channels in t
 A similar thing can be done to map to map repos to project boards */
 const temp_channel_id = 'C015FH00GVA';
 
+// Example repo object that would be an element in the subscribed_repo_list
+// TODO Revamp this repo object and add info like possible labels
 const gh_variables_init = {
   repo_owner: 'slackapi',
   repo_name: 'dummy-kian-test-repo'
 }
 
 
+
+// TODO Data object that stores the repos that the user has subscribed to
+/* QUESTION What kind of data structure to use here? An array of objects like gh_variables_init? Or a nested object 
+  that with a user assigned repo nickname key that maps to a gh_variables_init object? The argument for the first would be easy
+  iteration, while the second would make it easier to reference a specific repo
+*/
+
+// List of repos the user has subscribed to
+let subscribed_repo_list = {}
+
 // Declaring some variables to be passed to the GraphQL APIs
-
-
+// TODO Remove hardcoding from this
 const variables_getFirstColumnInProject = Object.assign({ project_name: "Slack dummy-test"}, gh_variables_init);
 
 
-const variables_get_untriaged_label_id = Object.assign({label_name: "untriaged"}, gh_variables_init)
-
-// TODO Possible remove the hardcoding on this
-const untriaged_label_name = 'untriaged'
-
-
+// A list of labels that a repo has
+// TODO Add this as part of the repo object
 let repo_label_list;
+
 
 // The block that contains the possible label values
 let label_block = [];
 
-let untriaged_label_id;
 
 // An array of users responsible for triaging
 let users_triage_team = []
 
-// Get list of all the labels in the repo
+// Untriaged label object
+// TODO Possible remove the name hardcoding
+let untriaged_label = {
+  name:"untriaged",
+  column_id: "",
+  label_id: ""
+}
+
+// !SECTION 
+
+/* -------------------------------------------------------------------------- */
+/*                     SECTION Essential initial API calls                    */
+/* -------------------------------------------------------------------------- */
+
+// Get list of Repo Labels
 graphql.call_gh_graphql(query.getRepoLabelsList, gh_variables_init, gh_variables_init).then((response) => {
   repo_label_list = response.repository.labels.nodes
-  untriaged_label_id = repo_label_list.find(label => label.name == untriaged_label_name).id
+  untriaged_label.label_id = repo_label_list.find(label => label.name == untriaged_label.name).id
 
   // Create a block that contains a section for each label
   repo_label_list.forEach((label) => {
@@ -69,16 +96,13 @@ graphql.call_gh_graphql(query.getRepoLabelsList, gh_variables_init, gh_variables
   })
 })
 
-
-let untriaged_column_id = "";
-
 // TODO: Add cards automatically to Needs Triage when they are labelled with the unlabelled tag
 graphql.call_gh_graphql(query.getFirstColumnInProject, variables_getFirstColumnInProject, gh_variables_init).then((response) => {
-  untriaged_column_id = response.repository.projects.nodes[0].columns.nodes[0].id;
+  untriaged_label.column_id = response.repository.projects.nodes[0].columns.nodes[0].id;
 });
 
 
-
+// !SECTION
 
 
 /* -------------------------------------------------------------------------- */
@@ -87,6 +111,8 @@ graphql.call_gh_graphql(query.getFirstColumnInProject, variables_getFirstColumnI
 
 
 /* --------------------- SECTION LISTENING FOR MESSAGES --------------------- */
+
+// ANCHOR Message testing function? 
 
 // Listens to incoming messages that contain 'yo bot' and responds. This is just for testing.
 // app.message('yo bot', async ({ message, say}) => {
@@ -120,33 +146,33 @@ graphql.call_gh_graphql(query.getFirstColumnInProject, variables_getFirstColumnI
 
 
 /* ----------------------- SECTION Listening for events ---------------------- */
+// Old mapping listener
+// // Listens for instances where the bot is mentioned, beginning step for mapping GH -> Slack usernames
+// app.event('app_mention', async ({ event, context }) => {
+//   try {
 
-// Listens for instances where the bot is mentioned, beginning step for mapping GH -> Slack usernames
-app.event('app_mention', async ({ event, context }) => {
-  try {
+//     // The first word is the mention, the second should be the username
+//     let github_username = event.text.split(" ")[1];
 
-    // The first word is the mention, the second should be the username
-    let github_username = event.text.split(" ")[1];
-
-    const result = await app.client.chat.postMessage({
-      token: context.botToken,
-      channel: temp_channel_id,
-      blocks: map_ghusername_to_slack_message(event.user,github_username),
-      text: `Hey there <@${event.user}>! Please make sure that GitHub username is right!`
-    });
-    console.log(result);
-  }
-  catch (error) {
-    console.error(error);
-  }
-});
+//     const result = await app.client.chat.postMessage({
+//       token: context.botToken,
+//       channel: temp_channel_id,
+//       blocks: map_ghusername_to_slack_message(event.user,github_username),
+//       text: `Hey there <@${event.user}>! Please make sure that GitHub username is right!`
+//     });
+//     console.log(result);
+//   }
+//   catch (error) {
+//     console.error(error);
+//   }
+// });
 
 //!SECTION
 
 /* -------------------------- SECTION App Home View events -------------------------- */
 
 // Loads the app home when the app home is opened!
-
+// ANCHOR App home opened
 app.event('app_home_opened', async ({ event, context, client }) => {
   try {
     console.log(event); 
@@ -181,7 +207,9 @@ app.event('app_home_opened', async ({ event, context, client }) => {
 
 //!SECTION
 
-/* ------------- SECTION Portion of app that listens for actions ------------ */
+/* ------------- SECTION Listening for actions ------------ */
+
+// ANCHOR Function for testing possibly?
 
 // // Responds to the test button
 // app.action('test_click', async ({body, ack, say}) => {
@@ -258,7 +286,7 @@ app.action('column_card_count_info', async ({ ack, body, context, client}) => {
   
 })
 
-// Acknowledges button clicks
+// Acknowledges arbitrary button clicks (ex. open a link in a new tab)
 // TODO: Possibly change the Bolt library so that link buttons don't have to be responded to
 app.action('link_button', ({ ack }) => ack());
 
@@ -417,7 +445,7 @@ app.options('project_list', async ({ options, ack }) => {
 // !SECTION
 
 /* ------------------------ REVIEW Labels as options ------------------------ */
-
+// I changed this to be preloaded rather than called as an option to speed things up
 // Responding to a label_list options request with a list of labels
 // app.options('label_list', async ({ options, ack }) => {
 //   try {
@@ -447,6 +475,10 @@ app.options('project_list', async ({ options, ack }) => {
 // });
 
 
+
+// !SECTION Listening for events/options/actions
+
+
 /* -------------------------------------------------------------------------- */
 /*                       SECTION Listening for shortcuts                       */
 /* -------------------------------------------------------------------------- */
@@ -463,6 +495,50 @@ app.shortcut('setup_triage_workflow', async ({ shortcut, ack, context, client })
       token: context.botToken,
       trigger_id: shortcut.trigger_id,
       view: blocks.SetupShortcutModalStatic
+    });
+
+    console.log(result);
+  }
+  catch (error) {
+    console.error(error);
+  }
+});
+
+
+// TODO Modify repo subscription shortcut
+app.shortcut('modify_repo_subscriptions', async ({ shortcut, ack, context, client }) => {
+
+  try {
+    // Acknowledge shortcut request
+    await ack();
+
+    // Call the views.open method using one of the built-in WebClients
+    const result = await client.views.open({
+      // The token you used to initialize your app is stored in the `context` object
+      token: context.botToken,
+      trigger_id: shortcut.trigger_id,
+      view: blocks.ModifyRepoSubscriptionsModal()
+    });
+
+    console.log(result);
+  }
+  catch (error) {
+    console.error(error);
+  }
+});
+
+app.shortcut('modify_github_username', async ({ shortcut, ack, context, client }) => {
+
+  try {
+    // Acknowledge shortcut request
+    await ack();
+
+    // Call the views.open method using one of the built-in WebClients
+    const result = await client.views.open({
+      // The token you used to initialize your app is stored in the `context` object
+      token: context.botToken,
+      trigger_id: shortcut.trigger_id,
+      view: blocks.EditGithubUsername
     });
 
     console.log(result);
@@ -531,44 +607,109 @@ app.view('setup_triage_workflow_view', async ({ ack, body, view, context }) => {
 
 
 
-app.view('map_username_modal', async ({ ack, body, view, context }) => {
-
+app.view("map_username_modal", async ({ ack, body, view, context }) => {
   // Acknowledge the view_submission event
   await ack();
 
-  console.log(view.state.values)
+  console.log(view.state.values);
 
-  const github_username = view.state.values.map_username_block.github_username_input.value;
-  const user = body.user.id;
+  const github_username =
+    view.state.values.map_username_block.github_username_input.value;
 
-  console.log('github username' + github_username)
+  console.log("github username" + github_username);
 
   let slack_username = body.user.id;
 
-  // We map the github username to that Slack username
-  gh_slack_username_map[github_username] = slack_username;
+  if (typeof gh_slack_username_map[github_username] !== "undefined") {
+    // We map the github username to that Slack username
+    gh_slack_username_map[github_username] = slack_username;
 
-  console.log(gh_slack_username_map);
+    console.log(gh_slack_username_map);
 
-  // Message the user
-  try {
-    await app.client.chat.postMessage({
-      token: context.botToken,
-      channel: user,
-      text: `<@${gh_slack_username_map[github_username]}>, your slack and github usernames were associated successfully! Your GitHub username is currently set to ${github_username}. If that doesn't look right, click the enter github username button again.`,
-    });
-  }
-  catch (error) {
-    console.error(error);
+    // Message the user
+    try {
+      await app.client.chat.postMessage({
+        token: context.botToken,
+        channel: slack_username,
+        text: `<@${gh_slack_username_map[github_username]}>, your slack and github usernames were associated successfully! Your GitHub username is currently set to ${github_username}. If that doesn't look right, click the enter github username button again.`,
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 });
 
+app.view("modify_repo_subscriptions", async ({ ack, body, view, context }) => {
+  // Acknowledge the view_submission event
+  await ack();
+
+  const view_values = view.state.values;
+
+  const subscribe_repo = view_values.subscribe_to_repo_block.subscribe_to_repo_input.value;
+
+  const unsubscribe_block = view_values.unsubscribe_repos_block
+
+  const unsubscribe_repo_list = unsubscribe_block
+    ? unsubscribe_block.unsubscribe_repos_input.selected_option.value
+    : [];
+
+
+  const repo_obj = new_repo_obj(subscribe_repo)
+
+  const slack_user_id = body.user.id;
+
+  console.log("subscribe_repo: " + subscribe_repo);
+
+  console.log("subscribe repo obj:")
+
+  console.log(repo_obj)
+
+  console.log("unsubscribe repo");
+
+  console.log(unsubscribe_repo_list);
+
+  console.log(repo_obj)
+
+
+  if(subscribed_repo_list.hasOwnProperty(repo_obj.repo_path)) {
+    // TODO Error,
+    await app.client.chat.postMessage({
+      token: context.botToken,
+      channel: slack_user_id,
+      // TODO Check if mentions are setup and change the message based on that
+      text: `Whoops <@${slack_user_id}>, you're already subscribed to *${repo_obj.repo_path}*`,
+    });
+    
+  }
+
+  else if(unsubscribe_repo_list.includes(repo_obj.repo_path)) {
+    // TODO Error
+    await app.client.chat.postMessage({
+      token: context.botToken,
+      channel: slack_user_id,
+      // TODO Check if mentions are setup and change the message based on that
+      text: `Whoops <@${slack_user_id}>, you tried to simultaneously subscribe to and unsubscribe from *${repo_obj.repo_path}*`,
+    });
+  }
+
+  
+  else {
+    subscribed_repo_list[repo_obj.repo_path] = repo_obj
+      
+    // Success! Message the user
+    try {
+      await app.client.chat.postMessage({
+        token: context.botToken,
+        channel: slack_user_id,
+        // TODO Check if mentions are setup and change the message based on that
+        text: `<@${slack_user_id}>, you've successfully subscribed to ${repo_obj.repo_path}`,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  });
 // !SECTION Listening for view submissions
-
-
-
-// !SECTION Listening for events/options/actions
-
 /* -------------------------------------------------------------------------- */
 /*                     SECTION Where webhooks are received                    */
 /* -------------------------------------------------------------------------- */
@@ -584,7 +725,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
     return res.send('Send webhook as application/json');
   }
 
-/* -------- TODO organize this to use swtich cases or modular design -------- */
+/* -------- TODO organize this to use swtich cases or modular design (array based?) -------- */
 
   try {
       const request = req.body;
@@ -620,20 +761,22 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
           const label_id = request.label.node_id
           console.log(label_id)
-          console.log(untriaged_label_id)
-          if (label_id == untriaged_label_id) {
-            const addCardToColumn_variables = {"issue": {"projectColumnId" : untriaged_column_id, "contentId": issue_node_id}}
+          console.log(untriaged_label.label_id)
+          if (label_id == untriaged_label.label_id) {
+            const addCardToColumn_variables = {"issue": {"projectColumnId" : untriaged_label.column_id, "contentId": issue_node_id}}
             graphql.call_gh_graphql(mutation.addCardToColumn, addCardToColumn_variables)
           }
-
-/* --------- TODO add a project card when issue is labeled untriaged -------- */
-
         }
 
         else if (action == "unlabeled") {
-
-/* -- TODO remove project from new issue column if untriaged label removed -- */
-
+          /* -- TODO remove project from new issue column if untriaged label removed -- */
+          // const label_id = request.label.node_id
+          // console.log(label_id)
+          // console.log(untriaged_label.label_id)
+          // if (label_id == untriaged_label.label_id) {
+          //   const addCardToColumn_variables = {"issue": {"projectColumnId" : untriaged_label.column_id, "contentId": issue_node_id}}
+          //   graphql.call_gh_graphql(mutation.addCardToColumn, addCardToColumn_variables)
+          // }
         }
       
         
@@ -869,6 +1012,16 @@ function check_for_mentions(temp_channel_id, title, text_body, content_url,conte
     });
   }
   
+}
+
+function new_repo_obj(subscribe_repo, label_list=[]) {
+  let parsed_url = parseGH(subscribe_repo)
+  return {
+    repo_owner: parsed_url.owner,
+    repo_name: parsed_url.name,
+    repo_path: parsed_url.repo,
+    repo_label_list: label_list
+  }
 }
 
 //!SECTION

@@ -14,6 +14,7 @@
     "@octokit/graphql": "^4.5.1",
     "@slack/bolt": "^2.1.1",
     "axios": "^0.19.2",
+    "parse-github-url": "^1.0.2",
     "universal-github-app-jwt": "^1.0.2"
   }
 }
