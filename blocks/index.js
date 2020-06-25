@@ -3,5 +3,7 @@ module.exports = {
     AppHomeMoreInfoSection: require('./AppHomeMoreInfoSection'),
     AppHomeIssue: require('./AppHomeIssue'),
     AppHomeMoreInfoIssueModal: require('./AppHomeMoreInfoIssueModal'),
-    SetupShortcutModalStatic: require('./SetupShortcutModalStatic')
+    SetupShortcutModalStatic: require('./SetupShortcutModalStatic'),
+    UsernameMapMessage: require('./UsernameMapMessage'),
+    UsernameMapModal: require('./UsernameMapModal')
   }

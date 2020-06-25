@@ -1,9 +1,7 @@
 const { App, ExpressReceiver } = require('@slack/bolt');
 const express  = require('express');
 const { query, mutation, graphql } = require('./graphql')
-const { AppHomeBase, AppHomeMoreInfoSection, 
-        AppHomeMoreInfoIssueModal, AppHomeIssue,
-        SetupShortcutModalStatic } = require('./blocks')
+const blocks = require('./blocks')
 
 
 // Create a Bolt Receiver
@@ -72,8 +70,6 @@ graphql.call_gh_graphql(query.getRepoLabelsList, gh_variables_init, gh_variables
 })
 
 
-
-
 let untriaged_column_id = "";
 
 // TODO: Add cards automatically to Needs Triage when they are labelled with the unlabelled tag
@@ -93,29 +89,29 @@ graphql.call_gh_graphql(query.getFirstColumnInProject, variables_getFirstColumnI
 /* --------------------- SECTION LISTENING FOR MESSAGES --------------------- */
 
 // Listens to incoming messages that contain 'yo bot' and responds. This is just for testing.
-app.message('yo bot', async ({ message, say}) => {
+// app.message('yo bot', async ({ message, say}) => {
 
-// note: say() sends a message to the channel where the event was triggered
-  await say({
-    blocks: [
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": `Hey there human <@${message.user}>!`
-        },
-        "accessory": {
-          "type": "button",
-          "text": {
-            "type": "plain_text",
-            "text": "Click Me"
-          },
-          "action_id": "test_click"
-        }
-      }
-    ]
-  });
-});
+// // note: say() sends a message to the channel where the event was triggered
+//   await say({
+//     blocks: [
+//       {
+//         "type": "section",
+//         "text": {
+//           "type": "mrkdwn",
+//           "text": `Hey there human <@${message.user}>!`
+//         },
+//         "accessory": {
+//           "type": "button",
+//           "text": {
+//             "type": "plain_text",
+//             "text": "Click Me"
+//           },
+//           "action_id": "test_click"
+//         }
+//       }
+//     ]
+//   });
+// });
 
 
 
@@ -154,7 +150,6 @@ app.event('app_mention', async ({ event, context }) => {
 app.event('app_home_opened', async ({ event, context, client }) => {
   try {
     console.log(event); 
-    console.log(AppHomeBase())
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.publish({
 
@@ -165,7 +160,7 @@ app.event('app_home_opened', async ({ event, context, client }) => {
       user_id: event.user,
 
       /* the view payload that appears in the app home*/
-      view: AppHomeBase()
+      view: blocks.AppHomeBase()
     });
   }
   catch (error) {
@@ -188,33 +183,50 @@ app.event('app_home_opened', async ({ event, context, client }) => {
 
 /* ------------- SECTION Portion of app that listens for actions ------------ */
 
-// Responds to the test button
-app.action('test_click', async ({body, ack, say}) => {
+// // Responds to the test button
+// app.action('test_click', async ({body, ack, say}) => {
   
+//   // Here we acknowledge receipt
+//   await ack();
+
+//   await say(`<@${body.user.id}>, thanks for clicking my button bro. That's respect :100:`);
+// });
+
+
+
+app.action('button_open_map_modal', async ({ ack, body, context, client}) => {
+
   // Here we acknowledge receipt
   await ack();
 
-  await say(`<@${body.user.id}>, thanks for clicking my button bro. That's respect :100:`);
-});
+  const trigger_id = body.trigger_id
+
+  const result = await client.views.open({
+    // The token you used to initialize your app is stored in the `context` object
+    token: context.botToken,
+    trigger_id: trigger_id,
+    view: blocks.UsernameMapModal
+  });
+})
 
 // Responds to the Map usernames button 
-app.action('connect_account', async ({body, ack, say}) => {
+// app.action('connect_account', async ({body, ack, say}) => {
   
-  // Here we acknowledge receipt
-  await ack();
+//   // Here we acknowledge receipt
+//   await ack();
 
-  console.log(body);
+//   console.log(body);
 
-  let github_username = body.actions[0].value;
-  let slack_username = body.user.id;
+//   let github_username = body.actions[0].value;
+//   let slack_username = body.user.id;
 
-  // We map the github username to that Slack username
-  gh_slack_username_map[github_username] = slack_username;
+//   // We map the github username to that Slack username
+//   gh_slack_username_map[github_username] = slack_username;
 
-  console.log(gh_slack_username_map);
+//   console.log(gh_slack_username_map);
 
-  await say(`<@${body.user.id}>, your slack and github usernames were associated successfully!`);
-});
+//   await say(`<@${body.user.id}>, your slack and github usernames were associated successfully!`);
+// });
 
 
 // Responds to the 'See number of cards by column' button on the home page
@@ -241,7 +253,7 @@ app.action('column_card_count_info', async ({ ack, body, context, client}) => {
     trigger_id: trigger_id,
 
     /* the view payload that appears in the app home*/
-    view:  AppHomeMoreInfoIssueModal(array_column_info, project_name)
+    view:  blocks.AppHomeMoreInfoIssueModal(array_column_info, project_name)
   });
   
 })
@@ -281,8 +293,8 @@ app.action('project_list', async ({ ack, body, context, client }) => {
 
     /* The blocks that should be rendered as the Home Page. The new page is 
     based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
-    const home_view = AppHomeBase(issue_blocks = AppHomeIssue(issue_array, label_block),
-                                  more_info_blocks = AppHomeMoreInfoSection(project_number), 
+    const home_view = blocks.AppHomeBase(issue_blocks = blocks.AppHomeIssue(issue_array, label_block),
+                                  more_info_blocks = blocks.AppHomeMoreInfoSection(project_number), 
                                   initial_option = selected_option)
     console.log(JSON.stringify(home_view.blocks, null, 4))
 
@@ -450,7 +462,7 @@ app.shortcut('setup_triage_workflow', async ({ shortcut, ack, context, client })
       // The token you used to initialize your app is stored in the `context` object
       token: context.botToken,
       trigger_id: shortcut.trigger_id,
-      view: SetupShortcutModalStatic
+      view: blocks.SetupShortcutModalStatic
     });
 
     console.log(result);
@@ -474,7 +486,6 @@ app.view('setup_triage_workflow_view', async ({ ack, body, view, context }) => {
   // Acknowledge the view_submission event
   await ack();
 
-  // Do whatever you want with the input data - here we're saving it to a DB then sending the user a verifcation of their submission
 
   console.log(view.state.values)
 
@@ -489,7 +500,6 @@ app.view('setup_triage_workflow_view', async ({ ack, body, view, context }) => {
   // Save triage users
   users_triage_team = selected_users_array
 
-  // FIXME
   if (selected_users_array.length !== 0) {
     // DB save was successful
     msg = 'Team members assigned successfully';
@@ -503,6 +513,49 @@ app.view('setup_triage_workflow_view', async ({ ack, body, view, context }) => {
       token: context.botToken,
       channel: user,
       text: msg
+    });
+
+    users_triage_team.forEach((user_id) => {
+      app.client.chat.postMessage({
+        token: context.botToken,
+        channel: user_id,
+        text: `Hey <@${user_id}>!  You've been added to the triage team. Tell me your GitHub username`,
+        blocks: blocks.UsernameMapMessage(user_id)
+      });
+    })
+  }
+  catch (error) {
+    console.error(error);
+  }
+});
+
+
+
+app.view('map_username_modal', async ({ ack, body, view, context }) => {
+
+  // Acknowledge the view_submission event
+  await ack();
+
+  console.log(view.state.values)
+
+  const github_username = view.state.values.map_username_block.github_username_input.value;
+  const user = body.user.id;
+
+  console.log('github username' + github_username)
+
+  let slack_username = body.user.id;
+
+  // We map the github username to that Slack username
+  gh_slack_username_map[github_username] = slack_username;
+
+  console.log(gh_slack_username_map);
+
+  // Message the user
+  try {
+    await app.client.chat.postMessage({
+      token: context.botToken,
+      channel: user,
+      text: `<@${gh_slack_username_map[github_username]}>, your slack and github usernames were associated successfully! Your GitHub username is currently set to ${github_username}. If that doesn't look right, click the enter github username button again.`,
     });
   }
   catch (error) {
@@ -702,66 +755,66 @@ function githubBlock(title, body, url, creator, avatar_url, date, mentioned_slac
 }
 
 
-function map_ghusername_to_slack_message(slackusername, githubusername) {
+// function map_ghusername_to_slack_message(slackusername, githubusername) {
 
-  let block_message = "if that looks right, press the button. If not, check that you followed the format above and retry.";
+//   let block_message = "if that looks right, press the button. If not, check that you followed the format above and retry.";
 
 
-  // The button_block is a variable so that it won't be rendered if the username is undefined!
-  let button_block = 	{
+//   // The button_block is a variable so that it won't be rendered if the username is undefined!
+//   let button_block = 	{
 
-    "type": "actions",
-    "elements": [
-      {
-        "type": "button",
-        "text": {
-          "type": "plain_text",
-          "text": "Map usernames",
-          "emoji": true
-        },
-        "action_id": "connect_account",
-        "value": githubusername
-      }
-    ]
-  };
+//     "type": "actions",
+//     "elements": [
+//       {
+//         "type": "button",
+//         "text": {
+//           "type": "plain_text",
+//           "text": "Map usernames",
+//           "emoji": true
+//         },
+//         "action_id": "connect_account",
+//         "value": githubusername
+//       }
+//     ]
+//   };
   
-  if (githubusername === undefined) {
-    block_message = "You forgot to give me a username silly! Make sure you follow the format described above!"
-    button_block = {
-      "type": "section",
-      "text": {
-        "type": "mrkdwn",
-        "text": "The correct format is: \n \n `@gitwave <your github username>`"
-      }
-    }
-  }
+//   if (githubusername === undefined) {
+//     block_message = "You forgot to give me a username silly! Make sure you follow the format described above!"
+//     button_block = {
+//       "type": "section",
+//       "text": {
+//         "type": "mrkdwn",
+//         "text": "The correct format is: \n \n `@gitwave <your github username>`"
+//       }
+//     }
+//   }
   
 
-  return [
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": `Hi <@${slackusername}>! :wave:`
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "Make sure you spelled your GitHub username correctly. The correct format is: \n \n `@gitwave <your github username>`"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": `Your GitHub username is *${githubusername}*. ${block_message}`
-			}
-		},
-    button_block
-	]
-}
+//   return [
+// 		{
+// 			"type": "section",
+// 			"text": {
+// 				"type": "mrkdwn",
+// 				"text": `Hi <@${slackusername}>! :wave:`
+// 			}
+// 		},
+// 		{
+// 			"type": "section",
+// 			"text": {
+// 				"type": "mrkdwn",
+// 				"text": "Make sure you spelled your GitHub username correctly. The correct format is: \n \n `@gitwave <your github username>`"
+// 			}
+// 		},
+// 		{
+// 			"type": "section",
+// 			"text": {
+// 				"type": "mrkdwn",
+// 				"text": `Your GitHub username is *${githubusername}*. ${block_message}`
+// 			}
+// 		},
+//     button_block
+// 	]
+// }
 
 // TODO: Get user's timezone and display the date/time with respect to it
 
