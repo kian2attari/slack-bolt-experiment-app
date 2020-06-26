@@ -63,8 +63,11 @@ let repo_label_list;
 let label_block = [];
 
 
-// An array of users responsible for triaging
-let users_triage_team = []
+/* Maps a channel id -> array of users.
+The channel ID is that triage team's channel
+for discussing and recieving team-wide notifs,
+and the array of users are the triage people */
+let users_triage_team = {}
 
 // Untriaged label object
 // TODO Possible remove the name hardcoding
@@ -543,8 +546,6 @@ app.shortcut('modify_github_username', async ({ shortcut, ack, context, client }
       text: `Hey <@${user_id}>! Click here to change your GitHub username`,
       blocks: blocks.UsernameMapMessage(user_id)
     });
-
-    console.log(result);
   }
   catch (error) {
     console.error(error);
@@ -573,11 +574,13 @@ app.view('setup_triage_workflow_view', async ({ ack, body, view, context }) => {
 
   console.log(selected_users_array)
 
+  const selected_channel = view.state.values.channel_select_input.triage_channel.selected_channel;
+
   // Message to send user
   let msg = '';
 
   // Save triage users
-  users_triage_team = selected_users_array
+  users_triage_team[selected_channel] = selected_users_array
 
   if (selected_users_array.length !== 0) {
     // DB save was successful
@@ -594,7 +597,7 @@ app.view('setup_triage_workflow_view', async ({ ack, body, view, context }) => {
       text: msg
     });
 
-    users_triage_team.forEach((user_id) => {
+    users_triage_team[selected_channel].forEach((user_id) => {
       app.client.chat.postMessage({
         token: context.botToken,
         channel: user_id,
@@ -760,7 +763,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
           }
 
           graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, gh_variables_init);
-
+          // TODO: instead of channel id, send over the users_triage_team object or don't and do it in the function
           check_for_mentions(temp_channel_id, issue_title, issue_body, issue_url, issue_creator, creator_avatar_url, issue_create_date);
         }
 
@@ -971,16 +974,16 @@ function githubBlock(title, body, url, creator, avatar_url, date, mentioned_slac
 
 // TODO: Get user's timezone and display the date/time with respect to it
 
-function mention_message(channel_id, title, body, url, creator, avatar_url, create_date, mentioned_slack_user, is_special_mention) {
+function mention_message(channel_id, title, body, url, creator, avatar_url, create_date, mentioned_slack_user, is_issue_closed) {
   app.client.chat.postMessage({
     // Since there is no context we just use the original token
     token: process.env.SLACK_BOT_TOKEN,
     // Conditional on whether the message should go to channel or just to a user as a DM
-    ...(is_special_mention && { channel: channel_id, 
+    ...(is_issue_closed && { channel: channel_id, 
                                 blocks: githubBlock(title, body, url, creator, avatar_url, create_date, mentioned_slack_user) 
                               }),
 
-    ...(!is_special_mention && { channel: mentioned_slack_user,
+    ...(!is_issue_closed && { channel: mentioned_slack_user,
                                  blocks: githubBlock(title, body, url, creator, avatar_url, create_date, `@${mentioned_slack_user}`) 
                                }),
     text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`
@@ -1015,7 +1018,7 @@ function check_for_mentions(temp_channel_id, title, text_body, content_url,conte
       console.log(`mentioned slack user: ${mentioned_slack_user}`);
 
       // If the mentioned username is associated with a Slack username, mention that person
-      // TODO: DM the person rather than posting the message to the channel
+      
       if (mentioned_slack_user) {
         mention_message(temp_channel_id, title, text_body, content_url, content_creator, creator_avatar_url, content_create_date, mentioned_slack_user, false)     
       }

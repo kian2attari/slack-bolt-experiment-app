@@ -44,6 +44,24 @@ module.exports = {
 				"text": "Select the users directly responsible for triaging",
 				"emoji": true
 			}
+		},
+		{
+			"type": "input",
+			"block_id": "channel_select_input",
+			"element": {
+				"type": "channels_select",
+				"action_id": "triage_channel",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Browse existing channels",
+					"emoji": true
+				}
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "Select a channel for the triage team to use",
+				"emoji": true
+			}
 		}
 	]
 }
