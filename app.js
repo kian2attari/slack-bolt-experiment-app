@@ -19,7 +19,7 @@ const app = new App({
 /* -------------------------------------------------------------------------- */
 /*                             SECTION Data layer                             */
 /* -------------------------------------------------------------------------- */
-
+// REVIEW Potentially using a Map() data structure rather than Objects for internal state
 // State object to map GH usernames to Slack usernames
 let gh_slack_username_map = {};
 
@@ -31,7 +31,7 @@ When any sort of event concerns that repo, post the message to all channels in t
 A similar thing can be done to map to map repos to project boards */
 const temp_channel_id = "C015FH00GVA";
 
-// Example repo object that would be an element in the subscribed_repo_list
+// Example repo object that would be an element in the subscribed_repo_map
 // TODO Revamp this repo object and add info like possible labels
 const gh_variables_init = {
   repo_owner: "slackapi",
@@ -45,7 +45,7 @@ const gh_variables_init = {
 */
 
 // List of repos the user has subscribed to
-let subscribed_repo_list = {};
+let subscribed_repo_map = new Map()
 
 // Declaring some variables to be passed to the GraphQL APIs
 // TODO Remove hardcoding from this
@@ -186,7 +186,20 @@ graphql
 app.event("app_home_opened", async ({ event, context, client }) => {
   try {
     console.log(event);
+
+    // If a list of initial repos is provided, we show a dropdown with those repos
+    const initial_repos_list = subscribed_repo_map
+
+    console.log("subscribed_repo_map: ", subscribed_repo_map)
+    /* If a list of initial projects is provided, that must mean that the user has
+    either only subscribed to a single repo, or set a default repo. If there's only
+    one project, select that by default */
+    let initial_projects = []
     /* view.publish is the method that your app uses to push a view to the Home tab */
+    // console.log(blocks.AppHomeBase(initial_repos=initial_repos_list))
+
+    const home_view = blocks.AppHomeBase(subscribed_repo_map)
+
     const result = await client.views.publish({
       /* retrieves your xoxb token from context */
       token: context.botToken,
@@ -195,7 +208,7 @@ app.event("app_home_opened", async ({ event, context, client }) => {
       user_id: event.user,
 
       /* the view payload that appears in the app home*/
-      view: blocks.AppHomeBase(),
+      view: home_view,
     });
   } catch (error) {
     console.error(error);
@@ -532,7 +545,7 @@ app.shortcut(
         token: context.botToken,
         trigger_id: shortcut.trigger_id,
         view: blocks.ModifyRepoSubscriptionsModal(
-          Object.keys(subscribed_repo_list)
+          subscribed_repo_map.keys()
         ),
       });
 
@@ -652,7 +665,7 @@ app.view("map_username_modal", async ({ ack, body, view, context }) => {
   }
 });
 
-app.view("modify_repo_subscriptions", async ({ ack, body, view, context }) => {
+app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
   // Acknowledge the view_submission event
   await ack();
 
@@ -667,31 +680,39 @@ app.view("modify_repo_subscriptions", async ({ ack, body, view, context }) => {
 
   /* safeAccess() is a try/catch utility function.
   Since the unsubscribe repos input can be left blank */
-  const unsubscribe_repo = safeAccess(
-    () => unsubscribe_block.unsubscribe_repos_input.selected_option.value
+  const default_repo_value = safeAccess(
+    () =>
+      view_values.default_repo_checkbox_block.default_repo_checkbox_input
+        .selected_options[0].value,
   );
 
-  if (typeof subscribe_repo === "undefined" && unsubscribe_repo === null) {
-    console.error("No repos specified by user");
+  console.log("default repo bool: " + default_repo_value)
+  
+  const is_default_repo = default_repo_value == 'default_repo' ? true : false
+
+  console.log(is_default_repo)
+
+  const unsubscribe_repo = safeAccess(
+    () => unsubscribe_block.unsubscribe_repos_input.selected_option.value,
+  );
+
+  if (typeof subscribe_repo === 'undefined' && unsubscribe_repo === null) {
+    console.error('No repos specified by user');
     return;
   }
 
-  console.log(unsubscribe_repo);
-
   const subscribe_repo_obj =
-    typeof subscribe_repo !== "undefined" ? new_repo_obj(subscribe_repo) : null;
+    typeof subscribe_repo !== 'undefined' ? new_repo_obj(subscribe_repo, default_repo_bool=is_default_repo) : null;
 
-  console.log("subscribe repo obj:");
+  // Logs the input for subscribing to new repo if any
+  console.log('subscribe_repo_obj', subscribe_repo_obj);
 
-  console.log(subscribe_repo_obj);
-
-  console.log("unsubscribe repo");
-
-  console.log(unsubscribe_repo);
+  // Logs the unsubscribe repos if any are present
+  console.log('unsubscribe_repo: ', unsubscribe_repo);
 
   if (
     subscribe_repo_obj !== null &&
-    subscribed_repo_list.hasOwnProperty(subscribe_repo_obj.repo_path)
+    subscribed_repo_map.has(subscribe_repo_obj.repo_path)
   ) {
     // TODO Error,
     app.client.chat.postMessage({
@@ -701,22 +722,26 @@ app.view("modify_repo_subscriptions", async ({ ack, body, view, context }) => {
       text: `Whoops <@${slack_user_id}>, you're already subscribed to *${subscribe_repo_obj.repo_path}*`,
     });
     console.error(
-      "User already subscribed to repo " + subscribe_repo_obj.repo_path
+      'User already subscribed to repo ' + subscribe_repo_obj.repo_path,
     );
     return;
   } else if (unsubscribe_repo !== null) {
-    delete subscribed_repo_list[unsubscribe_repo];
+    subscribed_repo_map.delete(unsubscribe_repo);
     app.client.chat.postMessage({
       token: context.botToken,
       channel: slack_user_id,
       // TODO Check if mentions are setup and change the message based on that
       text: `Hey <@${slack_user_id}>!, you are now unsubscribed from *${unsubscribe_repo}*`,
     });
-    console.error("User unsubscribed from repo: " + unsubscribe_repo);
+    console.error('User unsubscribed from repo: ' + unsubscribe_repo);
     return;
   } else {
-    subscribed_repo_list[subscribe_repo_obj.repo_path] = subscribe_repo_obj;
-    console.log(subscribed_repo_list);
+    // TODO set default repo if that box is ticked
+ 
+      subscribed_repo_map.set(subscribe_repo_obj.repo_path, subscribe_repo_obj);
+ 
+
+    console.log(subscribed_repo_map);
     // Success! Message the user
     try {
       await app.client.chat.postMessage({
@@ -1042,13 +1067,15 @@ function check_for_mentions(
   }
 }
 
-function new_repo_obj(subscribe_repo, label_list = []) {
+function new_repo_obj(subscribe_repo, default_repo_bool=false, label_list = [], project_list = []) {
   let parsed_url = parseGH(subscribe_repo);
   return {
     repo_owner: parsed_url.owner,
     repo_name: parsed_url.name,
     repo_path: parsed_url.repo,
     repo_label_list: label_list,
+    repo_project_list: project_list,
+    is_default_repo: default_repo_bool
   };
 }
 

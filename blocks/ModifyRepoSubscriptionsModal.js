@@ -1,6 +1,6 @@
-module.exports = (subscribed_repos_list=[]) => {
+module.exports = (subscribed_repos_list = new Map()) => {
 
-    let current_subscriptions_options = subscribed_repos_list.map((repo_path) => {
+    let current_subscriptions_options = Array.from(subscribed_repos_list, (repo_path) => {
         return {
             "text": {
                 "type": "plain_text",
@@ -53,32 +53,41 @@ module.exports = (subscribed_repos_list=[]) => {
                     "type": "plain_text_input",
                     "placeholder": {
                         "type": "plain_text",
-                        "text": "ex: slackapi/bolt-js",
+                        "text": "ex: slackapi/bolt-js or git@github.com:slackapi/bolt-js.git",
                         "emoji": true
                     }
                 },
                 "label": {
                     "type": "plain_text",
-                    "text": ":heavy_plus_sign:  Subscribe to a new repo (repo_owner/repo_name)",
+                    "text": ":heavy_plus_sign:  Subscribe to a new repo",
                     "emoji": true
                 }
             },
-            // {
-            //     "type": "actions",
-            //     "elements": [
-            //         {
-            //             "type": "button",
-            //             "style": "primary",
-            //             "text": {
-            //                 "type": "plain_text",
-            //                 "text": "Subscribe to repo",
-            //                 "emoji": true
-            //             },
-            //             "value": "subscribe_repo_button"
-            //         }
-            //     ]
-            // },
-            // If they aren't currently subscribed to any repos, don't show this section!
+            // TODO have this automatically ticked on the first repo add
+            {
+                "type": "input",
+                "block_id": "default_repo_checkbox_block",
+                "optional": true,
+                "element": {
+                    "action_id": "default_repo_checkbox_input",
+                    "type": "checkboxes",
+                    "options": [
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Select this repo by default on App Home",
+                                "emoji": true
+                            },
+                            "value": "default_repo"
+                        }
+                    ]
+                },
+                "label": {
+                    "type": "plain_text",
+                    "text": "Is this your favorite repo?",
+                    "emoji": true
+                }
+            },
             ...(current_subscriptions_options && current_subscriptions_options.length ? unsubscribe_block(current_subscriptions_options) : [])
         ]
     }
