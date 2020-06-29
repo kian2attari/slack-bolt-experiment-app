@@ -21,35 +21,29 @@ module.exports = (
   let default_repo_option = default_empty_repo_option;
 
   if (typeof initial_repos !== 'undefined') {
-    const repo_iterator = initial_repos.keys();
-
-    console.log('repo_array: ', repo_iterator);
-	
-    repo_options_list = Array.from(repo_iterator, repo_path => {
-      if (repo_path.is_default_repo) {
-        default_repo_option = {
-          'text': {
-            'type': 'plain_text',
-            'text': repo_path,
-            'emoji': true,
-          },
-          'value': repo_path,
-        };
-      }
-      return {
+    initial_repos.forEach((value, key) => {
+      const repo_option = {
         'text': {
           'type': 'plain_text',
-          'text': repo_path,
+          'text': value.repo_path,
           'emoji': true,
         },
-        'value': repo_path,
+        'value': value.repo_path,
       };
+      if (value.is_default_repo == true) {
+        default_repo_option = repo_option;
+      }
+      repo_options_list.push(repo_option);
     });
   }
 
-  console.log(default_repo_option)
+  console.log(default_repo_option);
 
   console.log('repo_options_list', repo_options_list);
+
+  if (repo_options_list.length === 1) {
+    default_repo_option = repo_options_list[0];
+  }
 
   return {
     'type': 'home',
@@ -72,10 +66,7 @@ module.exports = (
                 ? repo_options_list
                 : [default_empty_repo_option],
             // TODO add a default repo option in the ModifyRepoModal
-            'initial_option':
-              repo_options_list.length === 1
-                ? repo_options_list[0]
-                : default_repo_option,
+            'initial_option': default_repo_option,
           },
         ],
       },

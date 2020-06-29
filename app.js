@@ -124,7 +124,7 @@ graphql
 /*                    SECTION Listening for events/options/actions            */
 /* -------------------------------------------------------------------------- */
 
-/* --------------------- SECTION LISTENING FOR MESSAGES --------------------- */
+/* --------------------- SECTION Listening for messages --------------------- */
 
 // ANCHOR Message testing function?
 
@@ -156,30 +156,11 @@ graphql
 //!SECTION
 
 /* ----------------------- SECTION Listening for events ---------------------- */
-// Old mapping listener
-// // Listens for instances where the bot is mentioned, beginning step for mapping GH -> Slack usernames
-// app.event('app_mention', async ({ event, context }) => {
-//   try {
 
-//     // The first word is the mention, the second should be the username
-//     let github_username = event.text.split(" ")[1];
 
-//     const result = await app.client.chat.postMessage({
-//       token: context.botToken,
-//       channel: temp_channel_id,
-//       blocks: map_ghusername_to_slack_message(event.user,github_username),
-//       text: `Hey there <@${event.user}>! Please make sure that GitHub username is right!`
-//     });
-//     console.log(result);
-//   }
-//   catch (error) {
-//     console.error(error);
-//   }
-// });
 
-//!SECTION
 
-/* -------------------------- SECTION App Home View events -------------------------- */
+/* -------------------------- ANCHOR App Home View events -------------------------- */
 
 // Loads the app home when the app home is opened!
 // ANCHOR App home opened
@@ -512,7 +493,6 @@ app.shortcut(
   }
 );
 
-// TODO Modify repo subscription shortcut
 app.shortcut(
   "modify_repo_subscriptions",
   async ({ shortcut, ack, context, client }) => {
