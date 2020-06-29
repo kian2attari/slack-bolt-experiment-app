@@ -252,25 +252,6 @@ app.action("button_open_map_modal", async ({ ack, body, context, client }) => {
   });
 });
 
-// Responds to the Map usernames button
-// app.action('connect_account', async ({body, ack, say}) => {
-
-//   // Here we acknowledge receipt
-//   await ack();
-
-//   console.log(body);
-
-//   let github_username = body.actions[0].value;
-//   let slack_username = body.user.id;
-
-//   // We map the github username to that Slack username
-//   gh_slack_username_map[github_username] = slack_username;
-
-//   console.log(gh_slack_username_map);
-
-//   await say(`<@${body.user.id}>, your slack and github usernames were associated successfully!`);
-// });
-
 // Responds to the 'See number of cards by column' button on the home page
 app.action("column_card_count_info", async ({ ack, body, context, client }) => {
   // Here we acknowledge receipt
@@ -736,8 +717,15 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
     console.error('User unsubscribed from repo: ' + unsubscribe_repo);
     return;
   } else {
-    // TODO set default repo if that box is ticked
- 
+    
+    // TODO improve the data structure so this loop doesn't have to happen every time
+    // Set the previous default repo to false
+      if (is_default_repo) {
+        subscribed_repo_map.forEach((value, key) => {
+          value.is_default_repo = false
+        })
+      }
+
       subscribed_repo_map.set(subscribe_repo_obj.repo_path, subscribe_repo_obj);
  
 

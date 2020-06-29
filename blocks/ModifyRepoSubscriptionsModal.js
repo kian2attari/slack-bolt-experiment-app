@@ -84,7 +84,7 @@ module.exports = (subscribed_repos_list = new Map()) => {
                 },
                 "label": {
                     "type": "plain_text",
-                    "text": "Is this your favorite repo?",
+                    "text": "Use this repo a lot?",
                     "emoji": true
                 }
             },
