@@ -55,6 +55,7 @@ const gh_variables_init = {
 */ 
 let user_repo_subscriptions_obj = {
   default_repo: "",
+  currently_selected_repo: "",
   subscribed_repo_map: new Map()
 }
 
@@ -329,44 +330,26 @@ app.action('project_list', async ({ack, body, context, client}) => {
 
 /* ------------- ANCHOR Responding to the project name selection ------------ */
 
-app.action('project_list', async ({ack, body, context, client}) => {
+app.action('repo_selection', async ({ack, body, context, client}) => {
   await ack();
-
   try {
     const action_body = body.actions[0];
 
     const selected_option = action_body.selected_option;
 
-    const project_number = selected_option.value;
+    const selected_repo_path = selected_option.value;
 
-    const variables_getCardsByProjColumn = Object.assign(
-      {project_number: parseInt(project_number)},
-      gh_variables_init,
-    );
+    console.log("selected_repo_path", selected_repo_path)
+    
+    // QUESTION get projects here or when first add repo
 
-    const issue_response = await graphql.call_gh_graphql(
-      query.getCardsByProjColumn,
-      variables_getCardsByProjColumn,
-    );
+    user_repo_subscriptions_obj.currently_selected_repo = selected_repo_path;
 
-    // The actually array of issues extracted from the graphQL query
-    const issue_array =
-      issue_response.repository.project.columns.nodes[0].cards.nodes;
 
-    console.log(issue_array);
+    console.log("user_repo_subscriptions_obj", user_repo_subscriptions_obj)
 
-    const column_id = issue_response.repository.project.columns.nodes[0].id;
+    const updated_home_view = blocks.AppHomeBase(user_repo_subscriptions_obj);
 
-    console.log(column_id);
-
-    /* The blocks that should be rendered as the Home Page. The new page is 
-    based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
-    const home_view = blocks.AppHomeBase(
-      (issue_blocks = blocks.AppHomeIssue(issue_array, label_block)),
-      (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number)),
-      (initial_option = selected_option),
-    );
-    console.log(JSON.stringify(home_view.blocks, null, 4));
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.update({
@@ -377,7 +360,7 @@ app.action('project_list', async ({ack, body, context, client}) => {
       view_id: body.view.id,
 
       /* the view payload that appears in the app home*/
-      view: home_view,
+      view: updated_home_view,
     });
   } catch (error) {
     console.error(error);
@@ -514,7 +497,7 @@ app.options('repo_selection', async ({options, ack}) => {
 });
 
 
-app.options('project_selection', async ({options, ack}) => {
+/* app.options('project_selection', async ({options, ack}) => {
   // try {
   //   // TODO try using options directly
   //   console.log("options", options)
@@ -571,7 +554,7 @@ app.options('project_selection', async ({options, ack}) => {
   //   console.error(error);
   // }
   await ack()
-});
+}); */
 
 // !SECTION
 
@@ -810,7 +793,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
   if (subscribe_repo_obj !== null) {
     // TODO remove await?
     const project_list = await get_project_list(subscribe_repo_obj);
-
+    // QUESTION Get projects here or when repo is selected in app home
     subscribe_repo_obj.repo_project_list = project_list;
 
     if (project_list == 'INVALID_REPO_NAME') {
@@ -850,6 +833,10 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
     return;
   } else if (unsubscribe_repo !== null) {
     user_repo_subscriptions_obj.subscribed_repo_map.delete(unsubscribe_repo);
+    user_repo_subscriptions_obj.currently_selected_repo = ''
+
+    console.log('user_repo_subscriptions_obj', user_repo_subscriptions_obj)
+
     app.client.chat.postMessage({
       token: context.botToken,
       channel: slack_user_id,
