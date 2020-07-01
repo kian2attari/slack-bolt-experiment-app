@@ -1,9 +1,9 @@
-const { App, ExpressReceiver } = require("@slack/bolt");
-const express = require("express");
-const { query, mutation, graphql } = require("./graphql");
-const blocks = require("./blocks");
-const parseGH = require("parse-github-url");
-const safeAccess = require("./helper-functions/safeAccessUndefinedProperty");
+const {App, ExpressReceiver} = require('@slack/bolt');
+const express = require('express');
+const {query, mutation, graphql} = require('./graphql');
+const blocks = require('./blocks');
+const parseGH = require('parse-github-url');
+const safeAccess = require('./helper-functions/safeAccessUndefinedProperty');
 
 // Create a Bolt Receiver
 const expressReceiver = new ExpressReceiver({
@@ -29,13 +29,13 @@ let gh_slack_username_map = {};
 Everytime someone subscribes to a owner/repo, add their channel to the array with the key of that owner/repo
 When any sort of event concerns that repo, post the message to all channels in the array 
 A similar thing can be done to map to map repos to project boards */
-const temp_channel_id = "C015FH00GVA";
+const temp_channel_id = 'C015FH00GVA';
 
 // Example repo object that would be an element in the subscribed_repo_map
 // TODO Revamp this repo object and add info like possible labels
 const gh_variables_init = {
-  repo_owner: "slackapi",
-  repo_name: "dummy-kian-test-repo",
+  repo_owner: 'slackapi',
+  repo_name: 'dummy-kian-test-repo',
 };
 
 // TODO Data object that stores the repos that the user has subscribed to
@@ -43,15 +43,26 @@ const gh_variables_init = {
   that with a user assigned repo nickname key that maps to a gh_variables_init object? The argument for the first would be easy
   iteration, while the second would make it easier to reference a specific repo
 */
+// OLD Storing the repos in its own map
+// // List of repos the user has subscribed to
+// let subscribed_repo_map = new Map();
 
-// List of repos the user has subscribed to
-let subscribed_repo_map = new Map()
+// TODO change how default repos work now
+/* QUESTION 
+1. what about this data object to store all repo preferences
+2. Should things like default repo be stored in a user preferences obj
+   or one like this
+*/ 
+let user_repo_subscriptions_obj = {
+  default_repo: "",
+  subscribed_repo_map: new Map()
+}
 
 // Declaring some variables to be passed to the GraphQL APIs
 // TODO Remove hardcoding from this
 const variables_getFirstColumnInProject = Object.assign(
-  { project_name: "Slack dummy-test" },
-  gh_variables_init
+  {project_name: 'Slack dummy-test'},
+  gh_variables_init,
 );
 
 // A list of labels that a repo has
@@ -70,9 +81,9 @@ let users_triage_team = {};
 // Untriaged label object
 // TODO Possible remove the name hardcoding
 let untriaged_label = {
-  name: "untriaged",
-  column_id: "",
-  label_id: "",
+  name: 'untriaged',
+  column_id: '',
+  label_id: '',
 };
 
 // !SECTION
@@ -86,22 +97,22 @@ graphql
   .call_gh_graphql(
     query.getRepoLabelsList,
     gh_variables_init,
-    gh_variables_init
+    gh_variables_init,
   )
-  .then((response) => {
+  .then(response => {
     repo_label_list = response.repository.labels.nodes;
     untriaged_label.label_id = repo_label_list.find(
-      (label) => label.name == untriaged_label.name
+      label => label.name == untriaged_label.name,
     ).id;
 
     // Create a block that contains a section for each label
-    repo_label_list.forEach((label) => {
+    repo_label_list.forEach(label => {
       label_block.push({
         text: {
-          type: "plain_text",
+          type: 'plain_text',
           text: label.name,
         },
-        value: { l_id: label.id },
+        value: {l_id: label.id},
       });
     });
   });
@@ -111,9 +122,9 @@ graphql
   .call_gh_graphql(
     query.getFirstColumnInProject,
     variables_getFirstColumnInProject,
-    gh_variables_init
+    gh_variables_init,
   )
-  .then((response) => {
+  .then(response => {
     untriaged_label.column_id =
       response.repository.projects.nodes[0].columns.nodes[0].id;
   });
@@ -157,23 +168,20 @@ graphql
 
 /* ----------------------- SECTION Listening for events ---------------------- */
 
-
-
-
 /* -------------------------- ANCHOR App Home View events -------------------------- */
 
 // Loads the app home when the app home is opened!
 // ANCHOR App home opened
-app.event("app_home_opened", async ({ event, context, client }) => {
+app.event('app_home_opened', async ({event, context, client}) => {
   try {
     console.log(event);
 
-    console.log("subscribed_repo_map: ", subscribed_repo_map)
+    console.log('subscribed_repo_map: ', user_repo_subscriptions_obj.subscribed_repo_map);
     /* If a list of initial projects is provided, that must mean that the user has
     either only subscribed to a single repo, or set a default repo. If there's only
-    one project, select that by default */    
+    one project, select that by default */
 
-    const home_view = blocks.AppHomeBase(subscribed_repo_map)
+    const home_view = blocks.AppHomeBase(user_repo_subscriptions_obj);
 
     const result = await client.views.publish({
       /* retrieves your xoxb token from context */
@@ -213,7 +221,7 @@ app.event("app_home_opened", async ({ event, context, client }) => {
 //   await say(`<@${body.user.id}>, thanks for clicking my button bro. That's respect :100:`);
 // });
 
-app.action("button_open_map_modal", async ({ ack, body, context, client }) => {
+app.action('button_open_map_modal', async ({ack, body, context, client}) => {
   // Here we acknowledge receipt
   await ack();
 
@@ -228,19 +236,19 @@ app.action("button_open_map_modal", async ({ ack, body, context, client }) => {
 });
 
 // Responds to the 'See number of cards by column' button on the home page
-app.action("column_card_count_info", async ({ ack, body, context, client }) => {
+app.action('column_card_count_info', async ({ack, body, context, client}) => {
   // Here we acknowledge receipt
   await ack();
 
   const trigger_id = body.trigger_id;
   const project_number = parseInt(body.actions[0].value);
   const variables_getCardsByProjColumn = Object.assign(
-    { project_number: project_number },
-    gh_variables_init
+    {project_number: project_number},
+    gh_variables_init,
   );
   const num_cards_per_column = await graphql.call_gh_graphql(
     query.getNumOfCardsPerColumn,
-    variables_getCardsByProjColumn
+    variables_getCardsByProjColumn,
   );
 
   const project_name = num_cards_per_column.repository.project.name;
@@ -261,11 +269,10 @@ app.action("column_card_count_info", async ({ ack, body, context, client }) => {
 
 // Acknowledges arbitrary button clicks (ex. open a link in a new tab)
 // TODO: Possibly change the Bolt library so that link buttons don't have to be responded to
-app.action("link_button", ({ ack }) => ack());
+app.action('link_button', ({ack}) => ack());
 
-/* ------------- ANCHOR Responding to the project name selection ------------ */
-
-app.action("project_list", async ({ ack, body, context, client }) => {
+/* ------------- ANCHOR Responding to repo name selection ------------------- */
+app.action('project_list', async ({ack, body, context, client}) => {
   await ack();
 
   try {
@@ -276,13 +283,13 @@ app.action("project_list", async ({ ack, body, context, client }) => {
     const project_number = selected_option.value;
 
     const variables_getCardsByProjColumn = Object.assign(
-      { project_number: parseInt(project_number) },
-      gh_variables_init
+      {project_number: parseInt(project_number)},
+      gh_variables_init,
     );
 
     const issue_response = await graphql.call_gh_graphql(
       query.getCardsByProjColumn,
-      variables_getCardsByProjColumn
+      variables_getCardsByProjColumn,
     );
 
     // The actually array of issues extracted from the graphQL query
@@ -300,7 +307,64 @@ app.action("project_list", async ({ ack, body, context, client }) => {
     const home_view = blocks.AppHomeBase(
       (issue_blocks = blocks.AppHomeIssue(issue_array, label_block)),
       (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number)),
-      (initial_option = selected_option)
+      (initial_option = selected_option),
+    );
+    console.log(JSON.stringify(home_view.blocks, null, 4));
+
+    /* view.publish is the method that your app uses to push a view to the Home tab */
+    const result = await client.views.update({
+      /* retrieves your xoxb token from context */
+      token: context.botToken,
+
+      /* View to be updated */
+      view_id: body.view.id,
+
+      /* the view payload that appears in the app home*/
+      view: home_view,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+/* ------------- ANCHOR Responding to the project name selection ------------ */
+
+app.action('project_list', async ({ack, body, context, client}) => {
+  await ack();
+
+  try {
+    const action_body = body.actions[0];
+
+    const selected_option = action_body.selected_option;
+
+    const project_number = selected_option.value;
+
+    const variables_getCardsByProjColumn = Object.assign(
+      {project_number: parseInt(project_number)},
+      gh_variables_init,
+    );
+
+    const issue_response = await graphql.call_gh_graphql(
+      query.getCardsByProjColumn,
+      variables_getCardsByProjColumn,
+    );
+
+    // The actually array of issues extracted from the graphQL query
+    const issue_array =
+      issue_response.repository.project.columns.nodes[0].cards.nodes;
+
+    console.log(issue_array);
+
+    const column_id = issue_response.repository.project.columns.nodes[0].id;
+
+    console.log(column_id);
+
+    /* The blocks that should be rendered as the Home Page. The new page is 
+    based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
+    const home_view = blocks.AppHomeBase(
+      (issue_blocks = blocks.AppHomeIssue(issue_array, label_block)),
+      (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number)),
+      (initial_option = selected_option),
     );
     console.log(JSON.stringify(home_view.blocks, null, 4));
 
@@ -324,21 +388,19 @@ app.action("project_list", async ({ ack, body, context, client }) => {
 
 /* ------ TODO - add a clear all labels button ----- */
 
-app.action("label_list", async ({ ack, body, context, client }) => {
+app.action('label_list', async ({ack, body, context, client}) => {
   await ack();
 
   try {
-    console.log("body payload");
+    console.log('body payload');
 
     const action_body = body.actions[0];
 
     console.log(action_body);
 
-    const selected_id_label_value = action_body.selected_options.map(
-      (option) => {
-        return JSON.parse(option.value);
-      }
-    );
+    const selected_id_label_value = action_body.selected_options.map(option => {
+      return JSON.parse(option.value);
+    });
 
     const no_label_selected =
       selected_id_label_value.length == 0 ? true : false;
@@ -346,11 +408,9 @@ app.action("label_list", async ({ ack, body, context, client }) => {
     let issue_id;
 
     if (no_label_selected) {
-      const initial_id_label_value = action_body.initial_options.map(
-        (option) => {
-          return JSON.parse(option.value);
-        }
-      );
+      const initial_id_label_value = action_body.initial_options.map(option => {
+        return JSON.parse(option.value);
+      });
       issue_id = initial_id_label_value[0].iss_id;
     } else {
       // The issue ID is the same across the labels, so we just grab it from the first one
@@ -364,17 +424,17 @@ app.action("label_list", async ({ ack, body, context, client }) => {
     // We await the clearing so that the new labels, if any, are added after clearing
     await graphql.call_gh_graphql(
       mutation.clearAllLabels,
-      variables_clearAllLabels
+      variables_clearAllLabels,
     );
 
     // The GraphQL API needs an array of label IDs, so we extract just that
     const label_ids_array = selected_id_label_value.map(
-      (label_obj) => label_obj.l_id
+      label_obj => label_obj.l_id,
     );
 
     const variables_addLabelToIssue = Object.assign(
-      { label_ids: label_ids_array },
-      variables_clearAllLabels
+      {label_ids: label_ids_array},
+      variables_clearAllLabels,
     );
 
     // Only call the addLabelToIssue mutation if the user selected a label
@@ -382,7 +442,7 @@ app.action("label_list", async ({ ack, body, context, client }) => {
       graphql.call_gh_graphql(
         mutation.addLabelToIssue,
         variables_addLabelToIssue,
-        gh_variables_init
+        gh_variables_init,
       );
   } catch (error) {
     console.error(error);
@@ -393,44 +453,127 @@ app.action("label_list", async ({ ack, body, context, client }) => {
 
 /* ----------------------- SECTION Listen for options ----------------------- */
 
-// Responding to a project_list options request with a list of projects
-app.options("project_list", async ({ options, ack }) => {
+// Responding to a repo_selection options with list of repos
+app.options('repo_selection', async ({options, ack}) => {
+
   try {
-    // Get information specific to a team or channel
-    const results = await graphql.call_gh_graphql(
-      query.getProjectList,
-      gh_variables_init
-    );
+    // TODO try using options directly
+    console.log("options", options)
 
-    if (results) {
-      const projects = results.repository.projects.nodes;
-      let options_response = [];
+    const initial_repos = user_repo_subscriptions_obj.subscribed_repo_map;
 
-      // Collect information in options array to send in Slack ack response
-      projects.forEach((project) => {
-        options_response.push({
-          text: {
-            type: "plain_text",
-            text: project.name,
-          },
-          value: `${project.number}`,
-        });
-      });
+    console.log('type of initial_repos ' + typeof initial_repos);
 
+    console.log(initial_repos);
+
+    // TODO make this option its own lil block module
+    const option_obj = (option_text, option_val = option_text) => {
+      return {
+        'text': {
+          'type': 'plain_text',
+          'text': option_text,
+          'emoji': true,
+        },
+        'value': option_val,
+      };
+    };
+
+  
+    // const default_empty_project_option = option_obj(
+    //   'Select a project',
+    //   'no_repo_selected',
+    // );
+
+    if (initial_repos.size !== 0) {
+  
+      const repo_options_block_list = Array.from(initial_repos.keys(), (repo) => {
+        return option_obj(repo)
+      })
+
+      console.log("repo_options_block_list", repo_options_block_list)
+      
       await ack({
-        options: options_response,
+        options: repo_options_block_list,
       });
     } else {
-      await ack();
+      const no_subscribed_repos_option = option_obj(
+        'No repo subscriptions found',
+        'no_subscribed_repos',
+      );
+      // REVIEW should I return the empty option or nothing at all?
+
+      await ack({
+        options: no_subscribed_repos_option,
+      });
+
+      // await ack();
     }
   } catch (error) {
     console.error(error);
   }
 });
 
-// !SECTION
 
-// TODO turn the AppHomeBase selects into options
+app.options('project_selection', async ({options, ack}) => {
+  // try {
+  //   // TODO try using options directly
+  //   console.log("options", options)
+
+  //   // const initial_repos = subscribed_repo_map;
+
+  //   // console.log('type of initial_repos ' + typeof initial_repos);
+
+  //   // console.log(initial_repos);
+
+  //   // TODO make this option its own lil block module
+  //   const option_obj = (option_text, option_val = option_text) => {
+  //     return {
+  //       'text': {
+  //         'type': 'plain_text',
+  //         'text': option_text,
+  //         'emoji': true,
+  //       },
+  //       'value': option_val,
+  //     };
+  //   };
+
+  
+  //   // const default_empty_project_option = option_obj(
+  //   //   'Select a project',
+  //   //   'no_repo_selected',
+  //   // );
+
+  //   if (initial_repos.size !== 0) {
+  //     const repo_options_block_list = initial_repos.map((value, key) => {
+  //       const repo_option_block = option_obj(key)
+  //       return repo_option_block
+  //     })
+
+  //     console.log("repo_options_block_list", repo_options_block_list)
+      
+  //     await ack({
+  //       options: repo_options_block_list,
+  //     });
+  //   } else {
+  //     const no_subscribed_repos_option = option_obj(
+  //       'No repo subscriptions found',
+  //       'no_subscribed_repos',
+  //     );
+  //     // REVIEW should I return the empty option or nothing at all?
+
+  //     await ack({
+  //       options: no_subscribed_repos_option,
+  //     });
+
+  //     // await ack();
+  //   }
+  // } catch (error) {
+  //   console.error(error);
+  // }
+  await ack()
+});
+
+// !SECTION
 
 /* ------------------------ REVIEW Labels as options ------------------------ */
 // I changed this to be preloaded rather than called as an option to speed things up
@@ -468,8 +611,8 @@ app.options("project_list", async ({ options, ack }) => {
 /* -------------------------------------------------------------------------- */
 
 app.shortcut(
-  "setup_triage_workflow",
-  async ({ shortcut, ack, context, client }) => {
+  'setup_triage_workflow',
+  async ({shortcut, ack, context, client}) => {
     try {
       // Acknowledge shortcut request
       await ack();
@@ -486,12 +629,12 @@ app.shortcut(
     } catch (error) {
       console.error(error);
     }
-  }
+  },
 );
 
 app.shortcut(
-  "modify_repo_subscriptions",
-  async ({ shortcut, ack, context, client }) => {
+  'modify_repo_subscriptions',
+  async ({shortcut, ack, context, client}) => {
     try {
       // Acknowledge shortcut request
       await ack();
@@ -501,21 +644,19 @@ app.shortcut(
         // The token you used to initialize your app is stored in the `context` object
         token: context.botToken,
         trigger_id: shortcut.trigger_id,
-        view: blocks.ModifyRepoSubscriptionsModal(
-          subscribed_repo_map.keys()
-        ),
+        view: blocks.ModifyRepoSubscriptionsModal(user_repo_subscriptions_obj.subscribed_repo_map.keys()),
       });
 
       console.log(result);
     } catch (error) {
       console.error(error);
     }
-  }
+  },
 );
 
 app.shortcut(
-  "modify_github_username",
-  async ({ shortcut, ack, context, client }) => {
+  'modify_github_username',
+  async ({shortcut, ack, context, client}) => {
     try {
       // Acknowledge shortcut request
       await ack();
@@ -532,7 +673,7 @@ app.shortcut(
     } catch (error) {
       console.error(error);
     }
-  }
+  },
 );
 
 // !SECTION Listening for shortcuts
@@ -541,7 +682,7 @@ app.shortcut(
 /*                   SECTION Listening for view submissions                   */
 /* -------------------------------------------------------------------------- */
 
-app.view("setup_triage_workflow_view", async ({ ack, body, view, context }) => {
+app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
   // Acknowledge the view_submission event
   await ack();
 
@@ -557,16 +698,16 @@ app.view("setup_triage_workflow_view", async ({ ack, body, view, context }) => {
     view.state.values.channel_select_input.triage_channel.selected_channel;
 
   // Message to send user
-  let msg = "";
+  let msg = '';
 
   // Save triage users
   users_triage_team[selected_channel] = selected_users_array;
 
   if (selected_users_array.length !== 0) {
     // DB save was successful
-    msg = "Team members assigned successfully";
+    msg = 'Team members assigned successfully';
   } else {
-    msg = "There was an error with your submission";
+    msg = 'There was an error with your submission';
   }
 
   // Message the user
@@ -577,7 +718,7 @@ app.view("setup_triage_workflow_view", async ({ ack, body, view, context }) => {
       text: msg,
     });
 
-    users_triage_team[selected_channel].forEach((user_id) => {
+    users_triage_team[selected_channel].forEach(user_id => {
       app.client.chat.postMessage({
         token: context.botToken,
         channel: user_id,
@@ -590,7 +731,7 @@ app.view("setup_triage_workflow_view", async ({ ack, body, view, context }) => {
   }
 });
 
-app.view("map_username_modal", async ({ ack, body, view, context }) => {
+app.view('map_username_modal', async ({ack, body, view, context}) => {
   // Acknowledge the view_submission event
   await ack();
 
@@ -599,11 +740,11 @@ app.view("map_username_modal", async ({ ack, body, view, context }) => {
   const github_username =
     view.state.values.map_username_block.github_username_input.value;
 
-  console.log("github username" + github_username);
+  console.log('github username' + github_username);
 
   let slack_username = body.user.id;
 
-  if (typeof gh_slack_username_map[github_username] !== "undefined") {
+  if (typeof gh_slack_username_map[github_username] !== 'undefined') {
     // We map the github username to that Slack username
     gh_slack_username_map[github_username] = slack_username;
 
@@ -644,11 +785,11 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
         .selected_options[0].value,
   );
 
-  console.log("default repo bool: " + default_repo_value)
-  
-  const is_default_repo = default_repo_value == 'default_repo' ? true : false
+  console.log('default repo bool: ' + default_repo_value);
 
-  console.log(is_default_repo)
+  const is_default_repo = default_repo_value == 'default_repo' ? true : false;
+
+  console.log(is_default_repo);
 
   const unsubscribe_repo = safeAccess(
     () => unsubscribe_block.unsubscribe_repos_input.selected_option.value,
@@ -660,17 +801,18 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
   }
 
   const subscribe_repo_obj =
+    // TODO You only need one or the other way of setting default repo. 
     // TODO project list
     typeof subscribe_repo !== 'undefined'
-      ? new_repo_obj(subscribe_repo,(default_repo_bool = is_default_repo))
+      ? new_repo_obj(subscribe_repo, (default_repo_bool = is_default_repo))
       : null;
 
-if(subscribe_repo_obj !== null) {
+  if (subscribe_repo_obj !== null) {
     // TODO remove await?
-    const project_list = await get_project_list(subscribe_repo_obj)
+    const project_list = await get_project_list(subscribe_repo_obj);
 
-    subscribe_repo_obj.repo_project_list = project_list
-  
+    subscribe_repo_obj.repo_project_list = project_list;
+
     if (project_list == 'INVALID_REPO_NAME') {
       app.client.chat.postMessage({
         token: context.botToken,
@@ -682,9 +824,8 @@ if(subscribe_repo_obj !== null) {
         subscribe_repo_obj.repo_path + 'is not a valid GitHub repository',
       );
       return;
-  
     }
-}
+  }
 
   // Logs the input for subscribing to new repo if any
   console.log('subscribe_repo_obj', subscribe_repo_obj);
@@ -694,7 +835,7 @@ if(subscribe_repo_obj !== null) {
 
   if (
     subscribe_repo_obj !== null &&
-    subscribed_repo_map.has(subscribe_repo_obj.repo_path)
+    user_repo_subscriptions_obj.subscribed_repo_map.has(subscribe_repo_obj.repo_path)
   ) {
     // TODO Error,
     app.client.chat.postMessage({
@@ -708,7 +849,7 @@ if(subscribe_repo_obj !== null) {
     );
     return;
   } else if (unsubscribe_repo !== null) {
-    subscribed_repo_map.delete(unsubscribe_repo);
+    user_repo_subscriptions_obj.subscribed_repo_map.delete(unsubscribe_repo);
     app.client.chat.postMessage({
       token: context.botToken,
       channel: slack_user_id,
@@ -718,19 +859,22 @@ if(subscribe_repo_obj !== null) {
     console.error('User unsubscribed from repo: ' + unsubscribe_repo);
     return;
   } else {
-    
     // TODO improve the data structure so this loop doesn't have to happen every time
     // Set the previous default repo to false
-      if (is_default_repo) {
-        subscribed_repo_map.forEach((value, key) => {
-          value.is_default_repo = false
-        })
-      }
+    if (is_default_repo) {
+      user_repo_subscriptions_obj.default_repo = subscribe_repo_obj.repo_path;
 
-      subscribed_repo_map.set(subscribe_repo_obj.repo_path, subscribe_repo_obj);
- 
+      // TODO remove this looping
+      user_repo_subscriptions_obj.subscribed_repo_map.forEach((value, key) => {
+        value.is_default_repo = false;
+      });
+    }
 
-    console.log(subscribed_repo_map);
+    user_repo_subscriptions_obj.subscribed_repo_map.set(subscribe_repo_obj.repo_path, subscribe_repo_obj);
+    
+    console.log("user_repo_subscriptions_obj", user_repo_subscriptions_obj)
+    
+    console.log("user_repo_subscriptions_obj.subscribed_repo_map", user_repo_subscriptions_obj.subscribed_repo_map)
     // Success! Message the user
     try {
       await app.client.chat.postMessage({
@@ -753,9 +897,9 @@ if(subscribe_repo_obj !== null) {
 expressReceiver.router.use(express.json());
 
 // Receive github webhooks here!
-expressReceiver.router.post("/webhook", (req, res) => {
-  if (req.headers["content-type"] !== "application/json") {
-    return res.send("Send webhook as application/json");
+expressReceiver.router.post('/webhook', (req, res) => {
+  if (req.headers['content-type'] !== 'application/json') {
+    return res.send('Send webhook as application/json');
   }
 
   /* -------- TODO organize this to use swtich cases or modular design (array based?) -------- */
@@ -765,7 +909,7 @@ expressReceiver.router.post("/webhook", (req, res) => {
     const action = request.action;
 
     // TODO: Handle other event types. Currently, it's just issue-related events
-    if (req.headers["x-github-event"] == "issues") {
+    if (req.headers['x-github-event'] == 'issues') {
       const issue_url = request.issue.html_url;
       const issue_title = request.issue.title;
       const issue_body = request.issue.body;
@@ -775,7 +919,7 @@ expressReceiver.router.post("/webhook", (req, res) => {
       const issue_node_id = request.issue.node_id;
 
       // QUESTION: Should editing the issue also cause the untriaged label to be added?
-      if (action == "opened" || action == "reopened") {
+      if (action == 'opened' || action == 'reopened') {
         const variables_addLabelToIssue = {
           element_node_id: issue_node_id,
           label_ids: [untriaged_label_id],
@@ -784,7 +928,7 @@ expressReceiver.router.post("/webhook", (req, res) => {
         graphql.call_gh_graphql(
           mutation.addLabelToIssue,
           variables_addLabelToIssue,
-          gh_variables_init
+          gh_variables_init,
         );
         // TODO: instead of channel id, send over the users_triage_team object or don't and do it in the function
         check_for_mentions(
@@ -794,11 +938,10 @@ expressReceiver.router.post("/webhook", (req, res) => {
           issue_url,
           issue_creator,
           creator_avatar_url,
-          issue_create_date
+          issue_create_date,
         );
-      } else if (action == "labeled") {
-
-      /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
+      } else if (action == 'labeled') {
+        /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
         // const issue_label_array = request.issue.labels;
 
         const label_id = request.label.node_id;
@@ -813,10 +956,10 @@ expressReceiver.router.post("/webhook", (req, res) => {
           };
           graphql.call_gh_graphql(
             mutation.addCardToColumn,
-            addCardToColumn_variables
+            addCardToColumn_variables,
           );
         }
-      } else if (action == "unlabeled") {
+      } else if (action == 'unlabeled') {
         /* -- TODO remove project from new issue column if untriaged label removed -- */
         // const label_id = request.label.node_id
         // console.log(label_id)
@@ -826,7 +969,7 @@ expressReceiver.router.post("/webhook", (req, res) => {
         //   graphql.call_gh_graphql(mutation.addCardToColumn, addCardToColumn_variables)
         // }
       }
-    } else if (req.headers["x-github-event"] == "issue_comment") {
+    } else if (req.headers['x-github-event'] == 'issue_comment') {
       let issue_url = request.issue.html_url;
       let issue_title = request.issue.title;
       let comment_body = request.comment.body;
@@ -834,7 +977,7 @@ expressReceiver.router.post("/webhook", (req, res) => {
       let creator_avatar_url = request.comment.user.avatar_url;
       let comment_create_date = new Date(request.comment.created_at);
 
-      if (req.body.issue.state == "closed") {
+      if (req.body.issue.state == 'closed') {
         mention_message(
           temp_channel_id,
           `Comment on closed issue: ${issue_title}`,
@@ -843,8 +986,8 @@ expressReceiver.router.post("/webhook", (req, res) => {
           comment_creator,
           creator_avatar_url,
           comment_create_date,
-          "!channel",
-          true
+          '!channel',
+          true,
         );
       }
 
@@ -855,13 +998,13 @@ expressReceiver.router.post("/webhook", (req, res) => {
         issue_url,
         comment_creator,
         creator_avatar_url,
-        comment_create_date
+        comment_create_date,
       );
     }
   } catch (error) {
     console.error(error);
   }
-  res.send("Webhook initial test was received");
+  res.send('Webhook initial test was received');
 });
 
 //!SECTION
@@ -874,7 +1017,7 @@ expressReceiver.router.post("/webhook", (req, res) => {
   // Start your app
   await app.start(process.env.PORT || 3000);
 
-  console.log("⚡️ Bolt app is running!");
+  console.log('⚡️ Bolt app is running!');
 })();
 
 // !SECTION
@@ -893,63 +1036,63 @@ function githubBlock(
   creator,
   avatar_url,
   date,
-  mentioned_slack_user
+  mentioned_slack_user,
 ) {
   return [
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*<${mentioned_slack_user}>*`,
       },
     },
 
     {
-      type: "divider",
+      type: 'divider',
     },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*${title}*`,
       },
     },
     {
-      type: "divider",
+      type: 'divider',
     },
     {
-      type: "section",
+      type: 'section',
       accessory: {
-        type: "image",
+        type: 'image',
         image_url: avatar_url,
         alt_text: `${creator}'s GitHub avatar`,
       },
       text: {
-        type: "plain_text",
+        type: 'plain_text',
         text: body,
         emoji: true,
       },
     },
     {
-      type: "actions",
+      type: 'actions',
       elements: [
         {
-          type: "button",
+          type: 'button',
           text: {
-            type: "plain_text",
-            text: "Visit issue page",
+            type: 'plain_text',
+            text: 'Visit issue page',
             emoji: true,
           },
           url: url,
-          action_id: "link_button",
+          action_id: 'link_button',
         },
       ],
     },
     {
-      type: "context",
+      type: 'context',
       elements: [
         {
-          type: "plain_text",
+          type: 'plain_text',
           text: `Date: ${date}`,
           emoji: true,
         },
@@ -969,7 +1112,7 @@ function mention_message(
   avatar_url,
   create_date,
   mentioned_slack_user,
-  is_issue_closed
+  is_issue_closed,
 ) {
   app.client.chat.postMessage({
     // Since there is no context we just use the original token
@@ -984,7 +1127,7 @@ function mention_message(
         creator,
         avatar_url,
         create_date,
-        mentioned_slack_user
+        mentioned_slack_user,
       ),
     }),
 
@@ -997,7 +1140,7 @@ function mention_message(
         creator,
         avatar_url,
         create_date,
-        `@${mentioned_slack_user}`
+        `@${mentioned_slack_user}`,
       ),
     }),
     text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`,
@@ -1017,18 +1160,18 @@ function check_for_mentions(
   content_url,
   content_creator,
   creator_avatar_url,
-  content_create_date
+  content_create_date,
 ) {
   /* Since the regex contains a global operator, matchAll can used to get all the matches & the groups as an iterable.
   In this first version, we don't need to use substring(1) to drop the @ since contains_mention would also have just the usernames. */
 
   const contains_mention = text_body.match(
-    /\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi
+    /\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi,
   );
 
   // Checks to see if the body mentions a username
   if (contains_mention) {
-    contains_mention.forEach((mentioned_username) => {
+    contains_mention.forEach(mentioned_username => {
       let github_username = mentioned_username.substring(1);
 
       console.log(`mentioned gh username: ${github_username}`);
@@ -1049,14 +1192,19 @@ function check_for_mentions(
           creator_avatar_url,
           content_create_date,
           mentioned_slack_user,
-          false
+          false,
         );
       }
     });
   }
 }
 
-function new_repo_obj(subscribe_repo, default_repo_bool=false, label_list = [], project_list = []) {
+function new_repo_obj(
+  subscribe_repo,
+  default_repo_bool = false,
+  label_list = [],
+  project_list = [],
+) {
   let parsed_url = parseGH(subscribe_repo);
   return {
     repo_owner: parsed_url.owner,
@@ -1064,7 +1212,7 @@ function new_repo_obj(subscribe_repo, default_repo_bool=false, label_list = [], 
     repo_path: parsed_url.repo,
     repo_label_list: label_list,
     repo_project_list: project_list,
-    is_default_repo: default_repo_bool
+    is_default_repo: default_repo_bool,
   };
 }
 
@@ -1073,10 +1221,10 @@ async function get_project_list(repo_obj) {
     // Get information specific to a team or channel
     const results = await graphql.call_gh_graphql(
       query.getProjectList,
-      repo_obj
+      repo_obj,
     );
 
-    console.log(results)
+    console.log(results);
 
     if (typeof results === 'object') {
       const projects = results.repository.projects.nodes;
@@ -1085,9 +1233,9 @@ async function get_project_list(repo_obj) {
         // TODO also include node ID
         return {
           project_name: project.name,
-          project_number: project.number
-        }
-      })
+          project_number: project.number,
+        };
+      });
 
       // // TODO move this over to the AppHomeBase
       // let options_response = [];
@@ -1103,12 +1251,11 @@ async function get_project_list(repo_obj) {
       //   });
       // });
 
-      return project_list
-
+      return project_list;
     }
     // TODO Improve this error
     else if (results == 'NOT_FOUND') {
-      return 'INVALID_REPO_NAME'
+      return 'INVALID_REPO_NAME';
     }
   } catch (error) {
     console.error(error);
