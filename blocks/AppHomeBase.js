@@ -43,10 +43,13 @@ module.exports = (
       project => {
         return option_block(project.project_name, project.project_value);
       },
-	);
-	
-	console.log('project_option_block_list', project_option_block_list)
-	console.log('project_option_block_list length', project_option_block_list.length)	
+    );
+
+    console.log('project_option_block_list', project_option_block_list);
+    console.log(
+      'project_option_block_list length',
+      project_option_block_list.length,
+    );
   }
 
   const selected_repo_option_block = option_block(selected_repo_path);
@@ -55,26 +58,27 @@ module.exports = (
   the default repo should be the initial option. If a repo has been selected, that will be the
   initial option */
   const initial_option_block_repo =
-  selected_repo_option_block || default_repo_option_block;
-	
-  const option_blocks_project = project_option_block_list.length !== 0 ?
-  project_option_block_list : [default_empty_project_option]
+    selected_repo_option_block || default_repo_option_block;
 
-  console.log("option_blocks_project", option_blocks_project)
+  const option_blocks_project =
+    project_option_block_list.length !== 0
+      ? project_option_block_list
+      : [default_empty_project_option];
 
+  console.log('option_blocks_project', option_blocks_project);
 
   const project_select_block = {
-	'type': 'static_select',
-	'action_id': 'project_selection',
-	'placeholder': {
-	  'type': 'plain_text',
-	  'text': 'Select a project',
-	  'emoji': true,
-	},
-	'options': option_blocks_project,
-	// TODO picking default projects
-	// 'initial_option': initial_option_block_project,
-  }
+    'type': 'static_select',
+    'action_id': 'project_selection',
+    'placeholder': {
+      'type': 'plain_text',
+      'text': 'Select a project',
+      'emoji': true,
+    },
+    'options': option_blocks_project,
+    // TODO picking default projects
+    // 'initial_option': initial_option_block_project,
+  };
 
   return {
     'type': 'home',
@@ -97,8 +101,8 @@ module.exports = (
               'initial_option': initial_option_block_repo,
             }),
           },
-		  //   TODO Don't show the project select_menu until a repo selected
-		  ...(selected_repo_obj !== null ? [project_select_block] : []),
+          //   TODO Don't show the project select_menu until a repo selected
+          ...(selected_repo_obj !== null ? [project_select_block] : []),
         ],
       },
       {
