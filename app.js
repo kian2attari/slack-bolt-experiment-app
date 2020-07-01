@@ -168,16 +168,10 @@ app.event("app_home_opened", async ({ event, context, client }) => {
   try {
     console.log(event);
 
-    // If a list of initial repos is provided, we show a dropdown with those repos
-    const initial_repos_list = subscribed_repo_map
-
     console.log("subscribed_repo_map: ", subscribed_repo_map)
     /* If a list of initial projects is provided, that must mean that the user has
     either only subscribed to a single repo, or set a default repo. If there's only
-    one project, select that by default */
-    let initial_projects = []
-    /* view.publish is the method that your app uses to push a view to the Home tab */
-    // console.log(blocks.AppHomeBase(initial_repos=initial_repos_list))
+    one project, select that by default */    
 
     const home_view = blocks.AppHomeBase(subscribed_repo_map)
 
@@ -436,6 +430,8 @@ app.options("project_list", async ({ options, ack }) => {
 
 // !SECTION
 
+// TODO turn the AppHomeBase selects into options
+
 /* ------------------------ REVIEW Labels as options ------------------------ */
 // I changed this to be preloaded rather than called as an option to speed things up
 // Responding to a label_list options request with a list of labels
@@ -627,6 +623,7 @@ app.view("map_username_modal", async ({ ack, body, view, context }) => {
 });
 
 app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
+  // TODO Check if repo really exists and give an error otherwise
   // Acknowledge the view_submission event
   await ack();
 
@@ -663,7 +660,31 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
   }
 
   const subscribe_repo_obj =
-    typeof subscribe_repo !== 'undefined' ? new_repo_obj(subscribe_repo, default_repo_bool=is_default_repo) : null;
+    // TODO project list
+    typeof subscribe_repo !== 'undefined'
+      ? new_repo_obj(subscribe_repo,(default_repo_bool = is_default_repo))
+      : null;
+
+if(subscribe_repo_obj !== null) {
+    // TODO remove await?
+    const project_list = await get_project_list(subscribe_repo_obj)
+
+    subscribe_repo_obj.repo_project_list = project_list
+  
+    if (project_list == 'INVALID_REPO_NAME') {
+      app.client.chat.postMessage({
+        token: context.botToken,
+        channel: slack_user_id,
+        // TODO Check if mentions are setup and change the message based on that
+        text: `Whoops <@${slack_user_id}>, *${subscribe_repo_obj.repo_path}* is not a valid repo. Double check your spelling.`,
+      });
+      console.error(
+        subscribe_repo_obj.repo_path + 'is not a valid GitHub repository',
+      );
+      return;
+  
+    }
+}
 
   // Logs the input for subscribing to new repo if any
   console.log('subscribe_repo_obj', subscribe_repo_obj);
@@ -1045,6 +1066,53 @@ function new_repo_obj(subscribe_repo, default_repo_bool=false, label_list = [], 
     repo_project_list: project_list,
     is_default_repo: default_repo_bool
   };
+}
+
+async function get_project_list(repo_obj) {
+  try {
+    // Get information specific to a team or channel
+    const results = await graphql.call_gh_graphql(
+      query.getProjectList,
+      repo_obj
+    );
+
+    console.log(results)
+
+    if (typeof results === 'object') {
+      const projects = results.repository.projects.nodes;
+
+      let project_list = projects.map(project => {
+        // TODO also include node ID
+        return {
+          project_name: project.name,
+          project_number: project.number
+        }
+      })
+
+      // // TODO move this over to the AppHomeBase
+      // let options_response = [];
+
+      // // Collect information in options array to send in Slack ack response
+      // projects.forEach((project) => {
+      //   options_response.push({
+      //     text: {
+      //       type: "plain_text",
+      //       text: project.name,
+      //     },
+      //     value: `${project.number}`,
+      //   });
+      // });
+
+      return project_list
+
+    }
+    // TODO Improve this error
+    else if (results == 'NOT_FOUND') {
+      return 'INVALID_REPO_NAME'
+    }
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 //!SECTION

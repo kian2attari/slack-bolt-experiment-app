@@ -72,7 +72,9 @@ const call_gh_graphql = async(query, variables, gh_variables = undefined) => {
     }
 
     catch(error) {
+        // REVIEW is there a better way to handle this?
         console.error(error)
+        return error.errors[0].type
     }
 
 }
