@@ -834,6 +834,9 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
   } else if (unsubscribe_repo !== null) {
     user_repo_subscriptions_obj.subscribed_repo_map.delete(unsubscribe_repo);
     user_repo_subscriptions_obj.currently_selected_repo = ''
+    if (unsubscribe_repo == user_repo_subscriptions_obj.default_repo) {
+      user_repo_subscriptions_obj.default_repo = ''
+    }
 
     console.log('user_repo_subscriptions_obj', user_repo_subscriptions_obj)
 
