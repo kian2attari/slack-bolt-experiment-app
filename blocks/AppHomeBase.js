@@ -11,7 +11,7 @@ module.exports = (
         'text': option_text,
         'emoji': true,
       },
-      'value': option_val,
+      'value': `${option_val}`,
     };
   };
 
@@ -23,7 +23,7 @@ module.exports = (
   );
 
   const default_repo_option_block = option_block(
-    user_repo_subscriptions_obj.default_repo,
+    user_repo_subscriptions_obj.default_repo
   );
 
   console.log('default_repo_option_block', default_repo_option_block);
@@ -41,7 +41,7 @@ module.exports = (
   if (selected_repo_obj !== null) {
     project_option_block_list = selected_repo_obj.repo_project_list.map(
       project => {
-        return option_block(project.project_name, project.project_value);
+        return option_block(project.project_name, project.project_number);
       },
     );
 
@@ -57,8 +57,17 @@ module.exports = (
   /* How initial_option works: If a repo hasn't been selected but a default repo is defined,
   the default repo should be the initial option. If a repo has been selected, that will be the
   initial option */
-  const initial_option_block_repo =
-    selected_repo_option_block || default_repo_option_block;
+  let initial_option_block_repo;
+   // TODO if only one repo is subscribed, it must be the default
+  if (selected_repo_obj !== null) {
+	initial_option_block_repo = selected_repo_option_block
+  }
+
+  else {
+	initial_option_block_repo = default_repo_option_block
+  }
+	
+  console.log('initial_option_block_repo', initial_option_block_repo)
 
   const option_blocks_project =
     project_option_block_list.length !== 0
@@ -107,7 +116,8 @@ module.exports = (
       },
       {
         'type': 'divider',
-      },
+	  },
+	  // TODO if project has no issues, render nothing
       // If issue blocks have been provided, render them here
       ...(typeof issue_blocks !== 'undefined' ? issue_blocks : []),
 

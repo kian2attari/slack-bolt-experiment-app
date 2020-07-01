@@ -272,8 +272,8 @@ app.action('column_card_count_info', async ({ack, body, context, client}) => {
 // TODO: Possibly change the Bolt library so that link buttons don't have to be responded to
 app.action('link_button', ({ack}) => ack());
 
-/* ------------- ANCHOR Responding to repo name selection ------------------- */
-app.action('project_list', async ({ack, body, context, client}) => {
+/* ------------- ANCHOR Responding to project name selection ------------------- */
+app.action('project_selection', async ({ack, body, context, client}) => {
   await ack();
 
   try {
@@ -306,9 +306,9 @@ app.action('project_list', async ({ack, body, context, client}) => {
     /* The blocks that should be rendered as the Home Page. The new page is 
     based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
     const home_view = blocks.AppHomeBase(
+      user_repo_subscriptions_obj,
       (issue_blocks = blocks.AppHomeIssue(issue_array, label_block)),
-      (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number)),
-      (initial_option = selected_option),
+      (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number))
     );
     console.log(JSON.stringify(home_view.blocks, null, 4));
 
@@ -328,7 +328,7 @@ app.action('project_list', async ({ack, body, context, client}) => {
   }
 });
 
-/* ------------- ANCHOR Responding to the project name selection ------------ */
+/* ------------- ANCHOR Responding to the repo name selection ------------ */
 
 app.action('repo_selection', async ({ack, body, context, client}) => {
   await ack();
