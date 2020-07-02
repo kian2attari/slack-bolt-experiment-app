@@ -52,12 +52,13 @@ const gh_variables_init = {
 1. what about this data object to store all repo preferences
 2. Should things like default repo be stored in a user preferences obj
    or one like this
-*/ 
+*/
+
 let user_repo_subscriptions_obj = {
-  default_repo: "",
-  currently_selected_repo: "",
-  subscribed_repo_map: new Map()
-}
+  default_repo: '',
+  currently_selected_repo: '',
+  subscribed_repo_map: new Map(),
+};
 
 // Declaring some variables to be passed to the GraphQL APIs
 // TODO Remove hardcoding from this
@@ -177,7 +178,10 @@ app.event('app_home_opened', async ({event, context, client}) => {
   try {
     console.log(event);
 
-    console.log('subscribed_repo_map: ', user_repo_subscriptions_obj.subscribed_repo_map);
+    console.log(
+      'subscribed_repo_map: ',
+      user_repo_subscriptions_obj.subscribed_repo_map,
+    );
     /* If a list of initial projects is provided, that must mean that the user has
     either only subscribed to a single repo, or set a default repo. If there's only
     one project, select that by default */
@@ -308,7 +312,7 @@ app.action('project_selection', async ({ack, body, context, client}) => {
     const home_view = blocks.AppHomeBase(
       user_repo_subscriptions_obj,
       (issue_blocks = blocks.AppHomeIssue(issue_array, label_block)),
-      (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number))
+      (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number)),
     );
     console.log(JSON.stringify(home_view.blocks, null, 4));
 
@@ -339,17 +343,15 @@ app.action('repo_selection', async ({ack, body, context, client}) => {
 
     const selected_repo_path = selected_option.value;
 
-    console.log("selected_repo_path", selected_repo_path)
-    
+    console.log('selected_repo_path', selected_repo_path);
+
     // QUESTION get projects here or when first add repo
 
     user_repo_subscriptions_obj.currently_selected_repo = selected_repo_path;
 
-
-    console.log("user_repo_subscriptions_obj", user_repo_subscriptions_obj)
+    console.log('user_repo_subscriptions_obj', user_repo_subscriptions_obj);
 
     const updated_home_view = blocks.AppHomeBase(user_repo_subscriptions_obj);
-
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.update({
@@ -438,10 +440,9 @@ app.action('label_list', async ({ack, body, context, client}) => {
 
 // Responding to a repo_selection options with list of repos
 app.options('repo_selection', async ({options, ack}) => {
-
   try {
     // TODO try using options directly
-    console.log("options", options)
+    console.log('options', options);
 
     const initial_repos = user_repo_subscriptions_obj.subscribed_repo_map;
 
@@ -461,20 +462,18 @@ app.options('repo_selection', async ({options, ack}) => {
       };
     };
 
-  
     // const default_empty_project_option = option_obj(
     //   'Select a project',
     //   'no_repo_selected',
     // );
 
     if (initial_repos.size !== 0) {
-  
-      const repo_options_block_list = Array.from(initial_repos.keys(), (repo) => {
-        return option_obj(repo)
-      })
+      const repo_options_block_list = Array.from(initial_repos.keys(), repo => {
+        return option_obj(repo);
+      });
 
-      console.log("repo_options_block_list", repo_options_block_list)
-      
+      console.log('repo_options_block_list', repo_options_block_list);
+
       await ack({
         options: repo_options_block_list,
       });
@@ -495,7 +494,6 @@ app.options('repo_selection', async ({options, ack}) => {
     console.error(error);
   }
 });
-
 
 /* app.options('project_selection', async ({options, ack}) => {
   // try {
@@ -627,7 +625,9 @@ app.shortcut(
         // The token you used to initialize your app is stored in the `context` object
         token: context.botToken,
         trigger_id: shortcut.trigger_id,
-        view: blocks.ModifyRepoSubscriptionsModal(user_repo_subscriptions_obj.subscribed_repo_map.keys()),
+        view: blocks.ModifyRepoSubscriptionsModal(
+          user_repo_subscriptions_obj.subscribed_repo_map.keys(),
+        ),
       });
 
       console.log(result);
@@ -705,7 +705,9 @@ app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
       app.client.chat.postMessage({
         token: context.botToken,
         channel: user_id,
-        text: `Hey <@${user_id}>!  You've been added to the triage team. Tell me your GitHub username`,
+        text:
+          `Hey <@${user_id}>! ` +
+          "You've been added to the triage team. Tell me your GitHub username.",
         blocks: blocks.UsernameMapMessage(user_id),
       });
     });
@@ -723,22 +725,30 @@ app.view('map_username_modal', async ({ack, body, view, context}) => {
   const github_username =
     view.state.values.map_username_block.github_username_input.value;
 
-  console.log('github username' + github_username);
+  console.log('github username', github_username);
 
-  let slack_username = body.user.id;
+  const slack_username = body.user.id;
 
-  if (typeof gh_slack_username_map[github_username] !== 'undefined') {
+  console.log('slack_username 1', slack_username);
+
+  if (typeof gh_slack_username_map[github_username] === 'undefined') {
     // We map the github username to that Slack username
     gh_slack_username_map[github_username] = slack_username;
 
-    console.log(gh_slack_username_map);
+    console.log('gh_slack_username_map', gh_slack_username_map);
+
+    console.log('slack_username', slack_username);
 
     // Message the user
     try {
       await app.client.chat.postMessage({
         token: context.botToken,
         channel: slack_username,
-        text: `<@${gh_slack_username_map[github_username]}>, your slack and github usernames were associated successfully! Your GitHub username is currently set to ${github_username}. If that doesn't look right, click the enter github username button again.`,
+        text:
+          `<@${gh_slack_username_map[github_username]}>,` +
+          'your Slack and Github usernames were associated successfully! Your GitHub username is currently set to' +
+          `*${github_username}*.` +
+          "If that doesn't look right, click the enter github username button again.",
       });
     } catch (error) {
       console.error(error);
@@ -784,7 +794,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
   }
 
   const subscribe_repo_obj =
-    // TODO You only need one or the other way of setting default repo. 
+    // TODO You only need one or the other way of setting default repo.
     // TODO project list
     typeof subscribe_repo !== 'undefined'
       ? new_repo_obj(subscribe_repo, (default_repo_bool = is_default_repo))
@@ -818,7 +828,9 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
 
   if (
     subscribe_repo_obj !== null &&
-    user_repo_subscriptions_obj.subscribed_repo_map.has(subscribe_repo_obj.repo_path)
+    user_repo_subscriptions_obj.subscribed_repo_map.has(
+      subscribe_repo_obj.repo_path,
+    )
   ) {
     // TODO Error,
     app.client.chat.postMessage({
@@ -833,12 +845,12 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
     return;
   } else if (unsubscribe_repo !== null) {
     user_repo_subscriptions_obj.subscribed_repo_map.delete(unsubscribe_repo);
-    user_repo_subscriptions_obj.currently_selected_repo = ''
+    user_repo_subscriptions_obj.currently_selected_repo = '';
     if (unsubscribe_repo == user_repo_subscriptions_obj.default_repo) {
-      user_repo_subscriptions_obj.default_repo = ''
+      user_repo_subscriptions_obj.default_repo = '';
     }
 
-    console.log('user_repo_subscriptions_obj', user_repo_subscriptions_obj)
+    console.log('user_repo_subscriptions_obj', user_repo_subscriptions_obj);
 
     app.client.chat.postMessage({
       token: context.botToken,
@@ -860,11 +872,17 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
       });
     }
 
-    user_repo_subscriptions_obj.subscribed_repo_map.set(subscribe_repo_obj.repo_path, subscribe_repo_obj);
-    
-    console.log("user_repo_subscriptions_obj", user_repo_subscriptions_obj)
-    
-    console.log("user_repo_subscriptions_obj.subscribed_repo_map", user_repo_subscriptions_obj.subscribed_repo_map)
+    user_repo_subscriptions_obj.subscribed_repo_map.set(
+      subscribe_repo_obj.repo_path,
+      subscribe_repo_obj,
+    );
+
+    console.log('user_repo_subscriptions_obj', user_repo_subscriptions_obj);
+
+    console.log(
+      'user_repo_subscriptions_obj.subscribed_repo_map',
+      user_repo_subscriptions_obj.subscribed_repo_map,
+    );
     // Success! Message the user
     try {
       await app.client.chat.postMessage({
