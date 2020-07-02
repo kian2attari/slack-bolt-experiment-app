@@ -745,9 +745,9 @@ app.view('map_username_modal', async ({ack, body, view, context}) => {
         token: context.botToken,
         channel: slack_username,
         text:
-          `<@${gh_slack_username_map[github_username]}>,` +
+          `<@${gh_slack_username_map[github_username]}>, ` +
           'your Slack and Github usernames were associated successfully! Your GitHub username is currently set to' +
-          `*${github_username}*.` +
+          ` ${github_username}. ` +
           "If that doesn't look right, click the enter github username button again.",
       });
     } catch (error) {
