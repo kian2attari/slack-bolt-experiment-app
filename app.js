@@ -57,8 +57,30 @@ const gh_variables_init = {
 let user_repo_subscriptions_obj = {
   default_repo: '',
   currently_selected_repo: '',
+  currently_selected_project: {
+    number: 0,
+    columns: [],
+  },
+  currently_selected_column: {
+    name: '',
+    id: '',
+    cards: [],
+  },
   subscribed_repo_map: new Map(),
 };
+
+/* TODO separate the continuously-changing variables in the user_repo_subscriptions_obj into its own object.
+Keep the subscribed_repo_map as its own thing 
+const user_app_home_state_obj = {
+  default_repo: '',
+  currently_selected_repo: '',
+  currently_selected_project: 0,
+  currently_selected_column: ''
+}
+
+const subscribed_repo_map = new Map()
+
+*/
 
 // Declaring some variables to be passed to the GraphQL APIs
 // TODO Remove hardcoding from this
@@ -276,62 +298,6 @@ app.action('column_card_count_info', async ({ack, body, context, client}) => {
 // TODO: Possibly change the Bolt library so that link buttons don't have to be responded to
 app.action('link_button', ({ack}) => ack());
 
-/* ------------- ANCHOR Responding to project name selection ------------------- */
-app.action('project_selection', async ({ack, body, context, client}) => {
-  await ack();
-
-  try {
-    const action_body = body.actions[0];
-
-    const selected_option = action_body.selected_option;
-
-    const project_number = selected_option.value;
-
-    const variables_getCardsByProjColumn = Object.assign(
-      {project_number: parseInt(project_number)},
-      gh_variables_init,
-    );
-
-    const issue_response = await graphql.call_gh_graphql(
-      query.getCardsByProjColumn,
-      variables_getCardsByProjColumn,
-    );
-
-    // The actually array of issues extracted from the graphQL query
-    const issue_array =
-      issue_response.repository.project.columns.nodes[0].cards.nodes;
-
-    console.log(issue_array);
-
-    const column_id = issue_response.repository.project.columns.nodes[0].id;
-
-    console.log(column_id);
-
-    /* The blocks that should be rendered as the Home Page. The new page is 
-    based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
-    const home_view = blocks.AppHomeBase(
-      user_repo_subscriptions_obj,
-      (issue_blocks = blocks.AppHomeIssue(issue_array, label_block)),
-      (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number)),
-    );
-    console.log(JSON.stringify(home_view.blocks, null, 4));
-
-    /* view.publish is the method that your app uses to push a view to the Home tab */
-    const result = await client.views.update({
-      /* retrieves your xoxb token from context */
-      token: context.botToken,
-
-      /* View to be updated */
-      view_id: body.view.id,
-
-      /* the view payload that appears in the app home*/
-      view: home_view,
-    });
-  } catch (error) {
-    console.error(error);
-  }
-});
-
 /* ------------- ANCHOR Responding to the repo name selection ------------ */
 
 app.action('repo_selection', async ({ack, body, context, client}) => {
@@ -363,6 +329,150 @@ app.action('repo_selection', async ({ack, body, context, client}) => {
 
       /* the view payload that appears in the app home*/
       view: updated_home_view,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+/* ------------- ANCHOR Responding to project name selection ------------------- */
+app.action('project_selection', async ({ack, body, context, client}) => {
+  await ack();
+
+  try {
+    const action_body = body.actions[0];
+
+    const selected_option = action_body.selected_option;
+
+    const project_number = selected_option.value;
+
+    const variables_getCardsByProjColumn = Object.assign(
+      {project_number: parseInt(project_number)},
+      // TODO use repo node id rather than gh_variables_init
+      gh_variables_init,
+    );
+
+    const issue_response = await graphql.call_gh_graphql(
+      query.getCardsByProjColumn,
+      variables_getCardsByProjColumn,
+    );
+
+    // TODO change project number to Node ID
+    user_repo_subscriptions_obj.currently_selected_project.number = project_number;
+
+    const project_column_obj_array =
+      issue_response.repository.project.columns.nodes;
+
+    console.log('project_column_obj_array', project_column_obj_array);
+
+    user_repo_subscriptions_obj.currently_selected_project.columns = project_column_obj_array;
+
+    console.log(
+      'user_repo_subscriptions_obj.currently_selected_project',
+      user_repo_subscriptions_obj.currently_selected_project,
+    );
+
+    // // The actually array of issues extracted from the graphQL query
+    // const issue_array = project_column_obj_array[0].cards.nodes;
+
+    // console.log(issue_array);
+
+    // const column_id = issue_response.repository.project.columns.nodes[0].id;
+
+    // console.log(column_id);
+
+    /* The blocks that should be rendered as the Home Page. The new page is 
+    based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
+    // const home_view = blocks.AppHomeBase(
+    //   user_repo_subscriptions_obj,
+    //   (issue_blocks = blocks.AppHomeIssue(issue_array, label_block)),
+    //   (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number)),
+    // );
+
+    const home_view = blocks.AppHomeBase(user_repo_subscriptions_obj);
+    console.log(JSON.stringify(home_view.blocks, null, 4));
+
+    /* view.publish is the method that your app uses to push a view to the Home tab */
+    const result = await client.views.update({
+      /* retrieves your xoxb token from context */
+      token: context.botToken,
+
+      /* View to be updated */
+      view_id: body.view.id,
+
+      /* the view payload that appears in the app home*/
+      view: home_view,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+/* ------------- ANCHOR Responding to column selection ------------------- */
+// TODO add column select menu to AppHomeBase
+app.action('column_selection', async ({ack, body, context, client}) => {
+  // TODO account for deleting
+  await ack();
+
+  try {
+    const action_body = body.actions[0];
+
+    const selected_option = action_body.selected_option;
+
+    const selected_column_id = selected_option.value;
+
+    const project_number =
+      user_repo_subscriptions_obj.currently_selected_project.number;
+
+    const project_column_obj_array =
+      user_repo_subscriptions_obj.currently_selected_project.columns;
+
+    const column_obj = project_column_obj_array.find(
+      column => column.id === selected_column_id,
+    );
+
+    console.log('column_obj', column_obj);
+
+    // The actually array of issues extracted from the graphQL query
+    const cards_array = column_obj.cards.nodes;
+
+    console.log('cards_array', cards_array);
+
+    // TODO clean this up
+
+    user_repo_subscriptions_obj.currently_selected_column.cards = cards_array;
+
+    user_repo_subscriptions_obj.currently_selected_column.name =
+      column_obj.name;
+
+    user_repo_subscriptions_obj.currently_selected_column.id = column_obj.id;
+
+    // OLD
+    // const column_id = issue_response.repository.project.columns.nodes[0].id;
+
+    // console.log(column_id);
+
+    /* The blocks that should be rendered as the Home Page. The new page is 
+    based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
+    /* TODO change more info section so that it shows based on the column, it doesn't need to be a modal 
+    Also it shouldn't even need the API call anymore so just manually get that count */
+    const home_view = blocks.AppHomeBase(
+      user_repo_subscriptions_obj,
+      (issue_blocks = blocks.AppHomeIssue(cards_array, label_block)),
+      (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number)),
+    );
+    console.log(JSON.stringify(home_view.blocks, null, 4));
+
+    /* view.publish is the method that your app uses to push a view to the Home tab */
+    const result = await client.views.update({
+      /* retrieves your xoxb token from context */
+      token: context.botToken,
+
+      /* View to be updated */
+      view_id: body.view.id,
+
+      /* the view payload that appears in the app home*/
+      view: home_view,
     });
   } catch (error) {
     console.error(error);

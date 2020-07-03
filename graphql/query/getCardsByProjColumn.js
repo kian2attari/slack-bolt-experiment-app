@@ -4,7 +4,7 @@ query getCardsByProjColumn($repo_owner: String!, $repo_name: String!, $project_n
     id
     project(number: $project_number) {
       name
-      columns(first: 1) {
+      columns(first: 8) {
         nodes {
           id
           name
