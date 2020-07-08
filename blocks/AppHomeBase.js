@@ -1,5 +1,6 @@
 module.exports = (
   user_repo_subscriptions_obj,
+  user_subscribed_repos_obj,
   issue_blocks = undefined,
   more_info_blocks = undefined,
 ) => {
@@ -32,15 +33,11 @@ module.exports = (
     };
   };
 
-
-
-
-
   // REVIEW should default option be the empty one when no options blocks are returned
 
   // If no repo has been selected
   const default_repo_option_block = option_block(
-    user_repo_subscriptions_obj.default_repo,
+    user_subscribed_repos_obj.default_repo,
   );
 
   // If the repo contains no projects
@@ -66,16 +63,15 @@ module.exports = (
 
   const selected_repo_obj =
     selected_repo_path !== ''
-      ? user_repo_subscriptions_obj.subscribed_repo_map.get(selected_repo_path)
-	  : null;
-	  
+      ? user_subscribed_repos_obj.subscribed_repo_map.get(selected_repo_path)
+      : null;
 
   const selected_proj_num =
     user_repo_subscriptions_obj.currently_selected_project.number !== 0
       ? user_repo_subscriptions_obj.currently_selected_project.number
-	  : null;
-	  
-  console.log('selected_proj_num', selected_proj_num)
+      : null;
+
+  console.log('selected_proj_num', selected_proj_num);
 
   if (selected_repo_obj !== null) {
     project_option_block_list = selected_repo_obj.repo_project_list.map(

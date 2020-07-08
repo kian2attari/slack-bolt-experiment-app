@@ -74,7 +74,6 @@ module.exports = (subscribed_repos_list = new Map()) => {
           'emoji': true,
         },
       },
-      // TODO have this automatically ticked on the first repo add
       {
         'type': 'input',
         'block_id': 'default_repo_checkbox_block',
@@ -125,18 +124,3 @@ function unsubscribe_block(current_subscriptions_options) {
     },
   ];
 }
-// {
-//     "type": "actions",
-//     "elements": [
-//         {
-//             "type": "button",
-//             "style": "danger",
-//             "text": {
-//                 "type": "plain_text",
-//                 "text": "Unsubscribe from repo",
-//                 "emoji": true
-//             },
-//             "value": "unsubscribe_repo_button"
-//         }
-//     ]
-// }

@@ -1,4 +1,4 @@
-const {App, ExpressReceiver} = require('@slack/bolt');
+const {App, LogLevel, ExpressReceiver} = require('@slack/bolt');
 const express = require('express');
 const {query, mutation, graphql} = require('./graphql');
 const blocks = require('./blocks');
@@ -11,16 +11,19 @@ const expressReceiver = new ExpressReceiver({
 });
 
 // Initializes your app with your bot token, signing secret, and receiver
+// TODO remove debug setting when ready to prod
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   receiver: expressReceiver,
+  logLevel: LogLevel.DEBUG,
 });
 
 /* -------------------------------------------------------------------------- */
 /*                             SECTION Data layer                             */
 /* -------------------------------------------------------------------------- */
-// REVIEW Potentially using a Map() data structure rather than Objects for internal state
-// State object to map GH usernames to Slack usernames
+
+// Object to map GH usernames to Slack usernames
+// TODO: Make this persistent on DB
 let gh_slack_username_map = {};
 
 // Temporary hardcoding of channel id
@@ -29,33 +32,19 @@ let gh_slack_username_map = {};
 Everytime someone subscribes to a owner/repo, add their channel to the array with the key of that owner/repo
 When any sort of event concerns that repo, post the message to all channels in the array 
 A similar thing can be done to map to map repos to project boards */
+// The temp channel ID should be found through the users_triage_team object. Loop through
 const temp_channel_id = 'C015FH00GVA';
 
 // Example repo object that would be an element in the subscribed_repo_map
-// TODO Revamp this repo object and add info like possible labels
+// TODO Remove hardcoding of the init variables. They should be based on subscribed repos.
 const gh_variables_init = {
   repo_owner: 'slackapi',
   repo_name: 'dummy-kian-test-repo',
 };
 
-// TODO Data object that stores the repos that the user has subscribed to
-/* QUESTION What kind of data structure to use here? An array of objects like gh_variables_init? Or a nested object 
-  that with a user assigned repo nickname key that maps to a gh_variables_init object? The argument for the first would be easy
-  iteration, while the second would make it easier to reference a specific repo
-*/
-// OLD Storing the repos in its own map
-// // List of repos the user has subscribed to
-// let subscribed_repo_map = new Map();
-
-// TODO change how default repos work now
-/* QUESTION 
-1. what about this data object to store all repo preferences
-2. Should things like default repo be stored in a user preferences obj
-   or one like this
-*/
-
-let user_repo_subscriptions_obj = {
-  default_repo: '',
+// Internal object to store the current state of selections on App Home
+// TODO move default repo to a persistent preferences storage object.
+const user_app_home_state_obj = {
   currently_selected_repo: '',
   currently_selected_project: {
     number: 0,
@@ -66,21 +55,16 @@ let user_repo_subscriptions_obj = {
     id: '',
     cards: [],
   },
-  subscribed_repo_map: new Map(),
 };
 
-/* TODO separate the continuously-changing variables in the user_repo_subscriptions_obj into its own object.
-Keep the subscribed_repo_map as its own thing 
-const user_app_home_state_obj = {
+// Object that details the repos a user is subscribed to and their preferred default repo. The default repo is automatically picked on App Home load
+// TODO This should be persistent, pull it from the DB.
+// TODO Also, possible add default_project and default column to the mix. Maybe then default_repo should be an obj
+// REVIEW should change subscriptions to be on a team level?
+const user_subscribed_repos_obj = {
   default_repo: '',
-  currently_selected_repo: '',
-  currently_selected_project: 0,
-  currently_selected_column: ''
-}
-
-const subscribed_repo_map = new Map()
-
-*/
+  subscribed_repo_map: new Map(),
+};
 
 // Declaring some variables to be passed to the GraphQL APIs
 // TODO Remove hardcoding from this
@@ -200,15 +184,15 @@ app.event('app_home_opened', async ({event, context, client}) => {
   try {
     console.log(event);
 
-    console.log(
-      'subscribed_repo_map: ',
-      user_repo_subscriptions_obj.subscribed_repo_map,
-    );
+    console.log('user_subscribed_repos_obj: ', user_subscribed_repos_obj);
     /* If a list of initial projects is provided, that must mean that the user has
     either only subscribed to a single repo, or set a default repo. If there's only
     one project, select that by default */
 
-    const home_view = blocks.AppHomeBase(user_repo_subscriptions_obj);
+    const home_view = blocks.AppHomeBase(
+      user_app_home_state_obj,
+      user_subscribed_repos_obj,
+    );
 
     const result = await client.views.publish({
       /* retrieves your xoxb token from context */
@@ -313,11 +297,14 @@ app.action('repo_selection', async ({ack, body, context, client}) => {
 
     // QUESTION get projects here or when first add repo
 
-    user_repo_subscriptions_obj.currently_selected_repo = selected_repo_path;
+    user_app_home_state_obj.currently_selected_repo = selected_repo_path;
 
-    console.log('user_repo_subscriptions_obj', user_repo_subscriptions_obj);
+    console.log('user_app_home_state_obj', user_app_home_state_obj);
 
-    const updated_home_view = blocks.AppHomeBase(user_repo_subscriptions_obj);
+    const updated_home_view = blocks.AppHomeBase(
+      user_app_home_state_obj,
+      user_subscribed_repos_obj,
+    );
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
     const result = await client.views.update({
@@ -358,18 +345,18 @@ app.action('project_selection', async ({ack, body, context, client}) => {
     );
 
     // TODO change project number to Node ID
-    user_repo_subscriptions_obj.currently_selected_project.number = project_number;
+    user_app_home_state_obj.currently_selected_project.number = project_number;
 
     const project_column_obj_array =
       issue_response.repository.project.columns.nodes;
 
     console.log('project_column_obj_array', project_column_obj_array);
 
-    user_repo_subscriptions_obj.currently_selected_project.columns = project_column_obj_array;
+    user_app_home_state_obj.currently_selected_project.columns = project_column_obj_array;
 
     console.log(
-      'user_repo_subscriptions_obj.currently_selected_project',
-      user_repo_subscriptions_obj.currently_selected_project,
+      'user_app_home_state_obj.currently_selected_project',
+      user_app_home_state_obj.currently_selected_project,
     );
 
     // // The actually array of issues extracted from the graphQL query
@@ -384,12 +371,15 @@ app.action('project_selection', async ({ack, body, context, client}) => {
     /* The blocks that should be rendered as the Home Page. The new page is 
     based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
     // const home_view = blocks.AppHomeBase(
-    //   user_repo_subscriptions_obj,
+    //   user_app_home_state_obj,
     //   (issue_blocks = blocks.AppHomeIssue(issue_array, label_block)),
     //   (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number)),
     // );
 
-    const home_view = blocks.AppHomeBase(user_repo_subscriptions_obj);
+    const home_view = blocks.AppHomeBase(
+      user_app_home_state_obj,
+      user_subscribed_repos_obj,
+    );
     console.log(JSON.stringify(home_view.blocks, null, 4));
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
@@ -422,10 +412,10 @@ app.action('column_selection', async ({ack, body, context, client}) => {
     const selected_column_id = selected_option.value;
 
     const project_number =
-      user_repo_subscriptions_obj.currently_selected_project.number;
+      user_app_home_state_obj.currently_selected_project.number;
 
     const project_column_obj_array =
-      user_repo_subscriptions_obj.currently_selected_project.columns;
+      user_app_home_state_obj.currently_selected_project.columns;
 
     const column_obj = project_column_obj_array.find(
       column => column.id === selected_column_id,
@@ -440,12 +430,11 @@ app.action('column_selection', async ({ack, body, context, client}) => {
 
     // TODO clean this up
 
-    user_repo_subscriptions_obj.currently_selected_column.cards = cards_array;
+    user_app_home_state_obj.currently_selected_column.cards = cards_array;
 
-    user_repo_subscriptions_obj.currently_selected_column.name =
-      column_obj.name;
+    user_app_home_state_obj.currently_selected_column.name = column_obj.name;
 
-    user_repo_subscriptions_obj.currently_selected_column.id = column_obj.id;
+    user_app_home_state_obj.currently_selected_column.id = column_obj.id;
 
     // OLD
     // const column_id = issue_response.repository.project.columns.nodes[0].id;
@@ -457,7 +446,8 @@ app.action('column_selection', async ({ack, body, context, client}) => {
     /* TODO change more info section so that it shows based on the column, it doesn't need to be a modal 
     Also it shouldn't even need the API call anymore so just manually get that count */
     const home_view = blocks.AppHomeBase(
-      user_repo_subscriptions_obj,
+      user_app_home_state_obj,
+      user_subscribed_repos_obj,
       (issue_blocks = blocks.AppHomeIssue(cards_array, label_block)),
       (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number)),
     );
@@ -554,7 +544,7 @@ app.options('repo_selection', async ({options, ack}) => {
     // TODO try using options directly
     console.log('options', options);
 
-    const initial_repos = user_repo_subscriptions_obj.subscribed_repo_map;
+    const initial_repos = user_subscribed_repos_obj.subscribed_repo_map;
 
     console.log('type of initial_repos ' + typeof initial_repos);
 
@@ -610,7 +600,7 @@ app.options('repo_selection', async ({options, ack}) => {
   //   // TODO try using options directly
   //   console.log("options", options)
 
-  //   // const initial_repos = subscribed_repo_map;
+  //   // const initial_repos = user_subscribed_repos_obj.subscribed_repo_map;
 
   //   // console.log('type of initial_repos ' + typeof initial_repos);
 
@@ -736,7 +726,7 @@ app.shortcut(
         token: context.botToken,
         trigger_id: shortcut.trigger_id,
         view: blocks.ModifyRepoSubscriptionsModal(
-          user_repo_subscriptions_obj.subscribed_repo_map.keys(),
+          user_subscribed_repos_obj.subscribed_repo_map.keys(),
         ),
       });
 
@@ -785,7 +775,7 @@ app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
     view.state.values.users_select_input.triage_users.selected_users;
   const user = body.user.id;
 
-  console.log(selected_users_array);
+  console.log('selected_users_array', selected_users_array);
 
   const selected_channel =
     view.state.values.channel_select_input.triage_channel.selected_channel;
@@ -867,7 +857,6 @@ app.view('map_username_modal', async ({ack, body, view, context}) => {
 });
 
 app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
-  // TODO Check if repo really exists and give an error otherwise
   // Acknowledge the view_submission event
   await ack();
 
@@ -879,6 +868,9 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
     view_values.subscribe_to_repo_block.subscribe_to_repo_input.value;
 
   const unsubscribe_block = view_values.unsubscribe_repos_block;
+
+  const current_subscribed_repos =
+    user_subscribed_repos_obj.subscribed_repo_map;
 
   /* safeAccess() is a try/catch utility function.
   Since the unsubscribe repos input can be left blank */
@@ -904,17 +896,97 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
   }
 
   const subscribe_repo_obj =
-    // TODO You only need one or the other way of setting default repo.
     // TODO project list
-    typeof subscribe_repo !== 'undefined'
-      ? new_repo_obj(subscribe_repo, (default_repo_bool = is_default_repo))
-      : null;
+    typeof subscribe_repo !== 'undefined' ? new_repo_obj(subscribe_repo) : null;
 
+  console.log('user_subscribed_repos_obj before', user_subscribed_repos_obj);
+
+  // Logs the input for subscribing to new repo if any
+  console.log('subscribe_repo_obj', subscribe_repo_obj);
+
+  // Logs the unsubscribe repos if any are present
+  console.log('unsubscribe_repo: ', unsubscribe_repo);
+
+  // ERROR! The user is already subscribed to the repo they want to subscribe to
+  if (
+    subscribe_repo_obj !== null &&
+    current_subscribed_repos.has(subscribe_repo_obj.repo_path)
+  ) {
+    app.client.chat.postMessage({
+      token: context.botToken,
+      channel: slack_user_id,
+      text: `Whoops <@${slack_user_id}>, you're already subscribed to *${subscribe_repo_obj.repo_path}*`,
+    });
+    console.error(
+      'User already subscribed to repo ' + subscribe_repo_obj.repo_path,
+    );
+    return;
+  } else if (unsubscribe_repo !== null) {
+    // ERROR! The user is trying to subscribe and unsubscribe from the same repo
+    if (
+      subscribe_repo_obj !== null &&
+      typeof current_subscribed_repos.get(subscribe_repo_obj.repo_path) !==
+        'undefined'
+    ) {
+      app.client.chat.postMessage({
+        token: context.botToken,
+        channel: slack_user_id,
+        // TODO Check if mentions are setup and change the message based on that
+        text:
+          `<@${slack_user_id}> Woah there Schrödinger, ` +
+          "you can't simultaneously subscribe and unsubscribe from" +
+          ` *${unsubscribe_repo}*`,
+      });
+      console.error(
+        'User tried to simultaneously subscribe and unsubscribe to repo ' +
+          subscribe_repo_obj.repo_path,
+      );
+      return;
+    }
+    current_subscribed_repos.delete(unsubscribe_repo);
+    if (unsubscribe_repo === user_app_home_state_obj.currently_selected_repo) {
+      // TODO optimize this once the currently selected repo is turned into an object
+      user_app_home_state_obj.currently_selected_repo = user_app_home_state_obj.currently_selected_project = user_app_home_state_obj.currently_selected_column =
+        '';
+    }
+    if (unsubscribe_repo === user_subscribed_repos_obj.default_repo) {
+      // if only one repo is left, that should be the default now
+      user_subscribed_repos_obj.default_repo =
+        current_subscribed_repos.size === 1
+          ? current_subscribed_repos.values().next().value.repo_path
+          : '';
+
+      app.client.chat.postMessage({
+        token: context.botToken,
+        channel: slack_user_id,
+        text:
+          `Hey <@${slack_user_id}>!, ` +
+          'you are now unsubscribed from' +
+          ` *${unsubscribe_repo}*. ` +
+          'Since' +
+          ` *${unsubscribe_repo}* ` +
+          'was your default repo, make sure you pick a new one through the shortcut!',
+      });
+    } else {
+      app.client.chat.postMessage({
+        token: context.botToken,
+        channel: slack_user_id,
+        // TODO Check if mentions are setup and change the message based on that
+        text: `Hey <@${slack_user_id}>!, you are now unsubscribed from *${unsubscribe_repo}*`,
+      });
+      console.error('User unsubscribed from repo: ' + unsubscribe_repo);
+      return;
+    }
+    console.log('user_subscribed_repos_obj', user_subscribed_repos_obj);
+    console.log('user_app_home_state_obj', user_app_home_state_obj);
+  }
+  // Everything seems to be in order, subscribe to the specified repo
   if (subscribe_repo_obj !== null) {
     // TODO remove await?
     const project_list = await get_project_list(subscribe_repo_obj);
-    // QUESTION Get projects here or when repo is selected in app home
     subscribe_repo_obj.repo_project_list = project_list;
+
+    // TODO also get label_list here
 
     if (project_list == 'INVALID_REPO_NAME') {
       app.client.chat.postMessage({
@@ -928,71 +1000,17 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
       );
       return;
     }
-  }
 
-  // Logs the input for subscribing to new repo if any
-  console.log('subscribe_repo_obj', subscribe_repo_obj);
-
-  // Logs the unsubscribe repos if any are present
-  console.log('unsubscribe_repo: ', unsubscribe_repo);
-
-  if (
-    subscribe_repo_obj !== null &&
-    user_repo_subscriptions_obj.subscribed_repo_map.has(
-      subscribe_repo_obj.repo_path,
-    )
-  ) {
-    // TODO Error,
-    app.client.chat.postMessage({
-      token: context.botToken,
-      channel: slack_user_id,
-      // TODO Check if mentions are setup and change the message based on that
-      text: `Whoops <@${slack_user_id}>, you're already subscribed to *${subscribe_repo_obj.repo_path}*`,
-    });
-    console.error(
-      'User already subscribed to repo ' + subscribe_repo_obj.repo_path,
-    );
-    return;
-  } else if (unsubscribe_repo !== null) {
-    user_repo_subscriptions_obj.subscribed_repo_map.delete(unsubscribe_repo);
-    user_repo_subscriptions_obj.currently_selected_repo = '';
-    if (unsubscribe_repo == user_repo_subscriptions_obj.default_repo) {
-      user_repo_subscriptions_obj.default_repo = '';
-    }
-
-    console.log('user_repo_subscriptions_obj', user_repo_subscriptions_obj);
-
-    app.client.chat.postMessage({
-      token: context.botToken,
-      channel: slack_user_id,
-      // TODO Check if mentions are setup and change the message based on that
-      text: `Hey <@${slack_user_id}>!, you are now unsubscribed from *${unsubscribe_repo}*`,
-    });
-    console.error('User unsubscribed from repo: ' + unsubscribe_repo);
-    return;
-  } else {
-    // TODO improve the data structure so this loop doesn't have to happen every time
-    // Set the previous default repo to false
+    // Subscribe to the specified repo
     if (is_default_repo) {
-      user_repo_subscriptions_obj.default_repo = subscribe_repo_obj.repo_path;
-
-      // TODO remove this looping
-      user_repo_subscriptions_obj.subscribed_repo_map.forEach((value, key) => {
-        value.is_default_repo = false;
-      });
+      user_subscribed_repos_obj.default_repo = subscribe_repo_obj.repo_path;
     }
 
-    user_repo_subscriptions_obj.subscribed_repo_map.set(
+    current_subscribed_repos.set(
       subscribe_repo_obj.repo_path,
       subscribe_repo_obj,
     );
 
-    console.log('user_repo_subscriptions_obj', user_repo_subscriptions_obj);
-
-    console.log(
-      'user_repo_subscriptions_obj.subscribed_repo_map',
-      user_repo_subscriptions_obj.subscribed_repo_map,
-    );
     // Success! Message the user
     try {
       await app.client.chat.postMessage({
@@ -1005,6 +1023,9 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
       console.error(error);
     }
   }
+  console.log('user_subscribed_repos_obj', user_subscribed_repos_obj);
+  console.log('current_subscribed_repos', current_subscribed_repos);
+  console.log('subscribe_repo_obj', subscribe_repo_obj);
 });
 // !SECTION Listening for view submissions
 /* -------------------------------------------------------------------------- */
@@ -1272,7 +1293,7 @@ function view_username_mappings(username_mappings) {
 
 // Function that checks for github username mentions in a body of text
 function check_for_mentions(
-  temp_channel_id,
+  channel_id,
   title,
   text_body,
   content_url,
@@ -1302,7 +1323,7 @@ function check_for_mentions(
 
       if (mentioned_slack_user) {
         mention_message(
-          temp_channel_id,
+          channel_id,
           title,
           text_body,
           content_url,
@@ -1330,7 +1351,6 @@ function new_repo_obj(
     repo_path: parsed_url.repo,
     repo_label_list: label_list,
     repo_project_list: project_list,
-    is_default_repo: default_repo_bool,
   };
 }
 
