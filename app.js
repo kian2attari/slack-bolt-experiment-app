@@ -188,22 +188,44 @@ app.event('app_home_opened', async ({event, context, client}) => {
     /* If a list of initial projects is provided, that must mean that the user has
     either only subscribed to a single repo, or set a default repo. If there's only
     one project, select that by default */
+    // TODO have this default selection option for projects and column too
+    if (user_subscribed_repos_obj.default_repo !== '') {
+      user_app_home_state_obj.currently_selected_repo =
+        user_subscribed_repos_obj.default_repo;
 
-    const home_view = blocks.AppHomeBase(
-      user_app_home_state_obj,
-      user_subscribed_repos_obj,
-    );
+      console.log('user_app_home_state_obj', user_app_home_state_obj);
 
-    const result = await client.views.publish({
-      /* retrieves your xoxb token from context */
-      token: context.botToken,
+      const repo_selected_home_view = blocks.AppHomeBase(
+        user_app_home_state_obj,
+        user_subscribed_repos_obj,
+      );
+      const result = await client.views.publish({
+        /* retrieves your xoxb token from context */
+        token: context.botToken,
 
-      /* the user that opened your app's app home */
-      user_id: event.user,
+        /* the user that opened your app's app home */
+        user_id: event.user,
 
-      /* the view payload that appears in the app home*/
-      view: home_view,
-    });
+        /* the view payload that appears in the app home*/
+        view: repo_selected_home_view,
+      });
+    } else {
+      const home_view = blocks.AppHomeBase(
+        user_app_home_state_obj,
+        user_subscribed_repos_obj,
+      );
+      // REVIEW Should I be publishing every time app home is opened?
+      const result = await client.views.publish({
+        /* retrieves your xoxb token from context */
+        token: context.botToken,
+
+        /* the user that opened your app's app home */
+        user_id: event.user,
+
+        /* the view payload that appears in the app home*/
+        view: home_view,
+      });
+    }
   } catch (error) {
     console.error(error);
   }
