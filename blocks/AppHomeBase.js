@@ -1,164 +1,91 @@
 module.exports = (
-  user_repo_subscriptions_obj,
-  user_subscribed_repos_obj,
+  user_app_home_state_obj,
   issue_blocks = undefined,
-  more_info_blocks = undefined,
+  more_info_blocks = undefined
 ) => {
-  // TODO make this option its own lil block module
-  const option_block = (option_text, option_val = option_text) => {
-    return {
-      'text': {
-        'type': 'plain_text',
-        'text': option_text,
-        'emoji': true,
-      },
-      'value': `${option_val}`,
-    };
-  };
-
-  // TODO change the static select for project to a external select that loads after repo pick
-
-  // TODO either also change the column select to an external select or change it to row of buttons a la gcal
-
-  const static_select_block = (action_id, place_holder_text, option_blocks) => {
-    return {
-      'type': 'static_select',
-      'action_id': action_id,
-      'placeholder': {
-        'type': 'plain_text',
-        'text': place_holder_text,
-        'emoji': true,
-      },
-      'options': option_blocks,
-    };
-  };
-
   // REVIEW should default option be the empty one when no options blocks are returned
 
-  // If no repo has been selected
-  const default_repo_option_block = option_block(
-    user_subscribed_repos_obj.default_repo,
-  );
+  // // If no repos are found
+  // const no_subscribed_repos_option = option_obj(
+  //   'No repo subscriptions found',
+  //   'no_subscribed_repos',
+  // );
 
-  // If the repo contains no projects
-  const default_empty_project_option = option_block(
-    'Select a repo first!',
-    'no_repo_selected',
-  );
+  // // If the repo contains no projects
+  // const no_projects_option = option_obj('No projects found', 'no_projects');
 
-  // If the project contains no columns
-  const default_empty_column_option = option_block(
-    'No columns found',
-    'no_columns_selected',
-  );
+  // // If the project contains no columns
+  // const no_columns_option = option_obj('No columns found', 'no_columns');
 
-  console.log('default_repo_option_block', default_repo_option_block);
+  const repo_selection = user_app_home_state_obj.currently_selected_repo;
 
-  let project_option_block_list = [];
+  console.log(': ------------------------------');
+  console.log('user_app_home_state_obj', user_app_home_state_obj);
+  console.log(': ------------------------------');
 
-  let column_option_block_list = [];
+  // The block that contains the select_menu elements for filtering on the App Home page
+  // If a repo hasn't been selected, it should select the no_subscribed_repos_option by default
+  const selection_block = {
+    'type': 'actions',
+    'block_id': 'repo_proj_selection_block',
+    'elements': [],
+  };
 
-  const selected_repo_path =
-    user_repo_subscriptions_obj.currently_selected_repo;
+  // TODO use ternary operators to cut this code down
+  // Repo has been selected
+  if (repo_selection.repo_path !== '' && repo_selection.repo_id !== '') {
+    selection_block.elements = [
+      external_select_element(
+        'repo_selection',
+        'Select a repository',
+        option_obj(repo_selection.repo_path, repo_selection.repo_id)
+      ),
+    ];
 
-  const selected_repo_obj =
-    selected_repo_path !== ''
-      ? user_subscribed_repos_obj.subscribed_repo_map.get(selected_repo_path)
-      : null;
+    const project_selection = repo_selection.currently_selected_project || null;
 
-  const selected_proj_num =
-    user_repo_subscriptions_obj.currently_selected_project.number !== 0
-      ? user_repo_subscriptions_obj.currently_selected_project.number
-      : null;
+    if (project_selection.project_name !== '' && project_selection.project_id !== '') {
+      selection_block.elements.push(
+        external_select_element(
+          'project_selection',
+          'Select a project',
+          option_obj(project_selection.project_name, project_selection.project_id)
+        )
+      );
+      const column_selection = project_selection.currently_selected_column || null;
 
-  console.log('selected_proj_num', selected_proj_num);
-
-  if (selected_repo_obj !== null) {
-    project_option_block_list = selected_repo_obj.repo_project_list.map(
-      project => {
-        return option_block(project.project_name, project.project_number);
-      },
-    );
-
-    column_option_block_list = user_repo_subscriptions_obj.currently_selected_project.columns.map(
-      column => {
-        return option_block(column.name, column.id);
-      },
-    );
-
-    console.log('project_option_block_list', project_option_block_list);
-
-    console.log(
-      'project_option_block_list length',
-      project_option_block_list.length,
-    );
-  }
-
-  const selected_repo_option_block = option_block(selected_repo_path);
-
-  /* How initial_option works: If a repo hasn't been selected but a default repo is defined,
-  the default repo should be the initial option. If a repo has been selected, that will be the
-  initial option */
-  let initial_repo_options_block;
-  // TODO if only one repo is subscribed, it must be the default
-  if (selected_repo_obj !== null) {
-    initial_repo_options_block = selected_repo_option_block;
+      if (column_selection.column_name !== '') {
+        selection_block.elements.push(
+          external_select_element(
+            'column_selection',
+            'Select a column',
+            option_obj(column_selection.column_name, column_selection.column_id)
+          )
+        );
+      } else {
+        selection_block.elements.push(
+          external_select_element('column_selection', 'Select a column')
+        );
+      }
+    } else {
+      selection_block.elements.push(
+        external_select_element('project_selection', 'Select a project')
+      );
+    }
   } else {
-    initial_repo_options_block = default_repo_option_block;
+    // If not even a repo is selected, then just show the repo select menu with no initial option!
+    selection_block.elements = [
+      external_select_element('repo_selection', 'Select a repository'),
+    ];
   }
 
-  console.log('initial_repo_options_block', initial_repo_options_block);
-
-  const project_options_blocks =
-    project_option_block_list.length !== 0
-      ? project_option_block_list
-      : [default_empty_project_option];
-
-  const column_options_blocks =
-    column_option_block_list.length !== 0
-      ? column_option_block_list
-      : [default_empty_column_option];
-
-  console.log('project_options_blocks', project_options_blocks);
-
-  const project_select_block = static_select_block(
-    'project_selection',
-    'Select a project',
-    project_options_blocks,
-  );
-
-  const column_select_block = static_select_block(
-    'column_selection',
-    'Select a column',
-    column_options_blocks,
-  );
+  console.log('type of selection block', typeof selection_block);
+  console.log('selection_block', selection_block);
 
   return {
     'type': 'home',
     'blocks': [
-      {
-        'type': 'actions',
-        'block_id': 'repo_proj_selection_block',
-        'elements': [
-          {
-            'action_id': 'repo_selection',
-            'type': 'external_select',
-            'min_query_length': 0,
-            'placeholder': {
-              'type': 'plain_text',
-              'text': 'Select a repository',
-              'emoji': true,
-            },
-            // If no default repo has been specified, don't select an initial value
-            ...(default_repo_option_block['value'] !== '' && {
-              'initial_option': initial_repo_options_block,
-            }),
-          },
-          ...(selected_repo_obj !== null ? [project_select_block] : []),
-          //   TODO Don't show the project select_menu until a repo selected
-          ...(selected_proj_num !== null ? [column_select_block] : []),
-        ],
-      },
+      selection_block,
       {
         'type': 'divider',
       },
@@ -171,3 +98,45 @@ module.exports = (
     ],
   };
 };
+
+/**
+ * Returns an object for the options: or initial_option: property of a select_menu
+ *
+ * @param {string} option_text
+ * @param {string} [option_val=option_text]
+ * @returns {object} An option object
+ */
+function option_obj(option_text, option_val = option_text) {
+  return {
+    'text': {
+      'type': 'plain_text',
+      'text': option_text,
+      'emoji': true,
+    },
+    'value': `${option_val}`,
+  };
+}
+
+/**
+ *
+ *
+ * @param {string} action_id
+ * @param {string} place_holder_text
+ * @param {object} [initial_option={}]
+ * @returns {{'action_id': string, 'type': string, 'min_query_length': number, 'placeholder': object, 'initial_option': object}} Select_block_object
+ */
+function external_select_element(action_id, place_holder_text, initial_option = {}) {
+  return {
+    'action_id': action_id,
+    'type': 'external_select',
+    'min_query_length': 0,
+    'placeholder': {
+      'type': 'plain_text',
+      'text': place_holder_text,
+      'emoji': true,
+    },
+    ...(Object.keys(initial_option).length !== 0 && {
+      'initial_option': initial_option,
+    }),
+  };
+}
