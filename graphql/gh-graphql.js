@@ -31,7 +31,7 @@ const init = async gh_variables => {
   );
 
   const installation_id = response.data.id;
-  console.log(installation_id);
+  console.log('repo installation id: ', installation_id);
 
   const auth = createAppAuth({
     id: process.env.APP_ID,
@@ -48,13 +48,22 @@ const init = async gh_variables => {
   has_init_run = true;
 };
 
-const call_gh_graphql = async (query, variables, gh_variables = undefined) => {
+const call_gh_graphql = async (query, variables) => {
   try {
     if (!has_init_run) {
-      if (gh_variables === undefined) {
-        throw 'You must provide an object with a repo owner and repository value for the init(gh_variables) function!';
+      const init_variables = {
+        repo_owner: variables.repo_owner,
+        repo_name: variables.repo_name,
+      };
+      if (
+        typeof init_variables.repo_owner === 'undefined' ||
+        typeof init_variables.repo_name === 'undefined'
+      ) {
+        throw Error(
+          'You must provide an object with a repo owner and repository value for the init(gh_variables) function!'
+        );
       } else {
-        await init(gh_variables);
+        await init(init_variables);
       }
     }
     const data = await graphqlWithAuth(query, variables);
