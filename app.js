@@ -157,17 +157,10 @@ const user_subscribed_repos_obj = {
 
 // Declaring some variables to be passed to the GraphQL APIs
 // TODO Remove hardcoding from this
-const variables_getFirstColumnInProject = Object.assign(
-  {project_name: 'Slack dummy-test'},
-  gh_variables_init
-);
-
-// // A list of labels that a repo has
-// // TODO Add this as part of the repo object
-// let repo_label_map;
-
-// The block that contains the possible label values
-let label_block = [];
+// const variables_getFirstColumnInProject = {
+//   project_name: 'Slack dummy-test',
+//   ...gh_variables_init,
+// };
 
 /* Maps a channel id -> array of users.
 The channel ID is that triage team's channel
@@ -177,11 +170,11 @@ const users_triage_team = {};
 
 // Untriaged label object
 // TODO Possible remove the name hardcoding
-const untriaged_label = {
-  name: 'untriaged',
-  column_id: '',
-  label_id: '',
-};
+// const untriaged_label = {
+//   name: 'untriaged',
+//   column_id: '',
+//   label_id: '',
+// };
 
 // !SECTION
 
@@ -215,15 +208,15 @@ const untriaged_label = {
 //   });
 
 // TODO: Add cards automatically to Needs Triage when they are labelled with the unlabelled tag
-graphql
-  .call_gh_graphql(
-    query.getFirstColumnInProject,
-    variables_getFirstColumnInProject,
-    gh_variables_init
-  )
-  .then(response => {
-    untriaged_label.column_id = response.repository.projects.nodes[0].columns.nodes[0].id;
-  });
+// graphql
+//   .call_gh_graphql(
+//     query.getFirstColumnInProject,
+//     variables_getFirstColumnInProject,
+//     gh_variables_init
+//   )
+//   .then(response => {
+//     untriaged_label.column_id = response.repository.projects.nodes[0].columns.nodes[0].id;
+//   });
 
 // !SECTION
 
@@ -292,11 +285,11 @@ app.action('button_open_map_modal', async ({ack, body, context, client}) => {
   // Here we acknowledge receipt
   await ack();
 
-  const trigger_id = body.trigger_id;
+  const {trigger_id} = body;
 
   await client.views.open({
     token: context.botToken,
-    trigger_id: trigger_id,
+    trigger_id,
     view: blocks.UsernameMapModal,
   });
 });
@@ -308,10 +301,10 @@ app.action('column_card_count_info', async ({ack, body, context, client}) => {
 
   const {trigger_id} = body;
   const project_number = parseInt(body.actions[0].value, 10);
-  const variables_getCardsByProjColumn = Object.assign(
-    {project_number: project_number},
-    gh_variables_init
-  );
+  const variables_getCardsByProjColumn = {
+    project_number,
+    ...gh_variables_init,
+  };
   const num_cards_per_column = await graphql.call_gh_graphql(
     query.getNumOfCardsPerColumn,
     variables_getCardsByProjColumn
@@ -591,7 +584,7 @@ app.action('label_list', async ({ack, body, context, client}) => {
 
       const repo_labels_map = user_subscribed_repos_obj.subscribed_repo_map.get(
         user_app_home_state_obj.get_selected_repo_path()
-      ).repo_label_map;
+      ).repo_label_obj.repo_label_map;
 
       const selected_label_ids = selected_label_names.map(
         label_name => repo_labels_map.get(label_name).id
@@ -775,7 +768,7 @@ app.options('label_list', async ({options, ack}) => {
     );
 
     const options_response = Array.from(
-      currently_selected_repo_map.repo_label_map.values()
+      currently_selected_repo_map.repo_label_obj.repo_label_map.values()
     ).map(label => {
       return {
         'text': {
@@ -876,8 +869,7 @@ app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
 
   console.log('selected_users_array', selected_users_array);
 
-  const selected_channel =
-    view.state.values.channel_select_input.triage_channel.selected_channel;
+  const {selected_channel} = view.state.values.channel_select_input.triage_channel;
 
   // Message to send user
   let msg = '';
@@ -1012,7 +1004,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
       channel: slack_user_id,
       text: `Whoops <@${slack_user_id}>, you're already subscribed to *${subscribe_repo_obj.repo_path}*`,
     });
-    console.error('User already subscribed to repo ' + subscribe_repo_obj.repo_path);
+    console.error(`User already subscribed to repo ${subscribe_repo_obj.repo_path}`);
   } else if (unsubscribe_repo !== null) {
     // ERROR! The user is trying to subscribe and unsubscribe from the same repo
     if (
@@ -1078,7 +1070,11 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
       const repo_data = await get_repo_data(subscribe_repo_obj);
       subscribe_repo_obj.repo_project_map = repo_data.repo_projects;
 
-      subscribe_repo_obj.repo_label_map = repo_data.repo_labels;
+      subscribe_repo_obj.repo_label_obj.repo_label_map = repo_data.repo_labels;
+      // TODO remove hardcoding here
+      subscribe_repo_obj.repo_label_obj.untriaged_label_id = repo_data.repo_labels.get(
+        'untriaged'
+      );
 
       subscribe_repo_obj.repo_id = repo_data.repo_id;
 
@@ -1132,6 +1128,8 @@ expressReceiver.router.post('/webhook', (req, res) => {
     const request = req.body;
     const {action} = request;
 
+    const repo_path = request.repository.full_name;
+
     // TODO: Handle other event types. Currently, it's just issue-related events
     if (req.headers['x-github-event'] === 'issues') {
       const issue_url = request.issue.html_url;
@@ -1142,8 +1140,11 @@ expressReceiver.router.post('/webhook', (req, res) => {
       const issue_create_date = new Date(request.issue.created_at);
       const issue_node_id = request.issue.node_id;
 
+      const repo_obj = user_subscribed_repos_obj.subscribed_repo_map.get(repo_path);
+
       // QUESTION: Should editing the issue also cause the untriaged label to be added?
-      if (action == 'opened' || action == 'reopened') {
+      if (action === 'opened' || action === 'reopened') {
+        const {untriaged_label_id} = repo_obj.repo_label_obj;
         const variables_addLabelToIssue = {
           element_node_id: issue_node_id,
           label_ids: [untriaged_label_id],
@@ -1228,7 +1229,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
   res.send('Webhook initial test was received');
 });
 
-//!SECTION
+// !SECTION
 
 /* -------------------------------------------------------------------------- */
 /*                          SECTION Where app starts                          */
@@ -1423,7 +1424,7 @@ function check_for_mentions(
  *
  * Creates a repo object
  * @param {{owner: string, name: string, repo: string}} subscribe_repo
- * @returns {{repo_owner: string, repo_name: string, repo_path: string, repo_label_map: array, repo_project_map: Map<string,object>}} A repo object
+ * @returns {{repo_owner: string, repo_name: string, repo_path: string, repo_label_obj: {untriaged_label_id: string, repo_label_map: Map<string,object>}, repo_project_map: Map<string,object>}} A repo object
  */
 function new_repo_obj(subscribe_repo) {
   const parsed_url = parseGH(subscribe_repo);
@@ -1435,7 +1436,10 @@ function new_repo_obj(subscribe_repo) {
     // The properties below have to be gotten from an API call
     // TODO builtin method in this object/class to do the API call
     repo_id: '',
-    repo_label_map: new Map(),
+    repo_label_obj: {
+      untriaged_label_id: '',
+      repo_label_map: new Map(),
+    },
     // Projects are mapped from project_name -> {project_id, project_columns_map:}
     repo_project_map: new Map(),
     // set_projects: project_list => {
@@ -1518,4 +1522,4 @@ function Graphql_call_error(error_type, error_list) {
   this.error_list = error_list;
 }
 
-//!SECTION
+// !SECTION
