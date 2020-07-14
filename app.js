@@ -238,17 +238,22 @@ app.event('app_home_opened', async ({event, context, client}) => {
     one project, select that by default */
 
     const default_repo_path = user_subscribed_repos_obj.default_repo;
-
-    // No repo is selected, set the selection to the default repo if one is set!
-    // TODO have this default selection option for projects and column too
+    // TODO optimize this
     if (
-      default_repo_path !== '' &&
-      user_app_home_state_obj.currently_selected_repo.repo_path === ''
+      user_app_home_state_obj.currently_selected_repo.repo_path === '' &&
+      user_subscribed_repos_obj.subscribed_repo_map.size !== 0
     ) {
-      user_app_home_state_obj.currently_selected_repo.set_repo(
-        user_subscribed_repos_obj.default_repo,
-        user_subscribed_repos_obj.subscribed_repo_map.get(default_repo_path).repo_id
-      );
+      if (default_repo_path === '') {
+        user_app_home_state_obj.currently_selected_repo.set_repo(
+          'All Untriaged',
+          'all_untriaged'
+        );
+      } else {
+        user_app_home_state_obj.currently_selected_repo.set_repo(
+          user_subscribed_repos_obj.default_repo,
+          user_subscribed_repos_obj.subscribed_repo_map.get(default_repo_path).repo_id
+        );
+      }
     }
 
     console.log('app_home user_app_home_state_obj', user_app_home_state_obj);
@@ -294,6 +299,33 @@ app.action('button_open_map_modal', async ({ack, body, context, client}) => {
   });
 });
 
+app.action(
+  'button_open_set_repo_defaults_modal',
+  async ({ack, body, context, client}) => {
+    // Here we acknowledge receipt
+    await ack();
+
+    // TODO: Check the value of the button, if it specifies a repo then set the repo_path
+    const selected_repo = {repo_path: undefined};
+
+    console.log(': ----------');
+    console.log('button_open_map_modal context', context);
+    console.log(': ----------');
+
+    console.log(': ----------');
+    console.log('button_open_map_modal context', context);
+    console.log(': ----------');
+
+    const {trigger_id} = body;
+
+    await client.views.open({
+      token: context.botToken,
+      trigger_id,
+      view: blocks.SetupRepoNewIssueDefaultsModal(selected_repo),
+    });
+  }
+);
+
 // Responds to the 'See number of cards by column' button on the home page
 app.action('column_card_count_info', async ({ack, body, context, client}) => {
   // Here we acknowledge receipt
@@ -325,8 +357,100 @@ app.action('column_card_count_info', async ({ack, body, context, client}) => {
   });
 });
 
+app.action('setup_default_modal_repo_selection', async ({ack, body, context, client}) => {
+  console.log(': ----------------');
+  console.log('setup_default_modal_repo_selection context', context);
+  console.log(': ----------------');
+
+  console.log(': ----------');
+  console.log('setup_default_modal_repo_selection body', body);
+  console.log(': ----------');
+
+  await ack();
+  try {
+    const action_body = body.actions[0];
+
+    const {selected_option} = action_body;
+
+    const selected_repo_path = selected_option.text.text;
+
+    // const selected_repo_id = selected_option.value;
+
+    console.log('selected_repo_path', selected_repo_path);
+
+    const selected_repo_obj = {
+      repo_path: selected_repo_path,
+      selected_project_name: undefined,
+    };
+    const updated_modal = blocks.SetupRepoNewIssueDefaultsModal(selected_repo_obj);
+
+    await client.views.update({
+      /* retrieves your xoxb token from context */
+      token: context.botToken,
+
+      /* View to be updated */
+      view_id: body.view.id,
+
+      /* the view payload that appears in the modal */
+      view: updated_modal,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+// app.action(
+//   'setup_default_modal_project_selection',
+//   async ({ack, body, context, client}) => {
+//     console.log(': ----------------');
+//     console.log('setup_default_modal_project_selection context', context);
+//     console.log(': ----------------');
+
+//     console.log(': ----------');
+//     console.log('setup_default_modal_project_selection body', body);
+//     console.log(': ----------');
+
+//     await ack();
+//     try {
+//       const action_body = body.actions[0];
+
+//       const {selected_option} = action_body;
+
+//       const selected_project_name = selected_option.text.text;
+//       // TODO remove hardcoding
+//       const repo_path = 'slackapi/dummy-kian-test-repo';
+
+//       const selected_repo_obj = {
+//         repo_path,
+//         selected_project_name,
+//       };
+
+//       console.log('selected_repo_obj', selected_repo_obj);
+
+//       const updated_modal = blocks.SetupRepoNewIssueDefaultsModal(selected_repo_obj);
+
+//       await client.views.update({
+//         /* retrieves your xoxb token from context */
+//         token: context.botToken,
+
+//         /* View to be updated */
+//         view_id: body.view.id,
+
+//         /* the view payload that appears in the modal */
+//         view: updated_modal,
+//       });
+//     } catch (error) {
+//       console.error(error);
+//     }
+//   }
+// );
+
+// app.action('setup_default_modal_label_list', async ({ack}) => ack());
+
+// app.action('setup_default_modal_column_selection', ({ack}) => ack());
+
 // Acknowledges arbitrary button clicks (ex. open a link in a new tab)
-app.action('link_button', ({ack}) => ack());
+app.action('link_button', async ({ack}) => ack());
 
 /* ------------- ANCHOR Responding to the repo name selection ------------ */
 
@@ -349,8 +473,6 @@ app.action('repo_selection', async ({ack, body, context, client}) => {
       selected_repo_path,
       selected_repo_id
     );
-
-    console.log('user_app_home_state_obj', user_app_home_state_obj);
 
     const updated_home_view = blocks.AppHomeBase(user_app_home_state_obj);
     // QUESTION: should i use views.update or views.publish to update the app home view?
@@ -399,23 +521,6 @@ app.action('project_selection', async ({ack, body, context, client}) => {
         .currently_selected_column
     );
     console.log(': ------------------------------------------------');
-
-    // // The actually array of issues extracted from the graphQL query
-    // const issue_array = project_column_obj_array[0].cards.nodes;
-
-    // console.log(issue_array);
-
-    // const column_id = issue_response.repository.project.columns.nodes[0].id;
-
-    // console.log(column_id);
-
-    /* The blocks that should be rendered as the Home Page. The new page is 
-    based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
-    // const home_view = blocks.AppHomeBase(
-    //   user_app_home_state_obj,
-    //   (issue_blocks = blocks.AppHomeIssue(issue_array, label_block)),
-    //   (more_info_blocks = blocks.AppHomeMoreInfoSection(project_id)),
-    // );
 
     const home_view = blocks.AppHomeBase(user_app_home_state_obj);
     // console.log(JSON.stringify(home_view.blocks, null, 4));
@@ -469,29 +574,6 @@ app.action('column_selection', async ({ack, body, context, client}) => {
 
     console.log('cards_in_selected_column', cards_in_selected_column);
 
-    // const selected_repo_path = user_app_home_state_obj.currently_selected_repo
-
-    // const selected_project = user_app_home_state_obj.currently_selected_project
-
-    // const user_subscribed_repos_obj.subscribed_repo_map.get(selected_repo_path)
-
-    // OLD
-    // const column_id = issue_response.repository.project.columns.nodes[0].id;
-
-    // console.log(column_id);
-
-    /* The blocks that should be rendered as the Home Page. The new page is 
-    based on the AppHomeBase but with the issue_blocks and more_info_blocks added to it! */
-    /* TODO change more info section so that it shows based on the column, it doesn't need to be a modal 
-    Also it shouldn't even need the API call anymore so just manually get that count */
-    // TODO Merge more info blocks with issue_blocks
-    // const home_view = blocks.AppHomeBase(
-    //   user_app_home_state_obj,
-    //   (issue_blocks = blocks.AppHomeIssue()),
-    //   // (issue_blocks = blocks.AppHomeIssue(cards_array, label_block)),
-    //   (more_info_blocks = blocks.AppHomeMoreInfoSection(project_number))
-    // );
-
     const card_blocks = blocks.AppHomeIssue(cards_in_selected_column);
     console.log(': ------------------------');
     console.log('card_blocks');
@@ -521,7 +603,7 @@ app.action('column_selection', async ({ack, body, context, client}) => {
 
 /* ------ TODO - add a clear all labels button ----- */
 
-app.action('label_list', async ({ack, body, context, client}) => {
+app.action('label_list', async ({ack, body}) => {
   await ack();
   console.log(': ----------------');
   console.log('body', body);
@@ -627,6 +709,50 @@ app.action('label_list', async ({ack, body, context, client}) => {
 app.options('repo_selection', async ({options, ack}) => {
   try {
     // TODO try using options directly
+    console.log('repo_selection options', options);
+
+    const subscribed_repos = user_subscribed_repos_obj.subscribed_repo_map;
+
+    console.log('subscribed_repos', subscribed_repos);
+
+    if (subscribed_repos.size !== 0) {
+      // const repo_options_block_list = Array.from(subscribed_repos.keys(), repo => {
+      //   return option_obj(repo);
+      // });
+      const repo_options_block_list = [
+        option_obj('All Untriaged', 'all_untriaged'),
+        ...Array.from(subscribed_repos.keys()).map(repo => {
+          return option_obj(repo);
+        }),
+      ];
+
+      console.log('repo_options_block_list', repo_options_block_list);
+
+      await ack({
+        options: repo_options_block_list,
+      });
+    } else {
+      const no_subscribed_repos_option = option_obj(
+        'No repo subscriptions found',
+        'no_subscribed_repos'
+      );
+      // REVIEW should I return the empty option or nothing at all?
+
+      await ack({
+        options: no_subscribed_repos_option,
+      });
+
+      // await ack();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+// Same as the repo_selection option, just has to be seperated for this action_id
+app.options('setup_default_modal_repo_selection', async ({options, ack}) => {
+  try {
+    // TODO try using options directly
     console.log('options', options);
 
     const subscribed_repos = user_subscribed_repos_obj.subscribed_repo_map;
@@ -703,11 +829,54 @@ app.options('project_selection', async ({options, ack}) => {
   }
 });
 
+// Same as the project_selection modal, just has to have a seperate action ID
+app.options('setup_default_modal_project_selection', async ({options, ack}) => {
+  try {
+    // TODO try using options directly
+    console.log('options', options);
+
+    const selected_repo_metadata_obj = JSON.parse(options.view.private_metadata);
+
+    const selected_repo_path = selected_repo_metadata_obj.repo_path;
+
+    const subscribed_repo_projects = user_subscribed_repos_obj.subscribed_repo_map.get(
+      selected_repo_path
+    ).repo_project_map;
+
+    if (subscribed_repo_projects.size !== 0) {
+      const project_options_block_list = Array.from(
+        subscribed_repo_projects.values()
+      ).map(project => {
+        return option_obj(project.name, project.id);
+      });
+
+      console.log('project_options_block_list', project_options_block_list);
+
+      await ack({
+        options: project_options_block_list,
+      });
+    } else {
+      const no_projects_option = option_obj('No projects found', 'no_projects');
+      // REVIEW should I return the empty option or nothing at all?
+
+      await ack({
+        options: no_projects_option,
+      });
+
+      // await ack();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 // Responding to a column_selection option with list of columns in a repo
 app.options('column_selection', async ({options, ack}) => {
   try {
     // TODO try using options directly
+    console.log(': ----------------');
     console.log('options', options);
+    console.log(': ----------------');
 
     const selected_repo_path = user_app_home_state_obj.currently_selected_repo.repo_path;
 
@@ -754,11 +923,63 @@ app.options('column_selection', async ({options, ack}) => {
   }
 });
 
-// !SECTION
+// Responding to a setup_default_modal_column_selection option with list of columns in a repo
+// app.options('setup_default_modal_column_selection', async ({options, ack}) => {
+//   try {
+//     // TODO try using options directly
+//     console.log(': ----------------');
+//     console.log('options', options);
+//     console.log(': ----------------');
+
+//     const selected_repo_metadata_obj = JSON.parse(options.view.private_metadata);
+
+//     const {repo_path} = selected_repo_metadata_obj;
+
+//     const {selected_project_name} = selected_repo_metadata_obj;
+
+//     console.log(': --------------------------------------------');
+//     console.log('selected_repo_metadata_obj', selected_repo_metadata_obj);
+//     console.log(': --------------------------------------------');
+
+//     const selected_project_columns = user_subscribed_repos_obj.subscribed_repo_map
+//       .get(repo_path)
+//       .repo_project_map.get(selected_project_name).columns;
+
+//     if (
+//       typeof selected_project_columns !== 'undefined' &&
+//       selected_project_columns.size !== 0
+//     ) {
+//       const column_options_block_list = Array.from(selected_project_columns.values()).map(
+//         column => {
+//           return option_obj(column.name, column.id);
+//         }
+//       );
+
+//       console.log('column_options_block_list', column_options_block_list);
+
+//       await ack({
+//         options: column_options_block_list,
+//       });
+//     } else {
+//       const no_columns_option = option_obj('No columns found', 'no_columns');
+//       console.log('no columns');
+//       // REVIEW should I return the empty option or nothing at all?
+
+//       await ack({
+//         options: no_columns_option,
+//       });
+
+//       // await ack();
+//     }
+//   } catch (error) {
+//     console.error(error);
+//   }
+// });
 
 app.options('label_list', async ({options, ack}) => {
   try {
     console.log('options', options);
+    // TODO if the options value specified a repo_path, then set that as the currently selected_repo_path
     // Get information specific to a team or channel
     const currently_selected_repo_path =
       user_app_home_state_obj.currently_selected_repo.repo_path;
@@ -785,6 +1006,41 @@ app.options('label_list', async ({options, ack}) => {
     console.error(error);
   }
 });
+
+// Both label list options do the same thing, they just have to be seperated by action ID
+app.options('setup_default_modal_label_list', async ({options, ack}) => {
+  try {
+    console.log('options', options);
+
+    const selected_repo_metadata_obj = JSON.parse(options.view.private_metadata);
+    // TODO if the options value specified a repo_path, then set that as the currently selected_repo_path
+    // Get information specific to a team or channel
+    const currently_selected_repo_path = selected_repo_metadata_obj.repo_path;
+
+    const currently_selected_repo_map = user_subscribed_repos_obj.subscribed_repo_map.get(
+      currently_selected_repo_path
+    );
+
+    const options_response = Array.from(
+      currently_selected_repo_map.repo_label_obj.repo_label_map.values()
+    ).map(label => {
+      return {
+        'text': {
+          'type': 'plain_text',
+          'text': label.name,
+        },
+        'value': label.id,
+      };
+    });
+    await ack({
+      'options': options_response,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+// !SECTION
 
 // !SECTION Listening for events/options/actions
 
@@ -1071,10 +1327,19 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
       subscribe_repo_obj.repo_project_map = repo_data.repo_projects;
 
       subscribe_repo_obj.repo_label_obj.repo_label_map = repo_data.repo_labels;
+      // Set the untriaged label_id. Currently hard coded to a label with the name untriaged. This will be fixed so that the label can be named whatever the user wants.
       // TODO remove hardcoding here
-      subscribe_repo_obj.repo_label_obj.untriaged_label_id = repo_data.repo_labels.get(
+      subscribe_repo_obj.repo_label_obj.untriaged_label.label_id = repo_data.repo_labels.get(
         'untriaged'
-      );
+      ).id;
+
+      // Set the first column of the first project as the column for new issue cards to be created in
+      // TODO remove the first column hardcoding and let the user select their preferred default proj and column when subscribing.
+      // TODO HIGH Send a message to the user as soon as subscription is complete so they can set up the untriaged label and the untriaged column
+      // subscribe_repo_obj.repo_label_obj.untriaged_label.untriaged_column_id = subscribe_repo_obj.repo_project_map.values();
+      // very temp hardcoding hehe
+      subscribe_repo_obj.repo_label_obj.untriaged_label.untriaged_column_id =
+        'MDEzOlByb2plY3RDb2x1bW45NjMyODQ0';
 
       subscribe_repo_obj.repo_id = repo_data.repo_id;
 
@@ -1095,7 +1360,11 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
           token: context.botToken,
           channel: slack_user_id,
           // TODO Check if mentions are setup and change the message based on that
-          text: `<@${slack_user_id}>, you've successfully subscribed to *${subscribe_repo_obj.repo_path}*`,
+          text: `<@${slack_user_id}>, you've successfully subscribed to *${subscribe_repo_obj.repo_path}*. Make sure you set up the *New Issue defaults* for this repo using the global shortcut so that I can automatically assign newly-created issues to a project and column of your choice as soon as they are created!`,
+          blocks: blocks.SetupRepoDefaultsMessage(
+            slack_user_id,
+            subscribe_repo_obj.repo_path
+          ),
         });
       } catch (error) {
         console.error(error);
@@ -1107,6 +1376,42 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
   console.log('user_subscribed_repos_obj', user_subscribed_repos_obj);
   console.log('current_subscribed_repos', current_subscribed_repos);
   console.log('subscribe_repo_obj', subscribe_repo_obj);
+});
+
+app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => {
+  // Acknowledge the view_submission event
+  await ack();
+
+  const slack_user_id = body.user.id;
+
+  const view_values = view.state.values;
+
+  const default_untriaged_issues_label =
+    view_values.untriaged_label_block_input.setup_default_modal_label_list
+      .selected_option;
+
+  const default_untriaged_issues_project =
+    view_values.untriaged_project_block_input.setup_default_modal_project_selection
+      .selected_option;
+
+  console.log(': --------------------------------------------------------------');
+  console.log('default_untriaged_issues_label', default_untriaged_issues_label);
+  console.log(': --------------------------------------------------------------');
+
+  console.log(': ------------------------------------------------------------------');
+  console.log('default_untriaged_issues_project', default_untriaged_issues_project);
+  console.log(': ------------------------------------------------------------------');
+
+  // Success! Message the user
+  try {
+    await app.client.chat.postMessage({
+      token: context.botToken,
+      channel: slack_user_id,
+      text: `Hi <@${slack_user_id}>, the default label and project for new/untriaged issues was assigned successfully!`,
+    });
+  } catch (error) {
+    console.error(error);
+  }
 });
 // !SECTION Listening for view submissions
 /* -------------------------------------------------------------------------- */
@@ -1129,6 +1434,9 @@ expressReceiver.router.post('/webhook', (req, res) => {
     const {action} = request;
 
     const repo_path = request.repository.full_name;
+    console.log(': --------------------');
+    console.log('repo_path', repo_path);
+    console.log(': --------------------');
 
     // TODO: Handle other event types. Currently, it's just issue-related events
     if (req.headers['x-github-event'] === 'issues') {
@@ -1141,10 +1449,13 @@ expressReceiver.router.post('/webhook', (req, res) => {
       const issue_node_id = request.issue.node_id;
 
       const repo_obj = user_subscribed_repos_obj.subscribed_repo_map.get(repo_path);
+      console.log(': ------------------');
+      console.log('repo_obj', repo_obj);
+      console.log(': ------------------');
 
       // QUESTION: Should editing the issue also cause the untriaged label to be added?
       if (action === 'opened' || action === 'reopened') {
-        const {untriaged_label_id} = repo_obj.repo_label_obj;
+        const untriaged_label_id = repo_obj.repo_label_obj.untriaged_label.label_id;
         const variables_addLabelToIssue = {
           element_node_id: issue_node_id,
           label_ids: [untriaged_label_id],
@@ -1170,12 +1481,20 @@ expressReceiver.router.post('/webhook', (req, res) => {
         // const issue_label_array = request.issue.labels;
 
         const label_id = request.label.node_id;
-        console.log(label_id);
-        console.log(untriaged_label.label_id);
+        const {untriaged_label} = repo_obj.repo_label_obj;
+
+        console.log(': ------------------');
+        console.log('label_id', label_id);
+        console.log(': ------------------');
+
+        console.log(': --------------------------------------------------');
+        console.log('untriaged_label id', untriaged_label.label_id);
+        console.log(': --------------------------------------------------');
+
         if (label_id === untriaged_label.label_id) {
           const addCardToColumn_variables = {
             issue: {
-              projectColumnId: untriaged_label.column_id,
+              projectColumnId: untriaged_label.untriaged_column_id,
               contentId: issue_node_id,
             },
           };
@@ -1424,7 +1743,7 @@ function check_for_mentions(
  *
  * Creates a repo object
  * @param {{owner: string, name: string, repo: string}} subscribe_repo
- * @returns {{repo_owner: string, repo_name: string, repo_path: string, repo_label_obj: {untriaged_label_id: string, repo_label_map: Map<string,object>}, repo_project_map: Map<string,object>}} A repo object
+ * @returns {{repo_owner: string, repo_name: string, repo_path: string, repo_label_obj: {untriaged_label: {label_id: string, label_name: string, untriaged_column_id: string}, repo_label_map: Map<string,object>}, repo_project_map: Map<string,object>}} A repo object
  */
 function new_repo_obj(subscribe_repo) {
   const parsed_url = parseGH(subscribe_repo);
@@ -1437,7 +1756,11 @@ function new_repo_obj(subscribe_repo) {
     // TODO builtin method in this object/class to do the API call
     repo_id: '',
     repo_label_obj: {
-      untriaged_label_id: '',
+      untriaged_label: {
+        label_id: '',
+        label_name: '',
+        untriaged_column_id: '',
+      },
       repo_label_map: new Map(),
     },
     // Projects are mapped from project_name -> {project_id, project_columns_map:}

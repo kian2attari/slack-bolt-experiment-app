@@ -1,17 +1,14 @@
 module.exports = (subscribed_repos_list = new Map()) => {
-  let current_subscriptions_options = Array.from(
-    subscribed_repos_list,
-    repo_path => {
-      return {
-        'text': {
-          'type': 'plain_text',
-          'text': repo_path,
-          'emoji': true,
-        },
-        'value': repo_path,
-      };
-    },
-  );
+  const current_subscriptions_options = Array.from(subscribed_repos_list, repo_path => {
+    return {
+      'text': {
+        'type': 'plain_text',
+        'text': repo_path,
+        'emoji': true,
+      },
+      'value': repo_path,
+    };
+  });
 
   const default_checkbox_option_block = {
     'text': {
@@ -63,8 +60,7 @@ module.exports = (subscribed_repos_list = new Map()) => {
           'type': 'plain_text_input',
           'placeholder': {
             'type': 'plain_text',
-            'text':
-              'ex: slackapi/bolt-js or git@github.com:slackapi/bolt-js.git',
+            'text': 'ex: slackapi/bolt-js or git@github.com:slackapi/bolt-js.git',
             'emoji': true,
           },
         },
