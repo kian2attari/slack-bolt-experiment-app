@@ -229,7 +229,7 @@ const users_triage_team = {};
 
 // Loads the app home when the app home is opened!
 // ANCHOR App home opened
-actions_listener.app_home.app_home_opened(
+events_listener.app_home.app_home_opened(
   app,
   user_subscribed_repos_obj,
   user_app_home_state_obj
@@ -239,46 +239,10 @@ actions_listener.app_home.app_home_opened(
 
 /* ------------- SECTION Listening for actions ------------ */
 // Opens the username map modal
-app.action('open_map_modal_button', async ({ack, body, context, client}) => {
-  // Here we acknowledge receipt
-  await ack();
-
-  const {trigger_id} = body;
-
-  await client.views.open({
-    token: context.botToken,
-    trigger_id,
-    view: blocks.UsernameMapModal,
-  });
-});
+actions_listener.buttons.open_map_modal_button(app);
 
 // Opens the modal for setting default repos
-app.action(
-  'open_set_repo_defaults_modal_button',
-  async ({ack, body, context, client}) => {
-    // Here we acknowledge receipt
-    await ack();
-
-    // TODO: Check the value of the button, if it specifies a repo then set the repo_path
-    const selected_repo = {repo_path: undefined};
-
-    console.log(': ----------');
-    console.log('open_map_modal_button context', context);
-    console.log(': ----------');
-
-    console.log(': ----------');
-    console.log('open_map_modal_button context', context);
-    console.log(': ----------');
-
-    const {trigger_id} = body;
-
-    await client.views.open({
-      token: context.botToken,
-      trigger_id,
-      view: blocks.SetupRepoNewIssueDefaultsModal(selected_repo),
-    });
-  }
-);
+actions_listener.buttons.open_set_repo_defaults_modal_button(app);
 
 // The app home 'Untriaged' filter button
 app.action('show_untriaged_filter_button', async ({ack, body, context, client}) => {
@@ -692,50 +656,9 @@ app.action('label_list', async ({ack, body}) => {
 // !SECTION
 
 /* ----------------------- SECTION Listen for options ----------------------- */
-
+// TODO HIGH first add options obj to the helper functions and pull everything from there
 // Responding to a repo_selection options with list of repos
-app.options('repo_selection', async ({options, ack}) => {
-  try {
-    // TODO try using options directly
-    console.log('repo_selection options', options);
-
-    const subscribed_repos = user_subscribed_repos_obj.subscribed_repo_map;
-
-    console.log('subscribed_repos', subscribed_repos);
-
-    if (subscribed_repos.size !== 0) {
-      // const repo_options_block_list = Array.from(subscribed_repos.keys(), repo => {
-      //   return option_obj(repo);
-      // });
-      const repo_options_block_list = [
-        option_obj('All Untriaged', 'all_untriaged'),
-        ...Array.from(subscribed_repos.keys()).map(repo => {
-          return option_obj(repo);
-        }),
-      ];
-
-      console.log('repo_options_block_list', repo_options_block_list);
-
-      await ack({
-        options: repo_options_block_list,
-      });
-    } else {
-      const no_subscribed_repos_option = option_obj(
-        'No repo subscriptions found',
-        'no_subscribed_repos'
-      );
-      // REVIEW should I return the empty option or nothing at all?
-
-      await ack({
-        options: no_subscribed_repos_option,
-      });
-
-      // await ack();
-    }
-  } catch (error) {
-    console.error(error);
-  }
-});
+options_listener.repo_proj_col_selections.repo_selection(app, user_subscribed_repos_obj);
 
 // Same as the repo_selection option, just has to be seperated for this action_id
 app.options('setup_default_modal_repo_selection', async ({options, ack}) => {
