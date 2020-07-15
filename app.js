@@ -5,6 +5,7 @@ const {query, mutation, graphql} = require('./graphql');
 const blocks = require('./blocks');
 const safeAccess = require('./helper-functions/safeAccessUndefinedProperty');
 const {actions_listener, events_listener, options_listener} = require('./listeners');
+const {UserAppHomeState} = require('./models');
 
 // Create a Bolt Receiver
 const expressReceiver = new ExpressReceiver({
@@ -47,96 +48,10 @@ const temp_channel_id = 'C015FH00GVA';
 // Internal object to store the current state of selections on App Home
 // TODO make the repo_path,repo_id etc properties private or just turn this whole obj into a class
 // TODO possible replace this entirely with the private_metadata property
-const user_app_home_state_obj = {
-  currently_selected_repo: {
-    repo_path: '',
-    repo_id: '',
-    currently_selected_project: {
-      project_id: '',
-      project_name: '',
-      set_project(name, id) {
-        try {
-          this.project_id = id;
-          this.project_name = name;
-          this.currently_selected_column.clear_column();
-          return true;
-        } catch (err) {
-          console.error(err);
-          return false;
-        }
-      },
-      clear_project() {
-        try {
-          this.project_id = '';
-          this.project_name = '';
-          this.currently_selected_column.clear_column();
-          return true;
-        } catch (err) {
-          console.error(err);
-          return false;
-        }
-      },
-      currently_selected_column: {
-        column_id: '',
-        column_name: '',
-        set_column(name, id) {
-          try {
-            this.column_name = name;
-            this.column_id = id;
-            return true;
-          } catch (error) {
-            console.error(error);
-            return false;
-          }
-        },
-        clear_column() {
-          try {
-            this.column_id = '';
-            this.column_name = '';
-            return true;
-          } catch (err) {
-            console.error(err);
-            return false;
-          }
-        },
-      },
-    },
-    // Object methods for setting a new repo
-    set_repo(path, id) {
-      try {
-        this.repo_path = path;
-        this.repo_id = id;
-        this.currently_selected_project.clear_project();
-        return true;
-      } catch (error) {
-        console.error(error);
-        return false;
-      }
-    },
-    // Clearing the repo
-    clear_repo() {
-      try {
-        this.repo_path = '';
-        this.repo_id = '';
-        this.currently_selected_project.clear_project();
-        return true;
-      } catch (error) {
-        console.error(error);
-        return false;
-      }
-    },
-  },
-  get_selected_repo_path() {
-    return this.currently_selected_repo.repo_path;
-  },
-  get_selected_project_name() {
-    return this.currently_selected_repo.currently_selected_project.project_name;
-  },
-  get_selected_column_name() {
-    return this.currently_selected_repo.currently_selected_project
-      .currently_selected_column.column_name;
-  },
-};
+const user_app_home_state_obj = new UserAppHomeState();
+console.log(': ----------------------------------------');
+console.log('user_app_home_state_obj', user_app_home_state_obj);
+console.log(': ----------------------------------------');
 
 // Object that details the repos a user is subscribed to and their preferred default repo. The default repo is automatically picked on App Home load
 // TODO This should be persistent, pull it from the DB.
@@ -1143,7 +1058,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
         .selected_options[0].value
   );
 
-  console.log('default repo bool: ' + default_repo_value);
+  console.log('default repo bool:', default_repo_value);
 
   const unsubscribe_repo = safeAccess(
     () => unsubscribe_block.unsubscribe_repos_input.selected_option.value
@@ -1154,9 +1069,20 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
     return;
   }
 
-  const subscribe_repo_obj =
-    // TODO project list
-    typeof subscribe_repo !== 'undefined' ? new_repo_obj(subscribe_repo) : null;
+  let subscribe_repo_obj = {};
+  try {
+    subscribe_repo_obj =
+      typeof subscribe_repo !== 'undefined' ? new_repo_obj(subscribe_repo) : null;
+  } catch (error) {
+    console.error(error);
+    app.client.chat.postMessage({
+      token: context.botToken,
+      channel: slack_user_id,
+      // TODO Check if mentions are setup and change the message based on that
+      text: `*${subscribe_repo}* doesn't seem to be a valid repo. Please check your spelling <@${slack_user_id}>.`,
+    });
+    return;
+  }
 
   console.log('user_subscribed_repos_obj before', user_subscribed_repos_obj);
 
@@ -1290,7 +1216,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
     }
   }
   console.log('user_subscribed_repos_obj', user_subscribed_repos_obj);
-  console.log('current_subscribed_repos', current_subscribed_repos);
+  console.log('here current_subscribed_repos', current_subscribed_repos);
   console.log('subscribe_repo_obj', subscribe_repo_obj);
 });
 
@@ -1710,12 +1636,13 @@ function check_for_mentions(
  * @returns {{repo_owner: string, repo_name: string, repo_path: string, untriaged_settings: { label_id: string, label_name: string, repo_default_untriaged_project: {project_name:string, project_id:string }}, repo_label_map: Map<string,object>, repo_project_map: Map<string,object>}} A repo object
  */
 function new_repo_obj(subscribe_repo) {
-  const parsed_url = parseGH(subscribe_repo);
+  const {owner, name, repo} = parseGH(subscribe_repo);
+  if (!(owner && name && repo)) throw new Error('Invalid GitHub repo URL!');
   // TODO fix the methods
   const repo_obj = {
-    repo_owner: parsed_url.owner,
-    repo_name: parsed_url.name,
-    repo_path: parsed_url.repo,
+    repo_owner: owner,
+    repo_name: name,
+    repo_path: repo,
     // The properties below have to be gotten from an API call
     // TODO builtin method in this object/class to do the API call
     repo_id: '',
