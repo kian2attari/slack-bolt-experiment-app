@@ -1,3 +1,6 @@
+// eslint-disable-next-line import/no-useless-path-segments
+const blocks = require('../blocks');
+
 module.exports = (
   user_app_home_state_obj,
   issue_blocks = undefined,
@@ -89,7 +92,7 @@ module.exports = (
     external_select_element(
       'repo_selection',
       'Select a repository',
-      option_obj(repo_selection.repo_path, repo_selection.repo_id)
+      blocks.SubBlocks.option_obj(repo_selection.repo_path, repo_selection.repo_id)
     ),
   ];
 
@@ -124,7 +127,10 @@ module.exports = (
       external_select_element(
         'project_selection',
         'Select a project',
-        option_obj(project_selection.project_name, project_selection.project_id)
+        blocks.SubBlocks.option_obj(
+          project_selection.project_name,
+          project_selection.project_id
+        )
       )
     );
     const column_selection = project_selection.currently_selected_column || null;
@@ -134,7 +140,10 @@ module.exports = (
         external_select_element(
           'column_selection',
           'Select a column',
-          option_obj(column_selection.column_name, column_selection.column_id)
+          blocks.SubBlocks.option_obj(
+            column_selection.column_name,
+            column_selection.column_id
+          )
         )
       );
     } else {
@@ -178,24 +187,6 @@ module.exports = (
 };
 
 // TODO These are declared as functions so that they can be abstracted into their own modules if they happen to be used across different files
-
-/**
- * Returns an object for the options: or initial_option: property of a select_menu
- *
- * @param {string} option_text
- * @param {string} [option_val=option_text]
- * @returns {object} An option object
- */
-function option_obj(option_text, option_val = option_text) {
-  return {
-    'text': {
-      'type': 'plain_text',
-      'text': option_text,
-      'emoji': true,
-    },
-    'value': `${option_val}`,
-  };
-}
 
 /**
  *

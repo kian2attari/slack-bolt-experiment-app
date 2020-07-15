@@ -9,4 +9,5 @@ module.exports = {
   UsernameMapMessage: require('./UsernameMapMessage'),
   UsernameMapModal: require('./UsernameMapModal'),
   ModifyRepoSubscriptionsModal: require('./ModifyRepoSubscriptionsModal'),
+  SubBlocks: require('./SubBlocks'),
 };

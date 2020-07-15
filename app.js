@@ -38,10 +38,10 @@ const temp_channel_id = 'C015FH00GVA';
 
 // Example repo object that would be an element in the subscribed_repo_map
 // TODO Remove hardcoding of the init variables. They should be based on subscribed repos.
-const gh_variables_init = {
-  repo_owner: 'slackapi',
-  repo_name: 'dummy-kian-test-repo',
-};
+// const gh_variables_init = {
+//   repo_owner: 'slackapi',
+//   repo_name: 'dummy-kian-test-repo',
+// };
 
 // Selection state is stored in the order Repo->Project->Column.
 // Internal object to store the current state of selections on App Home
@@ -639,11 +639,7 @@ app.action('label_list', async ({ack, body}) => {
 
       if (selected_label_ids.length !== 0) {
         await graphql.call_gh_graphql(mutation.clearAllLabels, variables_clearAllLabels);
-        graphql.call_gh_graphql(
-          mutation.addLabelToIssue,
-          variables_addLabelToIssue,
-          gh_variables_init
-        );
+        graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue);
 
         // If successful, make sure to pull the new labels/change their state in the object. Tho it's best to rely on the webhooks
       }
@@ -672,10 +668,10 @@ app.options('setup_default_modal_repo_selection', async ({options, ack}) => {
 
     if (subscribed_repos.size !== 0) {
       // const repo_options_block_list = Array.from(subscribed_repos.keys(), repo => {
-      //   return option_obj(repo);
+      //   return blocks.SubBlocks.option_obj(repo);
       // });
       const repo_options_block_list = Array.from(subscribed_repos.keys()).map(repo => {
-        return option_obj(repo);
+        return blocks.SubBlocks.option_obj(repo);
       });
 
       console.log('repo_options_block_list', repo_options_block_list);
@@ -684,7 +680,7 @@ app.options('setup_default_modal_repo_selection', async ({options, ack}) => {
         options: repo_options_block_list,
       });
     } else {
-      const no_subscribed_repos_option = option_obj(
+      const no_subscribed_repos_option = blocks.SubBlocks.option_obj(
         'No repo subscriptions found',
         'no_subscribed_repos'
       );
@@ -717,7 +713,7 @@ app.options('project_selection', async ({options, ack}) => {
       const project_options_block_list = Array.from(
         subscribed_repo_projects.values()
       ).map(project => {
-        return option_obj(project.name, project.id);
+        return blocks.SubBlocks.option_obj(project.name, project.id);
       });
 
       console.log('project_options_block_list', project_options_block_list);
@@ -726,7 +722,10 @@ app.options('project_selection', async ({options, ack}) => {
         options: project_options_block_list,
       });
     } else {
-      const no_projects_option = option_obj('No projects found', 'no_projects');
+      const no_projects_option = blocks.SubBlocks.option_obj(
+        'No projects found',
+        'no_projects'
+      );
       // REVIEW should I return the empty option or nothing at all?
 
       await ack({
@@ -758,7 +757,7 @@ app.options('setup_default_modal_project_selection', async ({options, ack}) => {
       const project_options_block_list = Array.from(
         subscribed_repo_projects.values()
       ).map(project => {
-        return option_obj(project.name, project.id);
+        return blocks.SubBlocks.option_obj(project.name, project.id);
       });
 
       console.log('project_options_block_list', project_options_block_list);
@@ -767,7 +766,10 @@ app.options('setup_default_modal_project_selection', async ({options, ack}) => {
         options: project_options_block_list,
       });
     } else {
-      const no_projects_option = option_obj('No projects found', 'no_projects');
+      const no_projects_option = blocks.SubBlocks.option_obj(
+        'No projects found',
+        'no_projects'
+      );
       // REVIEW should I return the empty option or nothing at all?
 
       await ack({
@@ -809,7 +811,7 @@ app.options('column_selection', async ({options, ack}) => {
     ) {
       const column_options_block_list = Array.from(selected_project_columns.values()).map(
         column => {
-          return option_obj(column.name, column.id);
+          return blocks.SubBlocks.option_obj(column.name, column.id);
         }
       );
 
@@ -819,7 +821,10 @@ app.options('column_selection', async ({options, ack}) => {
         options: column_options_block_list,
       });
     } else {
-      const no_columns_option = option_obj('No columns found', 'no_columns');
+      const no_columns_option = blocks.SubBlocks.option_obj(
+        'No columns found',
+        'no_columns'
+      );
       console.log('no columns');
       // REVIEW should I return the empty option or nothing at all?
 
@@ -862,7 +867,7 @@ app.options('column_selection', async ({options, ack}) => {
 //     ) {
 //       const column_options_block_list = Array.from(selected_project_columns.values()).map(
 //         column => {
-//           return option_obj(column.name, column.id);
+//           return blocks.SubBlocks.option_obj(column.name, column.id);
 //         }
 //       );
 
@@ -872,7 +877,7 @@ app.options('column_selection', async ({options, ack}) => {
 //         options: column_options_block_list,
 //       });
 //     } else {
-//       const no_columns_option = option_obj('No columns found', 'no_columns');
+//       const no_columns_option = blocks.SubBlocks.option_obj('No columns found', 'no_columns');
 //       console.log('no columns');
 //       // REVIEW should I return the empty option or nothing at all?
 
@@ -1406,7 +1411,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
         const addLabelMutation = graphql.call_gh_graphql(
           mutation.addLabelToIssue,
           variables_addLabelToIssue,
-          gh_variables_init
+          {repo_owner: repo_obj.repo_owner, repo_name: repo_obj.repo_name}
         );
 
         // TODO: Create a card in the org-wide repo to indicate the presence of this untriaged issue
@@ -1791,17 +1796,6 @@ async function get_repo_data(repo_obj) {
   console.log('processed_object', processed_object);
 
   return processed_object;
-}
-
-function option_obj(option_text, option_val = option_text) {
-  return {
-    'text': {
-      'type': 'plain_text',
-      'text': option_text,
-      'emoji': true,
-    },
-    'value': option_val,
-  };
 }
 
 function Graphql_call_error(error_type, error_list) {

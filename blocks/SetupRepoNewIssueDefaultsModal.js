@@ -1,3 +1,6 @@
+// eslint-disable-next-line import/no-useless-path-segments
+const blocks = require('../blocks');
+
 module.exports = (
   selected_repo = {repo_path: undefined, selected_project_name: undefined}
 ) => {
@@ -45,7 +48,7 @@ module.exports = (
           },
           'action_id': 'setup_default_modal_repo_selection',
           ...(typeof selected_repo.repo_path !== 'undefined'
-            ? {'initial_option': option_obj(selected_repo.repo_path)}
+            ? {'initial_option': blocks.SubBlocks.option_obj(selected_repo.repo_path)}
             : {}),
         },
       },
@@ -132,22 +135,4 @@ function set_label_project_column_blocks() {
     //     ]
     //   : []),
   ];
-}
-
-/**
- * Returns an object for the options: or initial_option: property of a select_menu
- *
- * @param {string} option_text
- * @param {string} [option_val=option_text]
- * @returns {object} An option object
- */
-function option_obj(option_text, option_val = option_text) {
-  return {
-    'text': {
-      'type': 'plain_text',
-      'text': option_text,
-      'emoji': true,
-    },
-    'value': `${option_val}`,
-  };
 }
