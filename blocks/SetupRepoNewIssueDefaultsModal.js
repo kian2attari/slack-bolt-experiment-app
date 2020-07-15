@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-useless-path-segments
-const blocks = require('../blocks');
+const {SubBlocks} = require('../blocks');
 
 module.exports = (
   selected_repo = {repo_path: undefined, selected_project_name: undefined}
@@ -48,7 +48,7 @@ module.exports = (
           },
           'action_id': 'setup_default_modal_repo_selection',
           ...(typeof selected_repo.repo_path !== 'undefined'
-            ? {'initial_option': blocks.SubBlocks.option_obj(selected_repo.repo_path)}
+            ? {'initial_option': SubBlocks.option_obj(selected_repo.repo_path)}
             : {}),
         },
       },

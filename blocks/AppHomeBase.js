@@ -1,5 +1,4 @@
-// eslint-disable-next-line import/no-useless-path-segments
-const blocks = require('../blocks');
+const SubBlocks = require('./SubBlocks');
 
 module.exports = (
   user_app_home_state_obj,
@@ -92,7 +91,7 @@ module.exports = (
     external_select_element(
       'repo_selection',
       'Select a repository',
-      blocks.SubBlocks.option_obj(repo_selection.repo_path, repo_selection.repo_id)
+      SubBlocks.option_obj(repo_selection.repo_path, repo_selection.repo_id)
     ),
   ];
 
@@ -127,10 +126,7 @@ module.exports = (
       external_select_element(
         'project_selection',
         'Select a project',
-        blocks.SubBlocks.option_obj(
-          project_selection.project_name,
-          project_selection.project_id
-        )
+        SubBlocks.option_obj(project_selection.project_name, project_selection.project_id)
       )
     );
     const column_selection = project_selection.currently_selected_column || null;
@@ -140,10 +136,7 @@ module.exports = (
         external_select_element(
           'column_selection',
           'Select a column',
-          blocks.SubBlocks.option_obj(
-            column_selection.column_name,
-            column_selection.column_id
-          )
+          SubBlocks.option_obj(column_selection.column_name, column_selection.column_id)
         )
       );
     } else {

@@ -1,4 +1,4 @@
-const blocks = require('../../blocks');
+const {SubBlocks} = require('../../blocks');
 
 function repo_selection(app, user_subscribed_repos_obj) {
   app.options('repo_selection', async ({options, ack}) => {
@@ -15,9 +15,9 @@ function repo_selection(app, user_subscribed_repos_obj) {
         //   return blocks.SubBlocks.option_obj(repo);
         // });
         const repo_options_block_list = [
-          blocks.SubBlocks.option_obj('All Untriaged', 'all_untriaged'),
+          SubBlocks.option_obj('All Untriaged', 'all_untriaged'),
           ...Array.from(subscribed_repos.keys()).map(repo => {
-            return blocks.SubBlocks.option_obj(repo);
+            return SubBlocks.option_obj(repo);
           }),
         ];
 
@@ -27,7 +27,7 @@ function repo_selection(app, user_subscribed_repos_obj) {
           options: repo_options_block_list,
         });
       } else {
-        const no_subscribed_repos_option = blocks.SubBlocks.option_obj(
+        const no_subscribed_repos_option = SubBlocks.option_obj(
           'No repo subscriptions found',
           'no_subscribed_repos'
         );
