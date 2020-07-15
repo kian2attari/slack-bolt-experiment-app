@@ -69,27 +69,6 @@ const user_subscribed_repos_obj = {
   subscribed_repo_map: new Map(),
 };
 
-// Declaring some variables to be passed to the GraphQL APIs
-// TODO Remove hardcoding from this
-// const variables_getFirstColumnInProject = {
-//   project_name: 'Slack dummy-test',
-//   ...gh_variables_init,
-// };
-
-/* Maps a channel id -> array of users.
-The channel ID is that triage team's channel
-for discussing and recieving team-wide notifs,
-and the array of users are the triage people */
-const users_triage_team = {};
-
-// Untriaged label object
-// TODO Possible remove the name hardcoding
-// const untriaged_label = {
-//   name: 'untriaged',
-//   column_id: '',
-//   label_id: '',
-// };
-
 // !SECTION
 
 /* -------------------------------------------------------------------------- */
@@ -754,59 +733,6 @@ app.options('column_selection', async ({options, ack}) => {
   }
 });
 
-// Responding to a setup_default_modal_column_selection option with list of columns in a repo
-// app.options('setup_default_modal_column_selection', async ({options, ack}) => {
-//   try {
-//     // TODO try using options directly
-//     console.log(': ----------------');
-//     console.log('options', options);
-//     console.log(': ----------------');
-
-//     const selected_repo_metadata_obj = JSON.parse(options.view.private_metadata);
-
-//     const {repo_path} = selected_repo_metadata_obj;
-
-//     const {selected_project_name} = selected_repo_metadata_obj;
-
-//     console.log(': --------------------------------------------');
-//     console.log('selected_repo_metadata_obj', selected_repo_metadata_obj);
-//     console.log(': --------------------------------------------');
-
-//     const selected_project_columns = user_subscribed_repos_obj.subscribed_repo_map
-//       .get(repo_path)
-//       .repo_project_map.get(selected_project_name).columns;
-
-//     if (
-//       typeof selected_project_columns !== 'undefined' &&
-//       selected_project_columns.size !== 0
-//     ) {
-//       const column_options_block_list = Array.from(selected_project_columns.values()).map(
-//         column => {
-//           return blocks.SubBlocks.option_obj(column.name, column.id);
-//         }
-//       );
-
-//       console.log('column_options_block_list', column_options_block_list);
-
-//       await ack({
-//         options: column_options_block_list,
-//       });
-//     } else {
-//       const no_columns_option = blocks.SubBlocks.option_obj('No columns found', 'no_columns');
-//       console.log('no columns');
-//       // REVIEW should I return the empty option or nothing at all?
-
-//       await ack({
-//         options: no_columns_option,
-//       });
-
-//       // await ack();
-//     }
-//   } catch (error) {
-//     console.error(error);
-//   }
-// });
-
 app.options('label_list', async ({options, ack}) => {
   try {
     console.log('options', options);
@@ -1104,6 +1030,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
     });
     console.error(`User already subscribed to repo ${subscribe_repo_obj.repo_path}`);
   } else if (unsubscribe_repo !== null) {
+    // TODO seperate subscribe and unsubscribe. This is a headache
     // ERROR! The user is trying to subscribe and unsubscribe from the same repo
     if (
       subscribe_repo_obj !== null &&
@@ -1355,16 +1282,18 @@ expressReceiver.router.post('/webhook', (req, res) => {
           console.log('promise all calls_response', calls_response)
         );
 
-        // TODO: instead of channel id, send over the users_triage_team object or don't and do it in the function
-        check_for_mentions(
-          temp_channel_id,
-          issue_title,
-          issue_body,
-          issue_url,
-          issue_creator,
+        const mention_event_data = {
+          channel_id: temp_channel_id,
+          title: issue_title,
+          text_body: issue_body,
+          content_url: issue_url,
+          content_creator: issue_creator,
           creator_avatar_url,
-          issue_create_date
-        );
+          content_create_date: issue_create_date,
+        };
+
+        // TODO: instead of channel id, send over the users_triage_team object or don't and do it in the function
+        check_for_mentions(mention_event_data);
       } else if (action === 'labeled') {
         /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
         // const issue_label_array = request.issue.labels;
@@ -1409,28 +1338,32 @@ expressReceiver.router.post('/webhook', (req, res) => {
       const comment_create_date = new Date(request.comment.created_at);
 
       if (req.body.issue.state === 'closed') {
-        mention_message(
-          temp_channel_id,
-          `Comment on closed issue: ${issue_title}`,
-          comment_body,
-          issue_url,
-          comment_creator,
-          creator_avatar_url,
-          comment_create_date,
-          '!channel',
-          true
-        );
+        const mention_event_data = {
+          channel_id: temp_channel_id,
+          title: `Comment on closed issue: ${issue_title}`,
+          body: comment_body,
+          url: issue_url,
+          creator: comment_creator,
+          avatar_url: creator_avatar_url,
+          create_date: comment_create_date,
+          mentioned_slack_user: '!channel',
+          is_issue_closed: true,
+        };
+
+        mention_message(mention_event_data);
       }
 
-      check_for_mentions(
-        temp_channel_id,
-        `New comment on issue: ${issue_title}`,
-        comment_body,
-        issue_url,
-        comment_creator,
+      const mention_event_data = {
+        channel_id: temp_channel_id,
+        title: `New comment on issue: ${issue_title}`,
+        text_body: comment_body,
+        content_url: issue_url,
+        content_creator: comment_creator,
         creator_avatar_url,
-        comment_create_date
-      );
+        content_create_date: comment_create_date,
+      };
+
+      check_for_mentions(mention_event_data);
     }
   } catch (error) {
     console.error(error);
@@ -1460,15 +1393,15 @@ expressReceiver.router.post('/webhook', (req, res) => {
 /* The @ symbol for mentions is not concatenated here because the convention for mentioning is different 
 between mentioning users/groups/channels. To mention the channel, say when a closed issue is commented
 on, the special convention is <!channel>. */
-function githubBlock(
+function mention_message_blocks({
   title,
   body,
   gh_url,
   creator,
   avatar_url,
   date,
-  mentioned_slack_user
-) {
+  mentioned_slack_user,
+}) {
   return [
     {
       type: 'section',
@@ -1533,47 +1466,39 @@ function githubBlock(
 }
 
 // TODO: Get user's timezone and display the date/time with respect to it
-
-function mention_message(
-  channel_id,
-  title,
-  body,
-  url,
-  creator,
-  avatar_url,
-  create_date,
-  mentioned_slack_user,
-  is_issue_closed
-) {
+/**
+ *
+ *
+ * @param {{channel_id:string, title:string, body:string, url:string, creator:string, avatar_url:string, create_date:string, mentioned_slack_user:string, is_issue_closed:boolean }} mention_event_data
+ */
+function mention_message(mention_event_data) {
+  const {
+    channel_id,
+    title,
+    url,
+    creator,
+    create_date,
+    mentioned_slack_user,
+    is_issue_closed,
+  } = mention_event_data;
   app.client.chat.postMessage({
     // Since there is no context we just use the original token
     token: process.env.SLACK_BOT_TOKEN,
     // Conditional on whether the message should go to channel or just to a user as a DM
-    ...(is_issue_closed && {
-      channel: channel_id,
-      blocks: githubBlock(
-        title,
-        body,
-        url,
-        creator,
-        avatar_url,
-        create_date,
-        mentioned_slack_user
-      ),
-    }),
+    ...(is_issue_closed
+      ? {
+          channel: channel_id,
+          blocks: mention_message_blocks(mention_event_data),
+        }
+      : {
+          channel: mentioned_slack_user,
+          blocks: mention_message_blocks(
+            Object.assign(mention_event_data, {
+              mentioned_slack_user: `@${mentioned_slack_user}`,
+            })
+          ),
+        }),
 
-    ...(!is_issue_closed && {
-      channel: mentioned_slack_user,
-      blocks: githubBlock(
-        title,
-        body,
-        url,
-        creator,
-        avatar_url,
-        create_date,
-        `@${mentioned_slack_user}`
-      ),
-    }),
     text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`,
   });
 }
@@ -1584,15 +1509,15 @@ function view_username_mappings(username_mappings) {
 }
 
 // Function that checks for github username mentions in a body of text
-function check_for_mentions(
+function check_for_mentions({
   channel_id,
   title,
   text_body,
   content_url,
   content_creator,
   creator_avatar_url,
-  content_create_date
-) {
+  content_create_date,
+}) {
   /* Since the regex contains a global operator, matchAll can used to get all the matches & the groups as an iterable.
   In this first version, we don't need to use substring(1) to drop the @ since contains_mention would also have just the usernames. */
 
@@ -1610,19 +1535,20 @@ function check_for_mentions(
       console.log(`mentioned slack user: ${mentioned_slack_user}`);
 
       // If the mentioned username is associated with a Slack username, mention that person
+      const mention_event_data = {
+        channel_id,
+        title,
+        body: text_body,
+        url: content_url,
+        creator: content_creator,
+        avatar_url: creator_avatar_url,
+        create_date: content_create_date,
+        mentioned_slack_user,
+        is_issue_closed: false,
+      };
 
       if (mentioned_slack_user) {
-        mention_message(
-          channel_id,
-          title,
-          text_body,
-          content_url,
-          content_creator,
-          creator_avatar_url,
-          content_create_date,
-          mentioned_slack_user,
-          false
-        );
+        mention_message(mention_event_data);
       }
     });
   }

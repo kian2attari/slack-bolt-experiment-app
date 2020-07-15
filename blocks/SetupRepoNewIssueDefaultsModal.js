@@ -1,5 +1,4 @@
-// eslint-disable-next-line import/no-useless-path-segments
-const {SubBlocks} = require('../blocks');
+const SubBlocks = require('./SubBlocks');
 
 module.exports = (
   selected_repo = {repo_path: undefined, selected_project_name: undefined}
