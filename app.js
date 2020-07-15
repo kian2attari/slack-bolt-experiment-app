@@ -45,6 +45,7 @@ const gh_variables_init = {
 // Selection state is stored in the order Repo->Project->Column.
 // Internal object to store the current state of selections on App Home
 // TODO make the repo_path,repo_id etc properties private or just turn this whole obj into a class
+// TODO possible replace this entirely with the private_metadata property
 const user_app_home_state_obj = {
   currently_selected_repo: {
     repo_path: '',
@@ -136,9 +137,6 @@ const user_app_home_state_obj = {
   },
 };
 
-// const user_app_home_state_obj = {
-//   currently_selected_repo: {}
-// }
 // Object that details the repos a user is subscribed to and their preferred default repo. The default repo is automatically picked on App Home load
 // TODO This should be persistent, pull it from the DB.
 // TODO Also, possible add default_project and default column to the mix. Maybe then default_repo should be an obj
@@ -237,18 +235,21 @@ app.event('app_home_opened', async ({event, context, client}) => {
     either only subscribed to a single repo, or set a default repo. If there's only
     one project, select that by default */
 
-    const default_repo_path = user_subscribed_repos_obj.default_repo;
     // TODO optimize this
     if (
+      // The user has not selected a repo on the App Home, and they are subscribed to at least one repo
       user_app_home_state_obj.currently_selected_repo.repo_path === '' &&
       user_subscribed_repos_obj.subscribed_repo_map.size !== 0
     ) {
+      const default_repo_path = user_subscribed_repos_obj.default_repo;
+      // If a default repo hasn't been set, then show all untriaged issues across the repos
       if (default_repo_path === '') {
         user_app_home_state_obj.currently_selected_repo.set_repo(
           'All Untriaged',
           'all_untriaged'
         );
       } else {
+        // Set the selected repo to the default repo
         user_app_home_state_obj.currently_selected_repo.set_repo(
           user_subscribed_repos_obj.default_repo,
           user_subscribed_repos_obj.subscribed_repo_map.get(default_repo_path).repo_id
@@ -256,8 +257,8 @@ app.event('app_home_opened', async ({event, context, client}) => {
       }
     }
 
-    console.log('app_home user_app_home_state_obj', user_app_home_state_obj);
-    // TODO make all of the select boxes into external_options, only provide the current state to AppHomeBase
+    console.log('app_home_opened user_app_home_state_obj', user_app_home_state_obj);
+    // TODO HIGH if default repo is not set, then return app home state object with the selected repo as All Untriaged
     const home_view = blocks.AppHomeBase(user_app_home_state_obj);
     await client.views.publish({
       /* retrieves your xoxb token from context */
@@ -274,19 +275,11 @@ app.event('app_home_opened', async ({event, context, client}) => {
   }
 });
 
-// TODO: Create project cards directly from slack
-
-// TODO: Delete project cards directly from slack
-
-// TODO: Move project cards directly from slack
-
-// TODO: View all the project cards in Needs Triage directly on slack
-
 // !SECTION
 
 /* ------------- SECTION Listening for actions ------------ */
-
-app.action('button_open_map_modal', async ({ack, body, context, client}) => {
+// Opens the username map modal
+app.action('open_map_modal_button', async ({ack, body, context, client}) => {
   // Here we acknowledge receipt
   await ack();
 
@@ -299,8 +292,9 @@ app.action('button_open_map_modal', async ({ack, body, context, client}) => {
   });
 });
 
+// Opens the modal for setting default repos
 app.action(
-  'button_open_set_repo_defaults_modal',
+  'open_set_repo_defaults_modal_button',
   async ({ack, body, context, client}) => {
     // Here we acknowledge receipt
     await ack();
@@ -309,11 +303,11 @@ app.action(
     const selected_repo = {repo_path: undefined};
 
     console.log(': ----------');
-    console.log('button_open_map_modal context', context);
+    console.log('open_map_modal_button context', context);
     console.log(': ----------');
 
     console.log(': ----------');
-    console.log('button_open_map_modal context', context);
+    console.log('open_map_modal_button context', context);
     console.log(': ----------');
 
     const {trigger_id} = body;
@@ -326,6 +320,40 @@ app.action(
   }
 );
 
+// The app home 'Untriaged' filter button
+app.action('show_untriaged_filter_button', async ({ack, body, context, client}) => {
+  // Here we acknowledge receipt
+  await ack();
+
+  // Show all untriaged issues from all repos
+  // TODO LAST TODO HIGH show
+
+  const untriaged_issues = [];
+
+  const untriaged_blocks = blocks.AppHomeIssue(untriaged_issues);
+
+  const home_view = blocks.AppHomeBase(user_app_home_state_obj, untriaged_blocks);
+
+  console.log(JSON.stringify(home_view, null, 4));
+
+  console.log(': ----------');
+  console.log('open_map_modal_button context', context);
+  console.log(': ----------');
+
+  console.log(': ----------');
+  console.log('open_map_modal_button context', context);
+  console.log(': ----------');
+
+  const {trigger_id} = body;
+
+  await client.views.open({
+    token: context.botToken,
+    trigger_id,
+    view: blocks.AppHomeBase(home_view),
+  });
+});
+
+// TODO remove the API call, we dont need that
 // Responds to the 'See number of cards by column' button on the home page
 app.action('column_card_count_info', async ({ack, body, context, client}) => {
   // Here we acknowledge receipt
@@ -666,7 +694,7 @@ app.action('label_list', async ({ack, body}) => {
 
       const repo_labels_map = user_subscribed_repos_obj.subscribed_repo_map.get(
         user_app_home_state_obj.get_selected_repo_path()
-      ).repo_label_obj.repo_label_map;
+      ).repo_label_map;
 
       const selected_label_ids = selected_label_names.map(
         label_name => repo_labels_map.get(label_name).id
@@ -989,7 +1017,7 @@ app.options('label_list', async ({options, ack}) => {
     );
 
     const options_response = Array.from(
-      currently_selected_repo_map.repo_label_obj.repo_label_map.values()
+      currently_selected_repo_map.repo_label_map.values()
     ).map(label => {
       return {
         'text': {
@@ -1022,7 +1050,7 @@ app.options('setup_default_modal_label_list', async ({options, ack}) => {
     );
 
     const options_response = Array.from(
-      currently_selected_repo_map.repo_label_obj.repo_label_map.values()
+      currently_selected_repo_map.repo_label_map.values()
     ).map(label => {
       return {
         'text': {
@@ -1326,20 +1354,20 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
       const repo_data = await get_repo_data(subscribe_repo_obj);
       subscribe_repo_obj.repo_project_map = repo_data.repo_projects;
 
-      subscribe_repo_obj.repo_label_obj.repo_label_map = repo_data.repo_labels;
+      subscribe_repo_obj.repo_label_map = repo_data.repo_labels;
       // Set the untriaged label_id. Currently hard coded to a label with the name untriaged. This will be fixed so that the label can be named whatever the user wants.
       // TODO remove hardcoding here
-      subscribe_repo_obj.repo_label_obj.untriaged_label.label_id = repo_data.repo_labels.get(
-        'untriaged'
-      ).id;
+      // subscribe_repo_obj.untriaged_label.label_id = repo_data.repo_labels.get(
+      //   'untriaged'
+      // ).id;
 
       // Set the first column of the first project as the column for new issue cards to be created in
       // TODO remove the first column hardcoding and let the user select their preferred default proj and column when subscribing.
       // TODO HIGH Send a message to the user as soon as subscription is complete so they can set up the untriaged label and the untriaged column
-      // subscribe_repo_obj.repo_label_obj.untriaged_label.untriaged_column_id = subscribe_repo_obj.repo_project_map.values();
+      // subscribe_repo_obj.untriaged_label.untriaged_column_id = subscribe_repo_obj.repo_project_map.values();
       // very temp hardcoding hehe
-      subscribe_repo_obj.repo_label_obj.untriaged_label.untriaged_column_id =
-        'MDEzOlByb2plY3RDb2x1bW45NjMyODQ0';
+      // subscribe_repo_obj.untriaged_label.untriaged_column_id =
+      //   'MDEzOlByb2plY3RDb2x1bW45NjMyODQ0';
 
       subscribe_repo_obj.repo_id = repo_data.repo_id;
 
@@ -1378,6 +1406,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
   console.log('subscribe_repo_obj', subscribe_repo_obj);
 });
 
+// Listens for the submission of the untriaged issue flow/settings modal
 app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => {
   // Acknowledge the view_submission event
   await ack();
@@ -1386,6 +1415,8 @@ app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => 
 
   const view_values = view.state.values;
 
+  const {repo_path} = JSON.parse(view.private_metadata);
+
   const default_untriaged_issues_label =
     view_values.untriaged_label_block_input.setup_default_modal_label_list
       .selected_option;
@@ -1393,6 +1424,24 @@ app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => 
   const default_untriaged_issues_project =
     view_values.untriaged_project_block_input.setup_default_modal_project_selection
       .selected_option;
+
+  const repo_obj = user_subscribed_repos_obj.subscribed_repo_map.get(repo_path);
+
+  // set default project name
+  repo_obj.untriaged_settings.repo_default_untriaged_project.project_name =
+    default_untriaged_issues_project.text.text;
+  repo_obj.untriaged_settings.repo_default_untriaged_project.project_id =
+    default_untriaged_issues_project.value;
+
+  // set default label obj
+  repo_obj.untriaged_settings.untriaged_label = {
+    label_id: default_untriaged_issues_label.value,
+    label_name: default_untriaged_issues_label.text.text,
+  };
+
+  console.log(': ------------------');
+  console.log('repo_obj', repo_obj);
+  console.log(': ------------------');
 
   console.log(': --------------------------------------------------------------');
   console.log('default_untriaged_issues_label', default_untriaged_issues_label);
@@ -1433,13 +1482,15 @@ expressReceiver.router.post('/webhook', (req, res) => {
     const request = req.body;
     const {action} = request;
 
-    const repo_path = request.repository.full_name;
+    const {full_name: repo_path, id: repo_id} = request.repository;
+
     console.log(': --------------------');
     console.log('repo_path', repo_path);
     console.log(': --------------------');
 
     // TODO: Handle other event types. Currently, it's just issue-related events
     if (req.headers['x-github-event'] === 'issues') {
+      // TODO Use destructuring here
       const issue_url = request.issue.html_url;
       const issue_title = request.issue.title;
       const issue_body = request.issue.body;
@@ -1455,17 +1506,41 @@ expressReceiver.router.post('/webhook', (req, res) => {
 
       // QUESTION: Should editing the issue also cause the untriaged label to be added?
       if (action === 'opened' || action === 'reopened') {
-        const untriaged_label_id = repo_obj.repo_label_obj.untriaged_label.label_id;
+        const untriaged_label_id = repo_obj.untriaged_settings.untriaged_label.label_id;
         const variables_addLabelToIssue = {
           element_node_id: issue_node_id,
           label_ids: [untriaged_label_id],
         };
 
-        graphql.call_gh_graphql(
+        const variables_assignIssueToProject = {
+          issue_id: issue_node_id,
+          project_ids: [
+            user_subscribed_repos_obj.subscribed_repo_map.get(repo_path)
+              .untriaged_settings.repo_default_untriaged_project.project_id,
+          ],
+        };
+
+        const addLabelMutation = graphql.call_gh_graphql(
           mutation.addLabelToIssue,
           variables_addLabelToIssue,
           gh_variables_init
         );
+
+        // TODO: Create a card in the org-wide repo to indicate the presence of this untriaged issue
+        // Assigns the project to the selected issue
+        // TODO: let the user select a default project
+        const assignIssuToProjectMutation = graphql.call_gh_graphql(
+          mutation.assignIssueToProject,
+          variables_assignIssueToProject
+        );
+        // potetnially valuable
+        Promise.all([
+          addLabelMutation,
+          assignIssuToProjectMutation,
+        ]).then(calls_response =>
+          console.log('promise all calls_response', calls_response)
+        );
+
         // TODO: instead of channel id, send over the users_triage_team object or don't and do it in the function
         check_for_mentions(
           temp_channel_id,
@@ -1481,24 +1556,25 @@ expressReceiver.router.post('/webhook', (req, res) => {
         // const issue_label_array = request.issue.labels;
 
         const label_id = request.label.node_id;
-        const {untriaged_label} = repo_obj.repo_label_obj;
+        const untriaged_label_id = repo_obj.untriaged_settings.untriaged_label.label_id;
 
         console.log(': ------------------');
         console.log('label_id', label_id);
         console.log(': ------------------');
 
         console.log(': --------------------------------------------------');
-        console.log('untriaged_label id', untriaged_label.label_id);
+        console.log('untriaged_label id', untriaged_label_id);
         console.log(': --------------------------------------------------');
 
-        if (label_id === untriaged_label.label_id) {
-          const addCardToColumn_variables = {
-            issue: {
-              projectColumnId: untriaged_label.untriaged_column_id,
-              contentId: issue_node_id,
-            },
-          };
-          graphql.call_gh_graphql(mutation.addCardToColumn, addCardToColumn_variables);
+        if (label_id === untriaged_label_id) {
+          // TODO assign it to the project
+          // const assignIssueToProject_variables = {
+          //   issue: {
+          //     projectId: untriaged_label.repo_default_untriaged_project.project_id,
+          //     contentId: issue_node_id,
+          //   },
+          // };
+          // graphql.call_gh_graphql(mutation.addCardToColumn, addCardToColumn_variables);
         }
       } else if (action === 'unlabeled') {
         /* -- TODO remove project from new issue column if untriaged label removed -- */
@@ -1743,7 +1819,7 @@ function check_for_mentions(
  *
  * Creates a repo object
  * @param {{owner: string, name: string, repo: string}} subscribe_repo
- * @returns {{repo_owner: string, repo_name: string, repo_path: string, repo_label_obj: {untriaged_label: {label_id: string, label_name: string, untriaged_column_id: string}, repo_label_map: Map<string,object>}, repo_project_map: Map<string,object>}} A repo object
+ * @returns {{repo_owner: string, repo_name: string, repo_path: string, untriaged_settings: { label_id: string, label_name: string, repo_default_untriaged_project: {project_name:string, project_id:string }}, repo_label_map: Map<string,object>, repo_project_map: Map<string,object>}} A repo object
  */
 function new_repo_obj(subscribe_repo) {
   const parsed_url = parseGH(subscribe_repo);
@@ -1755,13 +1831,18 @@ function new_repo_obj(subscribe_repo) {
     // The properties below have to be gotten from an API call
     // TODO builtin method in this object/class to do the API call
     repo_id: '',
-    repo_label_obj: {
+    repo_label_map: new Map(),
+
+    untriaged_settings: {
+      // REVIEW should I make the label_name property a global  property rather than having to select it for each repo?
       untriaged_label: {
         label_id: '',
         label_name: '',
-        untriaged_column_id: '',
       },
-      repo_label_map: new Map(),
+      repo_default_untriaged_project: {
+        project_name: '',
+        project_id: '',
+      },
     },
     // Projects are mapped from project_name -> {project_id, project_columns_map:}
     repo_project_map: new Map(),

@@ -18,7 +18,7 @@ module.exports = (user_id, subscribed_repo_path) => {
             'emoji': true,
           },
           'value': subscribed_repo_path,
-          'action_id': 'button_open_set_repo_defaults_modal',
+          'action_id': 'open_set_repo_defaults_modal_button',
         },
       ],
     },

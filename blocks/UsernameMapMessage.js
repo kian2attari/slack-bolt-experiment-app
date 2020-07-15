@@ -23,7 +23,7 @@ module.exports = (user_id, added_through_setup = true) => {
             'emoji': true,
           },
           'value': user_id,
-          'action_id': 'button_open_map_modal',
+          'action_id': 'open_map_modal_button',
         },
       ],
     },
