@@ -71,7 +71,7 @@ module.exports = (
       external_select_element('repo_selection', 'Select a repository'),
     ];
     console.log(': --------------------------------------------------');
-    console.log('EMPTY SELECTIONselection_block.elements', selection_block.elements);
+    console.log('EMPTY SELECTION selection_block.elements', selection_block.elements);
     console.log(': --------------------------------------------------');
 
     return {

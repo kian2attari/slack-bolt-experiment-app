@@ -4,6 +4,7 @@ const parseGH = require('parse-github-url');
 const {query, mutation, graphql} = require('./graphql');
 const blocks = require('./blocks');
 const safeAccess = require('./helper-functions/safeAccessUndefinedProperty');
+const {actions_listener, events_listener, options_listener} = require('./listeners');
 
 // Create a Bolt Receiver
 const expressReceiver = new ExpressReceiver({
@@ -228,52 +229,11 @@ const users_triage_team = {};
 
 // Loads the app home when the app home is opened!
 // ANCHOR App home opened
-app.event('app_home_opened', async ({event, context, client}) => {
-  try {
-    console.log('user_subscribed_repos_obj: ', user_subscribed_repos_obj);
-    /* If a list of initial projects is provided, that must mean that the user has
-    either only subscribed to a single repo, or set a default repo. If there's only
-    one project, select that by default */
-
-    // TODO optimize this
-    if (
-      // The user has not selected a repo on the App Home, and they are subscribed to at least one repo
-      user_app_home_state_obj.currently_selected_repo.repo_path === '' &&
-      user_subscribed_repos_obj.subscribed_repo_map.size !== 0
-    ) {
-      const default_repo_path = user_subscribed_repos_obj.default_repo;
-      // If a default repo hasn't been set, then show all untriaged issues across the repos
-      if (default_repo_path === '') {
-        user_app_home_state_obj.currently_selected_repo.set_repo(
-          'All Untriaged',
-          'all_untriaged'
-        );
-      } else {
-        // Set the selected repo to the default repo
-        user_app_home_state_obj.currently_selected_repo.set_repo(
-          user_subscribed_repos_obj.default_repo,
-          user_subscribed_repos_obj.subscribed_repo_map.get(default_repo_path).repo_id
-        );
-      }
-    }
-
-    console.log('app_home_opened user_app_home_state_obj', user_app_home_state_obj);
-    // TODO HIGH if default repo is not set, then return app home state object with the selected repo as All Untriaged
-    const home_view = blocks.AppHomeBase(user_app_home_state_obj);
-    await client.views.publish({
-      /* retrieves your xoxb token from context */
-      token: context.botToken,
-
-      /* the user that opened your app's app home */
-      user_id: event.user,
-
-      /* the view payload that appears in the app home */
-      view: home_view,
-    });
-  } catch (error) {
-    console.error(error);
-  }
-});
+actions_listener.app_home.app_home_opened(
+  app,
+  user_subscribed_repos_obj,
+  user_app_home_state_obj
+);
 
 // !SECTION
 
@@ -355,35 +315,35 @@ app.action('show_untriaged_filter_button', async ({ack, body, context, client}) 
 
 // TODO remove the API call, we dont need that
 // Responds to the 'See number of cards by column' button on the home page
-app.action('column_card_count_info', async ({ack, body, context, client}) => {
-  // Here we acknowledge receipt
-  await ack();
+// app.action('column_card_count_info', async ({ack, body, context, client}) => {
+//   // Here we acknowledge receipt
+//   await ack();
 
-  const {trigger_id} = body;
-  const project_number = parseInt(body.actions[0].value, 10);
-  const variables_getCardsByProjColumn = {
-    project_number,
-    ...gh_variables_init,
-  };
-  const num_cards_per_column = await graphql.call_gh_graphql(
-    query.getNumOfCardsPerColumn,
-    variables_getCardsByProjColumn
-  );
+//   const {trigger_id} = body;
+//   const project_number = parseInt(body.actions[0].value, 10);
+//   const variables_getCardsByProjColumn = {
+//     project_number,
+//     ...gh_variables_init,
+//   };
+//   const num_cards_per_column = await graphql.call_gh_graphql(
+//     query.getNumOfCardsPerColumn,
+//     variables_getCardsByProjColumn
+//   );
 
-  const project_name = num_cards_per_column.repository.project.name;
+//   const project_name = num_cards_per_column.repository.project.name;
 
-  const array_column_info = num_cards_per_column.repository.project.columns.nodes;
+//   const array_column_info = num_cards_per_column.repository.project.columns.nodes;
 
-  await client.views.open({
-    /* retrieves your xoxb token from context */
-    token: context.botToken,
+//   await client.views.open({
+//     /* retrieves your xoxb token from context */
+//     token: context.botToken,
 
-    trigger_id,
+//     trigger_id,
 
-    // the view payload that appears in the app home
-    view: blocks.AppHomeMoreInfoIssueModal(array_column_info, project_name),
-  });
-});
+//     // the view payload that appears in the app home
+//     view: blocks.AppHomeMoreInfoIssueModal(array_column_info, project_name),
+//   });
+// });
 
 app.action('setup_default_modal_repo_selection', async ({ack, body, context, client}) => {
   console.log(': ----------------');
