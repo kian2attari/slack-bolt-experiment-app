@@ -23,7 +23,14 @@ class TriageTeamData {
   }
 
   subscribe_to_repo(repo_obj) {
+    if (this.team_channel_id.length === 0) {
+      console.log(
+        `Cannot subscribe to ${repo_obj.repo_path}. User must first create a triage team.`
+      );
+    }
+
     this.team_data.subscribed_repo_map.set(repo_obj.repo_path, repo_obj);
+    console.log(`Subscribed to ${repo_obj.repo_path} successfully!`);
   }
 
   // If a repo path is given, get that repo object. Otherwise, just return all

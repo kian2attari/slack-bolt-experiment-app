@@ -82,7 +82,7 @@ class UserAppHomeState {
   }
 
   // Object methods for setting a new repo
-  set selected_repo({repo_path, repo_id}) {
+  set_selected_repo({repo_path, repo_id}) {
     try {
       this.currently_selected_repo.repo_path = repo_path;
       this.currently_selected_repo.repo_id = repo_id;

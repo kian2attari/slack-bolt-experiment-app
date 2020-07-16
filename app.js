@@ -3,10 +3,9 @@ const express = require('express');
 const parseGH = require('parse-github-url');
 const {query, mutation, graphql} = require('./graphql');
 const {AppHome, Messages, Modals, SubBlocks} = require('./blocks');
-const safeAccess = require('./helper-functions/safeAccessUndefinedProperty');
+const {SafeAccess} = require('./helper-functions');
 const {actions_listener, events_listener, options_listener} = require('./listeners');
 const {UserAppHomeState, TriageTeamData} = require('./models');
-const getAllUntriaged = require('./graphql/query/getAllUntriaged');
 
 // Create a Bolt Receiver
 const expressReceiver = new ExpressReceiver({
@@ -90,7 +89,10 @@ app.action('show_untriaged_filter_button', async ({ack, body, context, client}) 
   const repo_project_id = '';
 
   // Show all untriaged issues from all repos
-  const github_untriaged = graphql.call_gh_graphql(getAllUntriaged, repo_project_id);
+  const github_untriaged = graphql.call_gh_graphql(
+    query.getAllUntriaged,
+    repo_project_id
+  );
   console.log(': ----------------------------------');
   console.log('github_untriaged', github_untriaged);
   console.log(': ----------------------------------');
@@ -259,7 +261,7 @@ app.action('repo_selection', async ({ack, body, context, client}) => {
 
     console.log('selected_repo_id', selected_repo_id);
 
-    user_app_home_state_obj.selected_repo({
+    user_app_home_state_obj.set_selected_repo({
       repo_path: selected_repo_path,
       repo_id: selected_repo_id,
     });
@@ -444,8 +446,8 @@ app.action('label_list', async ({ack, body}) => {
       /* The card_id is the same for all labels, so we just grab it from the first initial or selected option. One of them has to be there
       otherwise there wouldn't have been a symmetric difference. */
       const card_id =
-        safeAccess(() => selected_options[0].value) ||
-        safeAccess(() => initial_options[0].value);
+        SafeAccess(() => selected_options[0].value) ||
+        SafeAccess(() => initial_options[0].value);
 
       const variables_clearAllLabels = {
         element_node_id: card_id,
@@ -977,12 +979,30 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
 
   const unsubscribe_block = view_values.unsubscribe_repos_block;
 
+  if (triage_team_data_obj.team_channel_id.length === 0) {
+    console.log(
+      'You must create a triage team and assign them a channel before you can begin subscribing to repos!'
+    );
+
+    try {
+      app.client.chat.postMessage({
+        token: context.botToken,
+        channel: slack_user_id,
+        // TODO Check if mentions are setup and change the message based on that
+        text: `<@${slack_user_id}> you must create a triage team and assign them a channel before you can begin subscribing to repos!.`,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+    return;
+  }
+
   const current_subscribed_repos = triage_team_data_obj.get_team_repo_subscriptions();
 
-  /* safeAccess() is a try/catch utility function.
+  /* SafeAccess() is a try/catch utility function.
   Since the unsubscribe repos input can be left blank */
   // Does the user want to set the repo as their default repo?
-  const default_repo_value = safeAccess(
+  const default_repo_value = SafeAccess(
     () =>
       view_values.default_repo_checkbox_block.default_repo_checkbox_input
         .selected_options[0].value
@@ -990,7 +1010,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
 
   console.log('default repo bool:', default_repo_value);
 
-  const unsubscribe_repo = safeAccess(
+  const unsubscribe_repo = SafeAccess(
     () => unsubscribe_block.unsubscribe_repos_input.selected_option.value
   );
 
@@ -1086,7 +1106,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
         // TODO Check if mentions are setup and change the message based on that
         text: `Hey <@${slack_user_id}>!, you are now unsubscribed from *${unsubscribe_repo}*`,
       });
-      console.error('User unsubscribed from repo: ' + unsubscribe_repo);
+      console.error(`User unsubscribed from repo: ${unsubscribe_repo}`);
       return;
     }
     console.log('triage_team_data_obj', triage_team_data_obj);
@@ -1445,10 +1465,10 @@ function send_mention_message(mention_event_data) {
   });
 }
 
-// TODO: Function that lets user see all the username mappings with a slash command
-function view_username_mappings(username_mappings) {
-  console.log(username_mappings);
-}
+// // TODO: Function that lets user see all the username mappings with a slash command
+// function view_username_mappings(username_mappings) {
+//   console.log(username_mappings);
+// }
 
 // Function that checks for github username mentions in a body of text
 function check_for_mentions({
