@@ -6,4 +6,5 @@ module.exports = {
   getNumOfCardsPerColumn: require('./getNumOfCardsPerColumn'),
   getRepoLabelsList: require('./getRepoLabelsList'),
   getRepoData: require('./getRepoData'),
+  getAllUntriaged: require('./getAllUntriaged'),
 };

@@ -1,18 +1,18 @@
 const {SubBlocks} = require('../../blocks');
 
-function repo_selection(app, user_subscribed_repos_obj) {
+function repo_selection(app, triage_team_data_obj) {
   app.options('repo_selection', async ({options, ack}) => {
     try {
       // TODO try using options directly
       console.log('repo_selection options', options);
 
-      const subscribed_repos = user_subscribed_repos_obj.subscribed_repo_map;
+      const subscribed_repos = triage_team_data_obj.get_team_repo_subscriptions();
 
       console.log('subscribed_repos', subscribed_repos);
 
       if (subscribed_repos.size !== 0) {
         // const repo_options_block_list = Array.from(subscribed_repos.keys(), repo => {
-        //   return blocks.SubBlocks.option_obj(repo);
+        //   return SubBlocks.option_obj(repo);
         // });
         const repo_options_block_list = [
           SubBlocks.option_obj('All Untriaged', 'all_untriaged'),

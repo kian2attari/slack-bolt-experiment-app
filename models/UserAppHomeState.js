@@ -1,21 +1,8 @@
 class UserAppHomeState {
-  constructor() {
+  constructor({repo_path, repo_id}) {
     this.currently_selected_repo = {
-      repo_path: '',
-      repo_id: '',
-      // Object methods for setting a new repo
-      set_repo(path, id) {
-        try {
-          this.repo_path = path;
-          this.repo_id = id;
-          this.currently_selected_project.clear_project();
-          return true;
-        } catch (error) {
-          console.error(error);
-          return false;
-        }
-      },
-
+      repo_path,
+      repo_id,
       // Clearing the repo
       clear_repo() {
         try {
@@ -92,6 +79,19 @@ class UserAppHomeState {
   get_selected_column_name() {
     return this.currently_selected_repo.currently_selected_project
       .currently_selected_column.column_name;
+  }
+
+  // Object methods for setting a new repo
+  set selected_repo({repo_path, repo_id}) {
+    try {
+      this.currently_selected_repo.repo_path = repo_path;
+      this.currently_selected_repo.repo_id = repo_id;
+      this.currently_selected_repo.currently_selected_project.clear_project();
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
   }
 }
 

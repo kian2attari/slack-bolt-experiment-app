@@ -1,4 +1,4 @@
-const SubBlocks = require('./SubBlocks');
+const SubBlocks = require('../SubBlocks');
 
 module.exports = (
   user_app_home_state_obj,
@@ -10,7 +10,7 @@ module.exports = (
   const repo_selection = user_app_home_state_obj.currently_selected_repo;
 
   console.log(': ------------------------------');
-  console.log('AppHomeBase user_app_home_state_obj', user_app_home_state_obj);
+  console.log('BaseAppHome user_app_home_state_obj', user_app_home_state_obj);
   console.log(': ------------------------------');
 
   const filter_buttons_block = {

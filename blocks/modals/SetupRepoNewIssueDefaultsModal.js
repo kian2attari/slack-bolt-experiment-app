@@ -1,4 +1,4 @@
-const SubBlocks = require('./SubBlocks');
+const SubBlocks = require('../SubBlocks');
 
 module.exports = (
   selected_repo = {repo_path: undefined, selected_project_name: undefined}

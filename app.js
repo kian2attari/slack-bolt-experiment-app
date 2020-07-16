@@ -2,10 +2,11 @@ const {App, LogLevel, ExpressReceiver} = require('@slack/bolt');
 const express = require('express');
 const parseGH = require('parse-github-url');
 const {query, mutation, graphql} = require('./graphql');
-const blocks = require('./blocks');
+const {AppHome, Messages, Modals, SubBlocks} = require('./blocks');
 const safeAccess = require('./helper-functions/safeAccessUndefinedProperty');
 const {actions_listener, events_listener, options_listener} = require('./listeners');
-const {UserAppHomeState} = require('./models');
+const {UserAppHomeState, TriageTeamData} = require('./models');
+const getAllUntriaged = require('./graphql/query/getAllUntriaged');
 
 // Create a Bolt Receiver
 const expressReceiver = new ExpressReceiver({
@@ -25,91 +26,31 @@ const app = new App({
 /* -------------------------------------------------------------------------- */
 
 // Object to map GH usernames to Slack usernames
-// TODO: Make this persistent on DB
-const gh_slack_username_map = {};
+// const gh_slack_username_map = {};
 
-// Temporary hardcoding of channel id
+// Temporary hardcoding of channel id just to make testing/development easier
 // TODO: Remove this hardcoding
-/* The data object for this could be a mapping from '{repo_owner}/{repo_name} -> [Array of channel ID's]
-Every time someone subscribes to a owner/repo, add their channel to the array with the key of that owner/repo
-When any sort of event concerns that repo, post the message to all channels in the array 
-A similar thing can be done to map to map repos to project boards */
-// The temp channel ID should be found through the users_triage_team object. Loop through
 const temp_channel_id = 'C015FH00GVA';
 
-// Example repo object that would be an element in the subscribed_repo_map
-// TODO Remove hardcoding of the init variables. They should be based on subscribed repos.
-// const gh_variables_init = {
-//   repo_owner: 'slackapi',
-//   repo_name: 'dummy-kian-test-repo',
-// };
+// TODO get this from DB
+const default_repo = {
+  repo_path: 'All Untriaged',
+  repo_id: 'all_untriaged',
+};
 
 // Selection state is stored in the order Repo->Project->Column.
 // Internal object to store the current state of selections on App Home
-// TODO make the repo_path,repo_id etc properties private or just turn this whole obj into a class
 // TODO possible replace this entirely with the private_metadata property
-const user_app_home_state_obj = new UserAppHomeState();
+const user_app_home_state_obj = new UserAppHomeState(default_repo);
 console.log(': ----------------------------------------');
 console.log('user_app_home_state_obj', user_app_home_state_obj);
 console.log(': ----------------------------------------');
 
-// Object that details the repos a user is subscribed to and their preferred default repo. The default repo is automatically picked on App Home load
-// TODO This should be persistent, pull it from the DB.
-// TODO Also, possible add default_project and default column to the mix. Maybe then default_repo should be an obj
-// REVIEW should change subscriptions to be on a team level?
-const user_subscribed_repos_obj = {
-  default_repo: '',
-  set set_default_repo(repo_path) {
-    this.default_repo = repo_path;
-    user_app_home_state_obj.currently_selected_repo.repo_path = repo_path;
-    user_app_home_state_obj.currently_selected_repo.repo_id = this.subscribed_repo_map.get(
-      repo_path
-    ).repo_id;
-  },
-  subscribed_repo_map: new Map(),
-};
+/* Data object for persistent triage team data such as team members (and their github usernames), 
+the repos the team is subscribed to, and the triage team's channel */
 
-// !SECTION
-
-/* -------------------------------------------------------------------------- */
-/*                     SECTION Essential initial API calls                    */
-/* -------------------------------------------------------------------------- */
-// TODO TOP INITIATE API HERE TO AUTHENTICATE
-// Get list of Repo Labels
-// graphql
-//   .call_gh_graphql(
-//     query.getRepoLabelsList,
-//     gh_variables_init,
-//     gh_variables_init,
-//   )
-//   .then(response => {
-//     repo_label_map = response.repository.labels.nodes;
-//     untriaged_label.label_id = repo_label_map.find(
-//       label => label.name == untriaged_label.name,
-//     ).id;
-
-//     // Create a block that contains a section for each label
-//     repo_label_map.forEach(label => {
-//       label_block.push({
-//         text: {
-//           type: 'plain_text',
-//           text: label.name,
-//         },
-//         value: {l_id: label.id},
-//       });
-//     });
-//   });
-
-// TODO: Add cards automatically to Needs Triage when they are labelled with the unlabelled tag
-// graphql
-//   .call_gh_graphql(
-//     query.getFirstColumnInProject,
-//     variables_getFirstColumnInProject,
-//     gh_variables_init
-//   )
-//   .then(response => {
-//     untriaged_label.column_id = response.repository.projects.nodes[0].columns.nodes[0].id;
-//   });
+// TODO store this in DB as team_channel_id -> triage_team_data_obj
+const triage_team_data_obj = new TriageTeamData();
 
 // !SECTION
 
@@ -125,7 +66,7 @@ const user_subscribed_repos_obj = {
 // ANCHOR App home opened
 events_listener.app_home.app_home_opened(
   app,
-  user_subscribed_repos_obj,
+  triage_team_data_obj,
   user_app_home_state_obj
 );
 
@@ -133,7 +74,10 @@ events_listener.app_home.app_home_opened(
 
 /* ------------- SECTION Listening for actions ------------ */
 // Opens the username map modal
-actions_listener.buttons.open_map_modal_button(app);
+actions_listener.buttons.open_map_modal_button(
+  app,
+  triage_team_data_obj.team_data.team_members
+);
 
 // Opens the modal for setting default repos
 actions_listener.buttons.open_set_repo_defaults_modal_button(app);
@@ -142,21 +86,21 @@ actions_listener.buttons.open_set_repo_defaults_modal_button(app);
 app.action('show_untriaged_filter_button', async ({ack, body, context, client}) => {
   // Here we acknowledge receipt
   await ack();
+  // TODO HIGHEST PRIORITY
+  const repo_project_id = '';
 
   // Show all untriaged issues from all repos
-  // TODO LAST TODO HIGH show
-
+  const github_untriaged = graphql.call_gh_graphql(getAllUntriaged, repo_project_id);
+  console.log(': ----------------------------------');
+  console.log('github_untriaged', github_untriaged);
+  console.log(': ----------------------------------');
   const untriaged_issues = [];
 
-  const untriaged_blocks = blocks.AppHomeIssue(untriaged_issues);
+  const untriaged_blocks = AppHome.CardsAppHome(untriaged_issues);
 
-  const home_view = blocks.AppHomeBase(user_app_home_state_obj, untriaged_blocks);
+  const home_view = AppHome.BaseAppHome(user_app_home_state_obj, untriaged_blocks);
 
   console.log(JSON.stringify(home_view, null, 4));
-
-  console.log(': ----------');
-  console.log('open_map_modal_button context', context);
-  console.log(': ----------');
 
   console.log(': ----------');
   console.log('open_map_modal_button context', context);
@@ -167,7 +111,7 @@ app.action('show_untriaged_filter_button', async ({ack, body, context, client}) 
   await client.views.open({
     token: context.botToken,
     trigger_id,
-    view: blocks.AppHomeBase(home_view),
+    view: AppHome.BaseAppHome(home_view),
   });
 });
 
@@ -228,7 +172,7 @@ app.action('setup_default_modal_repo_selection', async ({ack, body, context, cli
       repo_path: selected_repo_path,
       selected_project_name: undefined,
     };
-    const updated_modal = blocks.SetupRepoNewIssueDefaultsModal(selected_repo_obj);
+    const updated_modal = Modals.SetupRepoNewIssueDefaultsModal(selected_repo_obj);
 
     await client.views.update({
       /* retrieves your xoxb token from context */
@@ -315,12 +259,12 @@ app.action('repo_selection', async ({ack, body, context, client}) => {
 
     console.log('selected_repo_id', selected_repo_id);
 
-    user_app_home_state_obj.currently_selected_repo.set_repo(
-      selected_repo_path,
-      selected_repo_id
-    );
+    user_app_home_state_obj.selected_repo({
+      repo_path: selected_repo_path,
+      repo_id: selected_repo_id,
+    });
 
-    const updated_home_view = blocks.AppHomeBase(user_app_home_state_obj);
+    const updated_home_view = AppHome.BaseAppHome(user_app_home_state_obj);
     // QUESTION: should i use views.update or views.publish to update the app home view?
     /* view.publish is the method that your app uses to push a view to the Home tab */
     await client.views.update({
@@ -368,7 +312,7 @@ app.action('project_selection', async ({ack, body, context, client}) => {
     );
     console.log(': ------------------------------------------------');
 
-    const home_view = blocks.AppHomeBase(user_app_home_state_obj);
+    const home_view = AppHome.BaseAppHome(user_app_home_state_obj);
     // console.log(JSON.stringify(home_view.blocks, null, 4));
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
@@ -388,7 +332,7 @@ app.action('project_selection', async ({ack, body, context, client}) => {
 });
 
 /* ------------- ANCHOR Responding to column selection ------------------- */
-// TODO add column select menu to AppHomeBase
+// TODO add column select menu to BaseAppHome
 app.action('column_selection', async ({ack, body, context, client}) => {
   // TODO account for deleting
   await ack();
@@ -407,26 +351,26 @@ app.action('column_selection', async ({ack, body, context, client}) => {
 
     selected_project.currently_selected_column.set_column(column_name, column_id);
     // TODO Columns must be a map
-    // const cards_in_selected_column = user_subscribed_repos_obj.subscribed_repo_map
+    // const cards_in_selected_column = triage_team_data_obj.subscribed_repo_map
     //   .get(user_app_home_state_obj.currently_selected_repo.repo_path)
     //   .repo_project_map.get(
     //     user_app_home_state_obj.currently_selected_repo
     //       .currently_selected_project.project_name
     //   ).columns;
 
-    const cards_in_selected_column = user_subscribed_repos_obj.subscribed_repo_map
-      .get(user_app_home_state_obj.currently_selected_repo.repo_path)
+    const cards_in_selected_column = triage_team_data_obj
+      .get_team_repo_subscriptions(user_app_home_state_obj.get_selected_repo_path())
       .get_cards(selected_project.project_name, column_name);
 
     console.log('cards_in_selected_column', cards_in_selected_column);
 
-    const card_blocks = blocks.AppHomeIssue(cards_in_selected_column);
+    const card_blocks = AppHome.CardsAppHome(cards_in_selected_column);
     console.log(': ------------------------');
     console.log('card_blocks');
     console.log(': ------------------------');
 
-    const home_view = blocks.AppHomeBase(user_app_home_state_obj, card_blocks);
-    // (issue_blocks = blocks.AppHomeIssue(cards_array, label_block)),
+    const home_view = AppHome.BaseAppHome(user_app_home_state_obj, card_blocks);
+    // (issue_blocks = blocks.CardsAppHome(cards_array, label_block)),
     console.log(JSON.stringify(home_view, null, 4));
 
     /* view.publish is the method that your app uses to push a view to the Home tab */
@@ -510,7 +454,7 @@ app.action('label_list', async ({ack, body}) => {
       // clear the current labels first
       await graphql.call_gh_graphql(mutation.clearAllLabels, variables_clearAllLabels);
 
-      const repo_labels_map = user_subscribed_repos_obj.subscribed_repo_map.get(
+      const repo_labels_map = triage_team_data_obj.get_team_repo_subscriptions(
         user_app_home_state_obj.get_selected_repo_path()
       ).repo_label_map;
 
@@ -532,8 +476,12 @@ app.action('label_list', async ({ack, body}) => {
       };
 
       if (selected_label_ids.length !== 0) {
+        // REVIEW should I await the second one?
         await graphql.call_gh_graphql(mutation.clearAllLabels, variables_clearAllLabels);
-        graphql.call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue);
+        await graphql.call_gh_graphql(
+          mutation.addLabelToIssue,
+          variables_addLabelToIssue
+        );
 
         // If successful, make sure to pull the new labels/change their state in the object. Tho it's best to rely on the webhooks
       }
@@ -546,9 +494,8 @@ app.action('label_list', async ({ack, body}) => {
 // !SECTION
 
 /* ----------------------- SECTION Listen for options ----------------------- */
-// TODO HIGH first add options obj to the helper functions and pull everything from there
 // Responding to a repo_selection options with list of repos
-options_listener.repo_proj_col_selections.repo_selection(app, user_subscribed_repos_obj);
+options_listener.repo_proj_col_selections.repo_selection(app, triage_team_data_obj);
 
 // Same as the repo_selection option, just has to be seperated for this action_id
 app.options('setup_default_modal_repo_selection', async ({options, ack}) => {
@@ -556,16 +503,16 @@ app.options('setup_default_modal_repo_selection', async ({options, ack}) => {
     // TODO try using options directly
     console.log('options', options);
 
-    const subscribed_repos = user_subscribed_repos_obj.subscribed_repo_map;
+    const subscribed_repos = triage_team_data_obj.get_team_repo_subscriptions();
 
     console.log('subscribed_repos', subscribed_repos);
 
     if (subscribed_repos.size !== 0) {
       // const repo_options_block_list = Array.from(subscribed_repos.keys(), repo => {
-      //   return blocks.SubBlocks.option_obj(repo);
+      //   return SubBlocks.option_obj(repo);
       // });
       const repo_options_block_list = Array.from(subscribed_repos.keys()).map(repo => {
-        return blocks.SubBlocks.option_obj(repo);
+        return SubBlocks.option_obj(repo);
       });
 
       console.log('repo_options_block_list', repo_options_block_list);
@@ -574,7 +521,7 @@ app.options('setup_default_modal_repo_selection', async ({options, ack}) => {
         options: repo_options_block_list,
       });
     } else {
-      const no_subscribed_repos_option = blocks.SubBlocks.option_obj(
+      const no_subscribed_repos_option = SubBlocks.option_obj(
         'No repo subscriptions found',
         'no_subscribed_repos'
       );
@@ -599,7 +546,7 @@ app.options('project_selection', async ({options, ack}) => {
 
     const selected_repo_path = user_app_home_state_obj.currently_selected_repo.repo_path;
 
-    const subscribed_repo_projects = user_subscribed_repos_obj.subscribed_repo_map.get(
+    const subscribed_repo_projects = triage_team_data_obj.get_team_repo_subscriptions(
       selected_repo_path
     ).repo_project_map;
 
@@ -607,7 +554,7 @@ app.options('project_selection', async ({options, ack}) => {
       const project_options_block_list = Array.from(
         subscribed_repo_projects.values()
       ).map(project => {
-        return blocks.SubBlocks.option_obj(project.name, project.id);
+        return SubBlocks.option_obj(project.name, project.id);
       });
 
       console.log('project_options_block_list', project_options_block_list);
@@ -616,10 +563,7 @@ app.options('project_selection', async ({options, ack}) => {
         options: project_options_block_list,
       });
     } else {
-      const no_projects_option = blocks.SubBlocks.option_obj(
-        'No projects found',
-        'no_projects'
-      );
+      const no_projects_option = SubBlocks.option_obj('No projects found', 'no_projects');
       // REVIEW should I return the empty option or nothing at all?
 
       await ack({
@@ -643,7 +587,7 @@ app.options('setup_default_modal_project_selection', async ({options, ack}) => {
 
     const selected_repo_path = selected_repo_metadata_obj.repo_path;
 
-    const subscribed_repo_projects = user_subscribed_repos_obj.subscribed_repo_map.get(
+    const subscribed_repo_projects = triage_team_data_obj.get_team_repo_subscriptions(
       selected_repo_path
     ).repo_project_map;
 
@@ -651,7 +595,7 @@ app.options('setup_default_modal_project_selection', async ({options, ack}) => {
       const project_options_block_list = Array.from(
         subscribed_repo_projects.values()
       ).map(project => {
-        return blocks.SubBlocks.option_obj(project.name, project.id);
+        return SubBlocks.option_obj(project.name, project.id);
       });
 
       console.log('project_options_block_list', project_options_block_list);
@@ -660,10 +604,7 @@ app.options('setup_default_modal_project_selection', async ({options, ack}) => {
         options: project_options_block_list,
       });
     } else {
-      const no_projects_option = blocks.SubBlocks.option_obj(
-        'No projects found',
-        'no_projects'
-      );
+      const no_projects_option = SubBlocks.option_obj('No projects found', 'no_projects');
       // REVIEW should I return the empty option or nothing at all?
 
       await ack({
@@ -695,8 +636,8 @@ app.options('column_selection', async ({options, ack}) => {
     console.log('selected_project_name', selected_project_name);
     console.log(': --------------------------------------------');
 
-    const selected_project_columns = user_subscribed_repos_obj.subscribed_repo_map
-      .get(selected_repo_path)
+    const selected_project_columns = triage_team_data_obj
+      .get_team_repo_subscriptions(selected_repo_path)
       .repo_project_map.get(selected_project_name).columns;
 
     if (
@@ -705,7 +646,7 @@ app.options('column_selection', async ({options, ack}) => {
     ) {
       const column_options_block_list = Array.from(selected_project_columns.values()).map(
         column => {
-          return blocks.SubBlocks.option_obj(column.name, column.id);
+          return SubBlocks.option_obj(column.name, column.id);
         }
       );
 
@@ -715,10 +656,7 @@ app.options('column_selection', async ({options, ack}) => {
         options: column_options_block_list,
       });
     } else {
-      const no_columns_option = blocks.SubBlocks.option_obj(
-        'No columns found',
-        'no_columns'
-      );
+      const no_columns_option = SubBlocks.option_obj('No columns found', 'no_columns');
       console.log('no columns');
       // REVIEW should I return the empty option or nothing at all?
 
@@ -741,7 +679,7 @@ app.options('label_list', async ({options, ack}) => {
     const currently_selected_repo_path =
       user_app_home_state_obj.currently_selected_repo.repo_path;
 
-    const currently_selected_repo_map = user_subscribed_repos_obj.subscribed_repo_map.get(
+    const currently_selected_repo_map = triage_team_data_obj.get_team_repo_subscriptions(
       currently_selected_repo_path
     );
 
@@ -774,7 +712,7 @@ app.options('setup_default_modal_label_list', async ({options, ack}) => {
     // Get information specific to a team or channel
     const currently_selected_repo_path = selected_repo_metadata_obj.repo_path;
 
-    const currently_selected_repo_map = user_subscribed_repos_obj.subscribed_repo_map.get(
+    const currently_selected_repo_map = triage_team_data_obj.get_team_repo_subscriptions(
       currently_selected_repo_path
     );
 
@@ -815,7 +753,7 @@ app.shortcut('setup_triage_workflow', async ({shortcut, ack, context, client}) =
       // The token you used to initialize your app is stored in the `context` object
       token: context.botToken,
       trigger_id: shortcut.trigger_id,
-      view: blocks.SetupShortcutModalStatic,
+      view: Modals.SetupShortcutStaticModal,
     });
 
     console.log(result);
@@ -834,8 +772,8 @@ app.shortcut('modify_repo_subscriptions', async ({shortcut, ack, context, client
       // The token you used to initialize your app is stored in the `context` object
       token: context.botToken,
       trigger_id: shortcut.trigger_id,
-      view: blocks.ModifyRepoSubscriptionsModal(
-        user_subscribed_repos_obj.subscribed_repo_map.keys()
+      view: Modals.ModifyRepoSubscriptionsModal(
+        triage_team_data_obj.get_team_repo_subscriptions().keys()
       ),
     });
 
@@ -857,7 +795,7 @@ app.shortcut('modify_github_username', async ({shortcut, ack, context, client}) 
       token: context.botToken,
       channel: user_id,
       text: `Hey <@${user_id}>! Click here to change your GitHub username`,
-      blocks: blocks.UsernameMapMessage(user_id),
+      blocks: Messages.UsernameMapMessage(user_id),
     });
   } catch (error) {
     console.error(error);
@@ -885,17 +823,24 @@ app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
   const {selected_channel} = view.state.values.channel_select_input.triage_channel;
 
   // Message to send user
-  let msg = '';
+  const msg =
+    selected_users_array.length !== 0
+      ? 'Team members assigned successfully'
+      : 'There was an error with your submission';
 
-  // Save triage users
-  users_triage_team[selected_channel] = selected_users_array;
+  // Assign the members to the team
+  selected_users_array.forEach(user_id => triage_team_data_obj.set_team_member(user_id));
 
-  if (selected_users_array.length !== 0) {
-    // DB save was successful
-    msg = 'Team members assigned successfully';
-  } else {
-    msg = 'There was an error with your submission';
+  // Set the team channel
+  // TODO maybe we should update the DB at this point
+  const team_channel_id = triage_team_data_obj.assign_team_channel(selected_channel);
+
+  if (team_channel_id !== selected_channel) {
+    console.log('Team channel assignment failed');
+    return;
   }
+
+  console.log('triage_team_data_obj', triage_team_data_obj);
 
   // Message the user
   try {
@@ -905,16 +850,19 @@ app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
       text: msg,
     });
 
-    users_triage_team[selected_channel].forEach(user_id => {
+    const team_member_ids = triage_team_data_obj.team_data.team_members.keys();
+
+    // Message the team members that were added to ask for their github usernames
+    for (const slack_user_id of team_member_ids) {
       app.client.chat.postMessage({
         token: context.botToken,
-        channel: user_id,
+        channel: slack_user_id,
         text:
-          `Hey <@${user_id}>! ` +
+          `Hey <@${slack_user_id}>! ` +
           "You've been added to the triage team. Tell me your GitHub username.",
-        blocks: blocks.UsernameMapMessage(user_id),
+        blocks: Messages.UsernameMapMessage(slack_user_id),
       });
-    });
+    }
   } catch (error) {
     console.error(error);
   }
@@ -931,25 +879,81 @@ app.view('map_username_modal', async ({ack, body, view, context}) => {
 
   console.log('github username', github_username);
 
-  const slack_username = body.user.id;
+  // RegExp for checking the username
+  const github_username_checker = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
 
-  console.log('slack_username 1', slack_username);
+  const valid_github_username = github_username_checker.test(github_username);
 
-  if (typeof gh_slack_username_map[github_username] === 'undefined') {
+  console.log(': --------------------------------------------');
+  console.log('valid_github_username', valid_github_username);
+  console.log(': --------------------------------------------');
+
+  const slack_user_id = body.user.id;
+
+  console.log('slack_user_id ', slack_user_id);
+
+  if (!valid_github_username) {
+    // TODO maybe open a modal
+    console.log(`${github_username} is not a valid github username`);
+    try {
+      await app.client.chat.postMessage({
+        token: context.botToken,
+        channel: slack_user_id,
+        text: `Hey <@${slack_user_id}>,  ${github_username} is not a valid GitHub username. Please double check your spelling. `,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+    return;
+  }
+
+  const slack_id_to_gh_username_match = triage_team_data_obj.get_team_member_by_github_username(
+    github_username
+  );
+  /* REVIEW potentially message the user or open a confirmation modal of some sort if the user already has a github username 
+  setup. This would actually be better done on the actual modal before submission. The modal should show the person's current
+  github name, and it should be a confirm type modal 
+  TODO all the above stuff */
+  // if (Object.keys(github_username_to_slack_id_match).length !== 0) {
+  //   // Message the user
+  //   try {
+  //     await app.client.chat.postMessage({
+  //       token: context.botToken,
+  //       channel: slack_user_id,
+  //       text:
+  //         `<@${slack_user_id}>, ` +
+  //         'your Slack and Github usernames were associated successfully! Your GitHub username is currently set to' +
+  //         ` ${github_username}. ` +
+  //         "If that doesn't look right, click the enter github username button again.",
+  //     });
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  //   return;
+  // }
+
+  if (slack_id_to_gh_username_match.length === 0) {
     // We map the github username to that Slack username
-    gh_slack_username_map[github_username] = slack_username;
+    triage_team_data_obj.set_team_member(slack_user_id, github_username);
 
-    console.log('gh_slack_username_map', gh_slack_username_map);
+    console.log(': ------------------------------------------------------------');
+    console.log('slack_id_to_gh_username_match', slack_id_to_gh_username_match);
+    console.log(': ------------------------------------------------------------');
 
-    console.log('slack_username', slack_username);
+    console.log(': ------------------------------------------');
+    console.log(
+      'Success map added check',
+      triage_team_data_obj.get_team_member_by_github_username(github_username)
+    );
+    console.log(': ------------------------------------------');
 
     // Message the user
     try {
       await app.client.chat.postMessage({
         token: context.botToken,
-        channel: slack_username,
+        channel: slack_user_id,
         text:
-          `<@${gh_slack_username_map[github_username]}>, ` +
+          `<@${slack_user_id}>, ` +
           'your Slack and Github usernames were associated successfully! Your GitHub username is currently set to' +
           ` ${github_username}. ` +
           "If that doesn't look right, click the enter github username button again.",
@@ -973,7 +977,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
 
   const unsubscribe_block = view_values.unsubscribe_repos_block;
 
-  const current_subscribed_repos = user_subscribed_repos_obj.subscribed_repo_map;
+  const current_subscribed_repos = triage_team_data_obj.get_team_repo_subscriptions();
 
   /* safeAccess() is a try/catch utility function.
   Since the unsubscribe repos input can be left blank */
@@ -1010,7 +1014,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
     return;
   }
 
-  console.log('user_subscribed_repos_obj before', user_subscribed_repos_obj);
+  console.log('triage_team_data_obj before', triage_team_data_obj);
 
   // Logs the input for subscribing to new repo if any
   console.log('subscribe_repo_obj', subscribe_repo_obj);
@@ -1056,9 +1060,9 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
     if (unsubscribe_repo === user_app_home_state_obj.currently_selected_repo) {
       user_app_home_state_obj.currently_selected_repo = {};
     }
-    if (unsubscribe_repo === user_subscribed_repos_obj.default_repo) {
+    if (unsubscribe_repo === triage_team_data_obj.default_repo) {
       // if only one repo is left, that should be the default now
-      user_subscribed_repos_obj.set_default_repo =
+      triage_team_data_obj.set_default_repo =
         current_subscribed_repos.size === 1
           ? current_subscribed_repos.values().next().value.repo_path
           : '';
@@ -1085,7 +1089,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
       console.error('User unsubscribed from repo: ' + unsubscribe_repo);
       return;
     }
-    console.log('user_subscribed_repos_obj', user_subscribed_repos_obj);
+    console.log('triage_team_data_obj', triage_team_data_obj);
     console.log('user_app_home_state_obj', user_app_home_state_obj);
   }
   // Everything seems to be in order, subscribe to the specified repo
@@ -1096,19 +1100,6 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
       subscribe_repo_obj.repo_project_map = repo_data.repo_projects;
 
       subscribe_repo_obj.repo_label_map = repo_data.repo_labels;
-      // Set the untriaged label_id. Currently hard coded to a label with the name untriaged. This will be fixed so that the label can be named whatever the user wants.
-      // TODO remove hardcoding here
-      // subscribe_repo_obj.untriaged_label.label_id = repo_data.repo_labels.get(
-      //   'untriaged'
-      // ).id;
-
-      // Set the first column of the first project as the column for new issue cards to be created in
-      // TODO remove the first column hardcoding and let the user select their preferred default proj and column when subscribing.
-      // TODO HIGH Send a message to the user as soon as subscription is complete so they can set up the untriaged label and the untriaged column
-      // subscribe_repo_obj.untriaged_label.untriaged_column_id = subscribe_repo_obj.repo_project_map.values();
-      // very temp hardcoding hehe
-      // subscribe_repo_obj.untriaged_label.untriaged_column_id =
-      //   'MDEzOlByb2plY3RDb2x1bW45NjMyODQ0';
 
       subscribe_repo_obj.repo_id = repo_data.repo_id;
 
@@ -1118,7 +1109,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
 
       // Subscribe to the specified repo
       if (is_default_repo) {
-        user_subscribed_repos_obj.set_default_repo = subscribe_repo_obj.repo_path;
+        triage_team_data_obj.set_default_repo = subscribe_repo_obj.repo_path;
       }
 
       console.log('user_app_home_state_obj', user_app_home_state_obj);
@@ -1130,7 +1121,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
           channel: slack_user_id,
           // TODO Check if mentions are setup and change the message based on that
           text: `<@${slack_user_id}>, you've successfully subscribed to *${subscribe_repo_obj.repo_path}*. Make sure you set up the *New Issue defaults* for this repo using the global shortcut so that I can automatically assign newly-created issues to a project and column of your choice as soon as they are created!`,
-          blocks: blocks.SetupRepoDefaultsMessage(
+          blocks: Messages.SetupRepoDefaultsMessage(
             slack_user_id,
             subscribe_repo_obj.repo_path
           ),
@@ -1142,7 +1133,7 @@ app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
       console.error(err);
     }
   }
-  console.log('user_subscribed_repos_obj', user_subscribed_repos_obj);
+  console.log('triage_team_data_obj', triage_team_data_obj);
   console.log('here current_subscribed_repos', current_subscribed_repos);
   console.log('subscribe_repo_obj', subscribe_repo_obj);
 });
@@ -1166,7 +1157,7 @@ app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => 
     view_values.untriaged_project_block_input.setup_default_modal_project_selection
       .selected_option;
 
-  const repo_obj = user_subscribed_repos_obj.subscribed_repo_map.get(repo_path);
+  const repo_obj = triage_team_data_obj.get_team_repo_subscriptions(repo_path);
 
   // set default project name
   repo_obj.untriaged_settings.repo_default_untriaged_project.project_name =
@@ -1223,6 +1214,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
     const request = req.body;
     const {action} = request;
 
+    // eslint-disable-next-line no-unused-vars
     const {full_name: repo_path, id: repo_id} = request.repository;
 
     console.log(': --------------------');
@@ -1240,7 +1232,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
       const issue_create_date = new Date(request.issue.created_at);
       const issue_node_id = request.issue.node_id;
 
-      const repo_obj = user_subscribed_repos_obj.subscribed_repo_map.get(repo_path);
+      const repo_obj = triage_team_data_obj.get_team_repo_subscriptions(repo_path);
       console.log(': ------------------');
       console.log('repo_obj', repo_obj);
       console.log(': ------------------');
@@ -1252,35 +1244,30 @@ expressReceiver.router.post('/webhook', (req, res) => {
           element_node_id: issue_node_id,
           label_ids: [untriaged_label_id],
         };
+        // TODO seperate this. The adding of the untriaged label event should trigger this.
+        // const variables_assignIssueToProject = {
+        //   issue_id: issue_node_id,
+        //   project_ids: [
+        //     triage_team_data_obj.get_team_repo_subscriptions(repo_path).untriaged_settings
+        //       .repo_default_untriaged_project.project_id,
+        //   ],
+        // };
 
-        const variables_assignIssueToProject = {
-          issue_id: issue_node_id,
-          project_ids: [
-            user_subscribed_repos_obj.subscribed_repo_map.get(repo_path)
-              .untriaged_settings.repo_default_untriaged_project.project_id,
-          ],
-        };
+        // eslint-disable-next-line no-unused-vars
+        const addLabelMutation = graphql
+          .call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, {
+            repo_owner: repo_obj.repo_owner,
+            repo_name: repo_obj.repo_name,
+          })
+          .then(addLabelMutation_response => {
+            console.log('addLabelMutation_response', addLabelMutation_response);
+            return addLabelMutation_response;
+          })
+          .catch(error => console.error(error));
 
-        const addLabelMutation = graphql.call_gh_graphql(
-          mutation.addLabelToIssue,
-          variables_addLabelToIssue,
-          {repo_owner: repo_obj.repo_owner, repo_name: repo_obj.repo_name}
-        );
-
-        // TODO: Create a card in the org-wide repo to indicate the presence of this untriaged issue
-        // Assigns the project to the selected issue
-        // TODO: let the user select a default project
-        const assignIssuToProjectMutation = graphql.call_gh_graphql(
-          mutation.assignIssueToProject,
-          variables_assignIssueToProject
-        );
-        // potetnially valuable
-        Promise.all([
-          addLabelMutation,
-          assignIssuToProjectMutation,
-        ]).then(calls_response =>
-          console.log('promise all calls_response', calls_response)
-        );
+        console.log(': ----------------------------------');
+        console.log('addLabelMutation', addLabelMutation);
+        console.log(': ----------------------------------');
 
         const mention_event_data = {
           channel_id: temp_channel_id,
@@ -1310,14 +1297,34 @@ expressReceiver.router.post('/webhook', (req, res) => {
         console.log(': --------------------------------------------------');
 
         if (label_id === untriaged_label_id) {
-          // TODO assign it to the project
-          // const assignIssueToProject_variables = {
-          //   issue: {
-          //     projectId: untriaged_label.repo_default_untriaged_project.project_id,
-          //     contentId: issue_node_id,
-          //   },
-          // };
-          // graphql.call_gh_graphql(mutation.addCardToColumn, addCardToColumn_variables);
+          const variables_assignIssueToProject = {
+            issue_id: issue_node_id,
+            project_ids: [
+              triage_team_data_obj.get_team_repo_subscriptions(repo_path)
+                .untriaged_settings.repo_default_untriaged_project.project_id,
+            ],
+          };
+
+          // TODO: Create a card in the org-wide repo to indicate the presence of this untriaged issue
+          // Assigns the project to the selected issue
+          // TODO: let the user select a default project
+          const assignIssueToProjectMutation = graphql
+            .call_gh_graphql(
+              mutation.assignIssueToProject,
+              variables_assignIssueToProject
+            )
+            .then(assignIssueToProjectMutation_response => {
+              console.log(
+                'assignIssueToProjectMutation_response',
+                assignIssueToProjectMutation_response
+              );
+              return assignIssueToProjectMutation_response;
+            })
+            .catch(error => console.error(error));
+
+          console.log(': ----------------------------------');
+          console.log('assignIssueToProjectMutation', assignIssueToProjectMutation);
+          console.log(': ----------------------------------');
         }
       } else if (action === 'unlabeled') {
         /* -- TODO remove project from new issue column if untriaged label removed -- */
@@ -1328,6 +1335,16 @@ expressReceiver.router.post('/webhook', (req, res) => {
         //   const addCardToColumn_variables = {"issue": {"projectColumnId" : untriaged_label.column_id, "contentId": issue_node_id}}
         //   graphql.call_gh_graphql(mutation.addCardToColumn, addCardToColumn_variables)
         // }
+        const label_id = request.label.node_id;
+        const untriaged_label_id = repo_obj.untriaged_settings.untriaged_label.label_id;
+
+        console.log(': ------------------');
+        console.log('label_id', label_id);
+        console.log(': ------------------');
+
+        console.log(': --------------------------------------------------');
+        console.log('untriaged_label id', untriaged_label_id);
+        console.log(': --------------------------------------------------');
       }
     } else if (req.headers['x-github-event'] === 'issue_comment') {
       const issue_url = request.issue.html_url;
@@ -1350,7 +1367,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
           is_issue_closed: true,
         };
 
-        mention_message(mention_event_data);
+        send_mention_message(mention_event_data);
       }
 
       const mention_event_data = {
@@ -1390,88 +1407,13 @@ expressReceiver.router.post('/webhook', (req, res) => {
 /*                        SECTION Function definitions                        */
 /* -------------------------------------------------------------------------- */
 
-/* The @ symbol for mentions is not concatenated here because the convention for mentioning is different 
-between mentioning users/groups/channels. To mention the channel, say when a closed issue is commented
-on, the special convention is <!channel>. */
-function mention_message_blocks({
-  title,
-  body,
-  gh_url,
-  creator,
-  avatar_url,
-  date,
-  mentioned_slack_user,
-}) {
-  return [
-    {
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `*<${mentioned_slack_user}>*`,
-      },
-    },
-
-    {
-      type: 'divider',
-    },
-    {
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `*${title}*`,
-      },
-    },
-    {
-      type: 'divider',
-    },
-    {
-      type: 'section',
-      accessory: {
-        type: 'image',
-        image_url: avatar_url,
-        alt_text: `${creator}'s GitHub avatar`,
-      },
-      text: {
-        type: 'plain_text',
-        text: body,
-        emoji: true,
-      },
-    },
-    {
-      type: 'actions',
-      elements: [
-        {
-          type: 'button',
-          text: {
-            type: 'plain_text',
-            text: 'Visit issue page',
-            emoji: true,
-          },
-          url: gh_url,
-          action_id: 'link_button',
-        },
-      ],
-    },
-    {
-      type: 'context',
-      elements: [
-        {
-          type: 'plain_text',
-          text: `Date: ${date}`,
-          emoji: true,
-        },
-      ],
-    },
-  ];
-}
-
 // TODO: Get user's timezone and display the date/time with respect to it
 /**
  *
  *
  * @param {{channel_id:string, title:string, body:string, url:string, creator:string, avatar_url:string, create_date:string, mentioned_slack_user:string, is_issue_closed:boolean }} mention_event_data
  */
-function mention_message(mention_event_data) {
+function send_mention_message(mention_event_data) {
   const {
     channel_id,
     title,
@@ -1488,11 +1430,11 @@ function mention_message(mention_event_data) {
     ...(is_issue_closed
       ? {
           channel: channel_id,
-          blocks: mention_message_blocks(mention_event_data),
+          blocks: Messages.GithubMentionMessage(mention_event_data),
         }
       : {
           channel: mentioned_slack_user,
-          blocks: mention_message_blocks(
+          blocks: Messages.GithubMentionMessage(
             Object.assign(mention_event_data, {
               mentioned_slack_user: `@${mentioned_slack_user}`,
             })
@@ -1530,7 +1472,9 @@ function check_for_mentions({
 
       console.log(`mentioned gh username: ${github_username}`);
 
-      const mentioned_slack_user = gh_slack_username_map[github_username];
+      const mentioned_slack_user = triage_team_data_obj.get_team_member_by_github_username(
+        github_username
+      );
 
       console.log(`mentioned slack user: ${mentioned_slack_user}`);
 
@@ -1548,7 +1492,7 @@ function check_for_mentions({
       };
 
       if (mentioned_slack_user) {
-        mention_message(mention_event_data);
+        send_mention_message(mention_event_data);
       }
     });
   }
