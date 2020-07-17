@@ -40,6 +40,32 @@ class TriageTeamData {
       : this.team_data.subscribed_repo_map.get(repo_path);
   }
 
+  get_repo_default_project(repo_path) {
+    return this.team_data.subscribed_repo_map.get(repo_path).untriaged_settings
+      .repo_default_untriaged_project;
+  }
+
+  set_repo_default_project(repo_path, project_obj) {
+    return Object.assign(
+      this.team_data.subscribed_repo_map.get(repo_path).untriaged_settings
+        .repo_default_untriaged_project,
+      project_obj
+    );
+  }
+
+  get_untriaged_label(repo_path) {
+    return this.team_data.subscribed_repo_map.get(repo_path).untriaged_settings
+      .untriaged_label;
+  }
+
+  set_untriaged_label(repo_path, label_obj) {
+    return Object.assign(
+      this.team_data.subscribed_repo_map.get(repo_path).untriaged_settings
+        .untriaged_label,
+      label_obj
+    );
+  }
+
   assign_team_channel(channel_id) {
     this.team_channel_id = channel_id;
     return this.team_channel_id;

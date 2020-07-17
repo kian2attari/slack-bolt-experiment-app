@@ -85,8 +85,9 @@ actions_listener.buttons.open_set_repo_defaults_modal_button(app);
 app.action('show_untriaged_filter_button', async ({ack, body, context, client}) => {
   // Here we acknowledge receipt
   await ack();
+
   // TODO HIGHEST PRIORITY
-  const repo_project_id = '';
+  // const repo_project_id = triage_team_data_obj.;
 
   // Show all untriaged issues from all repos
   const github_untriaged = graphql.call_gh_graphql(
@@ -149,13 +150,13 @@ app.action('show_untriaged_filter_button', async ({ack, body, context, client}) 
 //   });
 // });
 
-app.action('setup_default_modal_repo_selection', async ({ack, body, context, client}) => {
+app.action('setup_repo_defaults_repo_modal', async ({ack, body, context, client}) => {
   console.log(': ----------------');
-  console.log('setup_default_modal_repo_selection context', context);
+  console.log('setup_repo_defaults_repo_modal context', context);
   console.log(': ----------------');
 
   console.log(': ----------');
-  console.log('setup_default_modal_repo_selection body', body);
+  console.log('setup_repo_defaults_repo_modal body', body);
   console.log(': ----------');
 
   await ack();
@@ -500,7 +501,7 @@ app.action('label_list', async ({ack, body}) => {
 options_listener.repo_proj_col_selections.repo_selection(app, triage_team_data_obj);
 
 // Same as the repo_selection option, just has to be seperated for this action_id
-app.options('setup_default_modal_repo_selection', async ({options, ack}) => {
+app.options('setup_repo_defaults_repo_modal', async ({options, ack}) => {
   try {
     // TODO try using options directly
     console.log('options', options);
@@ -1177,23 +1178,17 @@ app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => 
     view_values.untriaged_project_block_input.setup_default_modal_project_selection
       .selected_option;
 
-  const repo_obj = triage_team_data_obj.get_team_repo_subscriptions(repo_path);
-
   // set default project name
-  repo_obj.untriaged_settings.repo_default_untriaged_project.project_name =
-    default_untriaged_issues_project.text.text;
-  repo_obj.untriaged_settings.repo_default_untriaged_project.project_id =
-    default_untriaged_issues_project.value;
+  triage_team_data_obj.set_repo_default_project(repo_path, {
+    project_name: default_untriaged_issues_project.text.text,
+    project_id: default_untriaged_issues_project.value,
+  });
 
   // set default label obj
-  repo_obj.untriaged_settings.untriaged_label = {
+  triage_team_data_obj.set_untriaged_label(repo_path, {
     label_id: default_untriaged_issues_label.value,
     label_name: default_untriaged_issues_label.text.text,
-  };
-
-  console.log(': ------------------');
-  console.log('repo_obj', repo_obj);
-  console.log(': ------------------');
+  });
 
   console.log(': --------------------------------------------------------------');
   console.log('default_untriaged_issues_label', default_untriaged_issues_label);
@@ -1201,6 +1196,10 @@ app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => 
 
   console.log(': ------------------------------------------------------------------');
   console.log('default_untriaged_issues_project', default_untriaged_issues_project);
+  console.log(': ------------------------------------------------------------------');
+
+  console.log(': ------------------------------------------------------------------');
+  console.log('triage object', triage_team_data_obj.team_data);
   console.log(': ------------------------------------------------------------------');
 
   // Success! Message the user

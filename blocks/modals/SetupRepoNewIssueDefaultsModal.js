@@ -45,7 +45,7 @@ module.exports = (
             'text': 'Select repo',
             'emoji': true,
           },
-          'action_id': 'setup_default_modal_repo_selection',
+          'action_id': 'setup_repo_defaults_repo_modal',
           ...(typeof selected_repo.repo_path !== 'undefined'
             ? {'initial_option': SubBlocks.option_obj(selected_repo.repo_path)}
             : {}),
