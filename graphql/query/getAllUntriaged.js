@@ -1,6 +1,6 @@
 module.exports = `
-query getAllUntriaged($project_id: ID!) {
-    node(id: $project_id) {
+query getAllUntriaged($project_ids: [ID!]!) {
+  nodes(ids: $project_ids) {
       ... on Project {
         id
         name

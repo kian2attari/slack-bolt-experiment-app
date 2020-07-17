@@ -87,17 +87,22 @@ app.action('show_untriaged_filter_button', async ({ack, body, context, client}) 
   await ack();
 
   // TODO HIGHEST PRIORITY
-  // const repo_project_id = triage_team_data_obj.;
+  // TODO REMOVE HARDCODING
+  const repo_project_id = triage_team_data_obj.get_repo_default_project(
+    'slackapi/dummy-kian-test-repo'
+  ).project_id;
+
+  console.log('repo_project_id', repo_project_id);
 
   // Show all untriaged issues from all repos
-  const github_untriaged = graphql.call_gh_graphql(
+  const github_untriaged_cards_response = await graphql.call_gh_graphql(
     query.getAllUntriaged,
-    repo_project_id
+    {project_ids: [repo_project_id]}
   );
   console.log(': ----------------------------------');
-  console.log('github_untriaged', github_untriaged);
+  console.log('github_untriaged_cards_response', github_untriaged_cards_response);
   console.log(': ----------------------------------');
-  const untriaged_issues = [];
+  const untriaged_issues = github_untriaged_cards_response.nodes[0].pendingCards.nodes;
 
   const untriaged_blocks = AppHome.CardsAppHome(untriaged_issues);
 
@@ -109,12 +114,10 @@ app.action('show_untriaged_filter_button', async ({ack, body, context, client}) 
   console.log('open_map_modal_button context', context);
   console.log(': ----------');
 
-  const {trigger_id} = body;
-
-  await client.views.open({
+  await client.views.publish({
     token: context.botToken,
-    trigger_id,
-    view: AppHome.BaseAppHome(home_view),
+    user_id: body.user.id,
+    view: home_view,
   });
 });
 
@@ -1199,7 +1202,10 @@ app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => 
   console.log(': ------------------------------------------------------------------');
 
   console.log(': ------------------------------------------------------------------');
-  console.log('triage object', triage_team_data_obj.team_data);
+  console.log(
+    'untriaged settings repo with defaults applied',
+    triage_team_data_obj.team_data.subscribed_repo_map.get(repo_path).untriaged_settings
+  );
   console.log(': ------------------------------------------------------------------');
 
   // Success! Message the user
