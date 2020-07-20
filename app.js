@@ -1,10 +1,15 @@
 const {App, LogLevel, ExpressReceiver} = require('@slack/bolt');
 const express = require('express');
-const parseGH = require('parse-github-url');
-const {query, mutation, graphql} = require('./graphql');
+const {mutation, graphql} = require('./graphql');
 const {AppHome, Messages, Modals, SubBlocks} = require('./blocks');
 const {SafeAccess} = require('./helper-functions');
-const {actions_listener, events_listener, options_listener} = require('./listeners');
+const {
+  actions_listener,
+  events_listener,
+  options_listener,
+  views_listener,
+  common_functions,
+} = require('./listeners');
 const {UserAppHomeState, TriageTeamData} = require('./models');
 
 // Create a Bolt Receiver
@@ -32,7 +37,7 @@ const app = new App({
 const temp_channel_id = 'C015FH00GVA';
 
 // TODO get this from DB
-const default_repo = {
+const default_selected_repo = {
   repo_path: 'All Untriaged',
   repo_id: 'all_untriaged',
 };
@@ -40,7 +45,7 @@ const default_repo = {
 // Selection state is stored in the order Repo->Project->Column.
 // Internal object to store the current state of selections on App Home
 // TODO possible replace this entirely with the private_metadata property
-const user_app_home_state_obj = new UserAppHomeState(default_repo);
+const user_app_home_state_obj = new UserAppHomeState(default_selected_repo);
 console.log(': ----------------------------------------');
 console.log('user_app_home_state_obj', user_app_home_state_obj);
 console.log(': ----------------------------------------');
@@ -50,7 +55,9 @@ the repos the team is subscribed to, and the triage team's channel */
 
 // TODO store this in DB as team_channel_id -> triage_team_data_obj
 const triage_team_data_obj = new TriageTeamData();
-
+console.log(': ------------------------------------------');
+console.log('triage_team_data_obj', triage_team_data_obj);
+console.log(': ------------------------------------------');
 // !SECTION
 
 /* -------------------------------------------------------------------------- */
@@ -66,7 +73,8 @@ const triage_team_data_obj = new TriageTeamData();
 events_listener.app_home.app_home_opened(
   app,
   triage_team_data_obj,
-  user_app_home_state_obj
+  user_app_home_state_obj,
+  default_selected_repo
 );
 
 // !SECTION
@@ -81,77 +89,11 @@ actions_listener.buttons.open_map_modal_button(
 // Opens the modal for setting default repos
 actions_listener.buttons.open_set_repo_defaults_modal_button(app);
 
-// The app home 'Untriaged' filter button
-app.action('show_untriaged_filter_button', async ({ack, body, context, client}) => {
-  // Here we acknowledge receipt
-  await ack();
-
-  // TODO HIGHEST PRIORITY
-  // TODO REMOVE HARDCODING
-  const repo_project_id = triage_team_data_obj.get_repo_default_project(
-    'slackapi/dummy-kian-test-repo'
-  ).project_id;
-
-  console.log('repo_project_id', repo_project_id);
-
-  // Show all untriaged issues from all repos
-  const github_untriaged_cards_response = await graphql.call_gh_graphql(
-    query.getAllUntriaged,
-    {project_ids: [repo_project_id]}
-  );
-  console.log(': ----------------------------------');
-  console.log('github_untriaged_cards_response', github_untriaged_cards_response);
-  console.log(': ----------------------------------');
-  const untriaged_issues = github_untriaged_cards_response.nodes[0].pendingCards.nodes;
-
-  const untriaged_blocks = AppHome.CardsAppHome(untriaged_issues);
-
-  const home_view = AppHome.BaseAppHome(user_app_home_state_obj, untriaged_blocks);
-
-  console.log(JSON.stringify(home_view, null, 4));
-
-  console.log(': ----------');
-  console.log('open_map_modal_button context', context);
-  console.log(': ----------');
-
-  await client.views.publish({
-    token: context.botToken,
-    user_id: body.user.id,
-    view: home_view,
-  });
-});
-
-// TODO remove the API call, we dont need that
-// Responds to the 'See number of cards by column' button on the home page
-// app.action('column_card_count_info', async ({ack, body, context, client}) => {
-//   // Here we acknowledge receipt
-//   await ack();
-
-//   const {trigger_id} = body;
-//   const project_number = parseInt(body.actions[0].value, 10);
-//   const variables_getCardsByProjColumn = {
-//     project_number,
-//     ...gh_variables_init,
-//   };
-//   const num_cards_per_column = await graphql.call_gh_graphql(
-//     query.getNumOfCardsPerColumn,
-//     variables_getCardsByProjColumn
-//   );
-
-//   const project_name = num_cards_per_column.repository.project.name;
-
-//   const array_column_info = num_cards_per_column.repository.project.columns.nodes;
-
-//   await client.views.open({
-//     /* retrieves your xoxb token from context */
-//     token: context.botToken,
-
-//     trigger_id,
-
-//     // the view payload that appears in the app home
-//     view: blocks.AppHomeMoreInfoIssueModal(array_column_info, project_name),
-//   });
-// });
+actions_listener.buttons.show_untriaged_filter_button(
+  app,
+  triage_team_data_obj,
+  user_app_home_state_obj
+);
 
 app.action('setup_repo_defaults_repo_modal', async ({ack, body, context, client}) => {
   console.log(': ----------------');
@@ -250,7 +192,7 @@ app.action('link_button', async ({ack}) => ack());
 
 /* ------------- ANCHOR Responding to the repo name selection ------------ */
 
-app.action('repo_selection', async ({ack, body, context, client}) => {
+app.action('main_view_scope_selection', async ({ack, body, context, client}) => {
   await ack();
   try {
     const action_body = body.actions[0];
@@ -269,6 +211,22 @@ app.action('repo_selection', async ({ack, body, context, client}) => {
       repo_path: selected_repo_path,
       repo_id: selected_repo_id,
     });
+
+    // If the selection is All untriaged, then just show those cards
+    if (
+      selected_repo_path === default_selected_repo.repo_path &&
+      selected_repo_id === default_selected_repo.repo_id
+    ) {
+      common_functions.show_all_untriaged_cards({
+        triage_team_data_obj,
+        user_app_home_state_obj,
+        body,
+        context,
+        client,
+      });
+
+      return;
+    }
 
     const updated_home_view = AppHome.BaseAppHome(user_app_home_state_obj);
     // QUESTION: should i use views.update or views.publish to update the app home view?
@@ -364,9 +322,11 @@ app.action('column_selection', async ({ack, body, context, client}) => {
     //       .currently_selected_project.project_name
     //   ).columns;
 
-    const cards_in_selected_column = triage_team_data_obj
-      .get_team_repo_subscriptions(user_app_home_state_obj.get_selected_repo_path())
-      .get_cards(selected_project.project_name, column_name);
+    const cards_in_selected_column = triage_team_data_obj.get_cards_by_column(
+      user_app_home_state_obj.get_selected_repo_path(),
+      selected_project.project_name,
+      column_name
+    );
 
     console.log('cards_in_selected_column', cards_in_selected_column);
 
@@ -550,7 +510,7 @@ app.options('project_selection', async ({options, ack}) => {
     // TODO try using options directly
     console.log('options', options);
 
-    const selected_repo_path = user_app_home_state_obj.currently_selected_repo.repo_path;
+    const selected_repo_path = user_app_home_state_obj.get_selected_repo_path();
 
     const subscribed_repo_projects = triage_team_data_obj.get_team_repo_subscriptions(
       selected_repo_path
@@ -634,9 +594,7 @@ app.options('column_selection', async ({options, ack}) => {
 
     const selected_repo_path = user_app_home_state_obj.currently_selected_repo.repo_path;
 
-    const selected_project_name =
-      user_app_home_state_obj.currently_selected_repo.currently_selected_project
-        .project_name;
+    const selected_project_name = user_app_home_state_obj.get_selected_project_name();
 
     console.log(': --------------------------------------------');
     console.log('selected_project_name', selected_project_name);
@@ -789,6 +747,49 @@ app.shortcut('modify_repo_subscriptions', async ({shortcut, ack, context, client
   }
 });
 
+// TODO potentially seperate the add/remove repo shortcuts
+// app.shortcut('add_repo_subscription', async ({shortcut, ack, context, client}) => {
+//   try {
+//     // Acknowledge shortcut request
+//     await ack();
+
+//     // Call the views.open method using one of the built-in WebClients
+//     const result = await client.views.open({
+//       // The token you used to initialize your app is stored in the `context` object
+//       token: context.botToken,
+//       trigger_id: shortcut.trigger_id,
+//       view: Modals.AddRepoSubscriptionModal(
+//         triage_team_data_obj.get_team_repo_subscriptions().keys()
+//       ),
+//     });
+
+//     console.log(result);
+//   } catch (error) {
+//     console.error(error);
+//   }
+// });
+
+// app.shortcut('remove_repo_subscription', async ({shortcut, ack, context, client}) => {
+//   try {
+//     // Acknowledge shortcut request
+//     await ack();
+
+//     // Call the views.open method using one of the built-in WebClients
+//     const result = await client.views.open({
+//       // The token you used to initialize your app is stored in the `context` object
+//       token: context.botToken,
+//       trigger_id: shortcut.trigger_id,
+//       view: Modals.ModifyRepoSubscriptionsModal(
+//         triage_team_data_obj.get_team_repo_subscriptions().keys()
+//       ),
+//     });
+
+//     console.log(result);
+//   } catch (error) {
+//     console.error(error);
+//   }
+// });
+
 app.shortcut('modify_github_username', async ({shortcut, ack, context, client}) => {
   try {
     // Acknowledge shortcut request
@@ -873,6 +874,12 @@ app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
     console.error(error);
   }
 });
+
+views_listener.ModifyRepoSubscriptionsModalView(
+  app,
+  triage_team_data_obj,
+  user_app_home_state_obj
+);
 
 app.view('map_username_modal', async ({ack, body, view, context}) => {
   // Acknowledge the view_submission event
@@ -970,198 +977,6 @@ app.view('map_username_modal', async ({ack, body, view, context}) => {
   }
 });
 
-app.view('modify_repo_subscriptions', async ({ack, body, view, context}) => {
-  // Acknowledge the view_submission event
-  await ack();
-
-  const slack_user_id = body.user.id;
-
-  const view_values = view.state.values;
-
-  const subscribe_repo =
-    view_values.subscribe_to_repo_block.subscribe_to_repo_input.value;
-
-  const unsubscribe_block = view_values.unsubscribe_repos_block;
-
-  if (triage_team_data_obj.team_channel_id.length === 0) {
-    console.log(
-      'You must create a triage team and assign them a channel before you can begin subscribing to repos!'
-    );
-
-    try {
-      app.client.chat.postMessage({
-        token: context.botToken,
-        channel: slack_user_id,
-        // TODO Check if mentions are setup and change the message based on that
-        text: `<@${slack_user_id}> you must create a triage team and assign them a channel before you can begin subscribing to repos!.`,
-      });
-    } catch (error) {
-      console.error(error);
-    }
-    return;
-  }
-
-  const current_subscribed_repos = triage_team_data_obj.get_team_repo_subscriptions();
-
-  /* SafeAccess() is a try/catch utility function.
-  Since the unsubscribe repos input can be left blank */
-  // Does the user want to set the repo as their default repo?
-  const default_repo_value = SafeAccess(
-    () =>
-      view_values.default_repo_checkbox_block.default_repo_checkbox_input
-        .selected_options[0].value
-  );
-
-  console.log('default repo bool:', default_repo_value);
-
-  const unsubscribe_repo = SafeAccess(
-    () => unsubscribe_block.unsubscribe_repos_input.selected_option.value
-  );
-
-  if (typeof subscribe_repo === 'undefined' && unsubscribe_repo === null) {
-    console.error('No repos specified by user');
-    return;
-  }
-
-  let subscribe_repo_obj = {};
-  try {
-    subscribe_repo_obj =
-      typeof subscribe_repo !== 'undefined' ? new_repo_obj(subscribe_repo) : null;
-  } catch (error) {
-    console.error(error);
-    app.client.chat.postMessage({
-      token: context.botToken,
-      channel: slack_user_id,
-      // TODO Check if mentions are setup and change the message based on that
-      text: `*${subscribe_repo}* doesn't seem to be a valid repo. Please check your spelling <@${slack_user_id}>.`,
-    });
-    return;
-  }
-
-  console.log('triage_team_data_obj before', triage_team_data_obj);
-
-  // Logs the input for subscribing to new repo if any
-  console.log('subscribe_repo_obj', subscribe_repo_obj);
-
-  // Logs the unsubscribe repos if any are present
-  console.log('unsubscribe_repo: ', unsubscribe_repo);
-
-  // ERROR! The user is already subscribed to the repo they want to subscribe to
-  if (
-    subscribe_repo_obj !== null &&
-    current_subscribed_repos.has(subscribe_repo_obj.repo_path)
-  ) {
-    app.client.chat.postMessage({
-      token: context.botToken,
-      channel: slack_user_id,
-      text: `Whoops <@${slack_user_id}>, you're already subscribed to *${subscribe_repo_obj.repo_path}*`,
-    });
-    console.error(`User already subscribed to repo ${subscribe_repo_obj.repo_path}`);
-  } else if (unsubscribe_repo !== null) {
-    // TODO seperate subscribe and unsubscribe. This is a headache
-    // ERROR! The user is trying to subscribe and unsubscribe from the same repo
-    if (
-      subscribe_repo_obj !== null &&
-      typeof current_subscribed_repos.get(subscribe_repo_obj.repo_path) !== 'undefined'
-    ) {
-      app.client.chat.postMessage({
-        token: context.botToken,
-        channel: slack_user_id,
-        // TODO Check if mentions are setup and change the message based on that
-        text:
-          `<@${slack_user_id}> Woah there Schrödinger, ` +
-          "you can't simultaneously subscribe and unsubscribe from" +
-          ` *${unsubscribe_repo}*`,
-      });
-      console.error(
-        // eslint-disable-next-line prefer-template
-        'User tried to simultaneously subscribe and unsubscribe to repo ' +
-          subscribe_repo_obj.repo_path
-      );
-      return;
-    }
-    current_subscribed_repos.delete(unsubscribe_repo);
-    if (unsubscribe_repo === user_app_home_state_obj.currently_selected_repo) {
-      user_app_home_state_obj.currently_selected_repo = {};
-    }
-    if (unsubscribe_repo === triage_team_data_obj.default_repo) {
-      // if only one repo is left, that should be the default now
-      triage_team_data_obj.set_default_repo =
-        current_subscribed_repos.size === 1
-          ? current_subscribed_repos.values().next().value.repo_path
-          : '';
-
-      app.client.chat.postMessage({
-        token: context.botToken,
-        channel: slack_user_id,
-        text:
-          `Hey <@${slack_user_id}>!, ` +
-          'you are now unsubscribed from' +
-          ` *${unsubscribe_repo}*. ` +
-          'Since' +
-          ` *${unsubscribe_repo}* ` +
-          'was your default repo, make sure you pick a new one through the shortcut!',
-      });
-    } else {
-      // Everything is in order, unsubscribe from the specified repo
-      app.client.chat.postMessage({
-        token: context.botToken,
-        channel: slack_user_id,
-        // TODO Check if mentions are setup and change the message based on that
-        text: `Hey <@${slack_user_id}>!, you are now unsubscribed from *${unsubscribe_repo}*`,
-      });
-      console.error(`User unsubscribed from repo: ${unsubscribe_repo}`);
-      return;
-    }
-    console.log('triage_team_data_obj', triage_team_data_obj);
-    console.log('user_app_home_state_obj', user_app_home_state_obj);
-  }
-  // Everything seems to be in order, subscribe to the specified repo
-  if (subscribe_repo_obj !== null) {
-    try {
-      // TODO remove await?
-      const repo_data = await get_repo_data(subscribe_repo_obj);
-      subscribe_repo_obj.repo_project_map = repo_data.repo_projects;
-
-      subscribe_repo_obj.repo_label_map = repo_data.repo_labels;
-
-      subscribe_repo_obj.repo_id = repo_data.repo_id;
-
-      const is_default_repo = !!(default_repo_value === 'default_repo');
-
-      current_subscribed_repos.set(subscribe_repo_obj.repo_path, subscribe_repo_obj);
-
-      // Subscribe to the specified repo
-      if (is_default_repo) {
-        triage_team_data_obj.set_default_repo = subscribe_repo_obj.repo_path;
-      }
-
-      console.log('user_app_home_state_obj', user_app_home_state_obj);
-
-      // Success! Message the user
-      try {
-        await app.client.chat.postMessage({
-          token: context.botToken,
-          channel: slack_user_id,
-          // TODO Check if mentions are setup and change the message based on that
-          text: `<@${slack_user_id}>, you've successfully subscribed to *${subscribe_repo_obj.repo_path}*. Make sure you set up the *New Issue defaults* for this repo using the global shortcut so that I can automatically assign newly-created issues to a project and column of your choice as soon as they are created!`,
-          blocks: Messages.SetupRepoDefaultsMessage(
-            slack_user_id,
-            subscribe_repo_obj.repo_path
-          ),
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-  console.log('triage_team_data_obj', triage_team_data_obj);
-  console.log('here current_subscribed_repos', current_subscribed_repos);
-  console.log('subscribe_repo_obj', subscribe_repo_obj);
-});
-
 // Listens for the submission of the untriaged issue flow/settings modal
 app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => {
   // Acknowledge the view_submission event
@@ -1182,7 +997,7 @@ app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => 
       .selected_option;
 
   // set default project name
-  triage_team_data_obj.set_repo_default_project(repo_path, {
+  triage_team_data_obj.set_default_untriaged_project(repo_path, {
     project_name: default_untriaged_issues_project.text.text,
     project_id: default_untriaged_issues_project.value,
   });
@@ -1521,108 +1336,6 @@ function check_for_mentions({
       }
     });
   }
-}
-
-// TODO project and labels should be pulled from subscribe_repo
-/**
- *
- * Creates a repo object
- * @param {{owner: string, name: string, repo: string}} subscribe_repo
- * @returns {{repo_owner: string, repo_name: string, repo_path: string, untriaged_settings: { label_id: string, label_name: string, repo_default_untriaged_project: {project_name:string, project_id:string }}, repo_label_map: Map<string,object>, repo_project_map: Map<string,object>}} A repo object
- */
-function new_repo_obj(subscribe_repo) {
-  const {owner, name, repo} = parseGH(subscribe_repo);
-  if (!(owner && name && repo)) throw new Error('Invalid GitHub repo URL!');
-  // TODO fix the methods
-  const repo_obj = {
-    repo_owner: owner,
-    repo_name: name,
-    repo_path: repo,
-    // The properties below have to be gotten from an API call
-    // TODO builtin method in this object/class to do the API call
-    repo_id: '',
-    repo_label_map: new Map(),
-
-    untriaged_settings: {
-      // REVIEW should I make the label_name property a global  property rather than having to select it for each repo?
-      untriaged_label: {
-        label_id: '',
-        label_name: '',
-      },
-      repo_default_untriaged_project: {
-        project_name: '',
-        project_id: '',
-      },
-    },
-    // Projects are mapped from project_name -> {project_id, project_columns_map:}
-    repo_project_map: new Map(),
-    // set_projects: project_list => {
-    //   this.repo_project_map = new Map(
-    //     project_list.map(project => [project.val.name, project.val])
-    //   );
-    // },
-    // get_project_column: (project_name, column_name) => {
-    //   return this.get_project(project_name).project_column_map.get(column_name);
-    // },
-    // set_project_columns: (project_name, column_list) => {
-    //   this.get_project(project_name).project_column_map = new Map(
-    //     column_list.map(column => [column.val.name, column.val])
-    //   );
-    // },
-    // TODO add method for getting project
-    get_cards(project_name, column_name) {
-      return this.repo_project_map.get(project_name).columns.get(column_name).cards.nodes;
-    },
-  };
-  return repo_obj;
-}
-
-async function get_repo_data(repo_obj) {
-  const repo_data_response = await graphql.call_gh_graphql(query.getRepoData, repo_obj);
-
-  console.log(repo_data_response);
-
-  // There was an error!
-  // TODO Improve this error
-  if (Object.prototype.hasOwnProperty.call(repo_data_response, 'error_type')) {
-    throw new Graphql_call_error(
-      repo_data_response.error_type,
-      repo_data_response.error_list
-    );
-  }
-
-  const label_nodes_list = repo_data_response.repository.labels.nodes;
-  const project_nodes_list = repo_data_response.repository.projects.nodes;
-  // Turn the labels into a Map for quick reference + iteration
-  const label_map = new Map(
-    label_nodes_list.map(label_obj => [label_obj.name, label_obj])
-  );
-  // REVIEW can this be made more efficient?
-  // Turning the GitHub response object to use Maps not nested objects/arrays
-  const repo_projects_map = new Map(
-    project_nodes_list.map(project => {
-      const project_obj = project;
-      project_obj.columns = new Map(
-        project_obj.columns.nodes.map(column => [column.name, column])
-      );
-      return [project_obj.name, project_obj];
-    })
-  );
-
-  const processed_object = {
-    repo_id: repo_data_response.repository.id,
-    repo_labels: label_map,
-    repo_projects: repo_projects_map,
-  };
-
-  console.log('processed_object', processed_object);
-
-  return processed_object;
-}
-
-function Graphql_call_error(error_type, error_list) {
-  this.type = error_type;
-  this.error_list = error_list;
 }
 
 // !SECTION

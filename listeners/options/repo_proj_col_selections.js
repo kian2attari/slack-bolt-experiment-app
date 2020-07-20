@@ -1,7 +1,7 @@
 const {SubBlocks} = require('../../blocks');
 
 function repo_selection(app, triage_team_data_obj) {
-  app.options('repo_selection', async ({options, ack}) => {
+  app.options('main_view_scope_selection', async ({options, ack}) => {
     try {
       // TODO try using options directly
       console.log('repo_selection options', options);

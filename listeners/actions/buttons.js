@@ -1,4 +1,5 @@
 const {Modals} = require('../../blocks');
+const {show_all_untriaged_cards} = require('../commonFunctions');
 
 /**
  *
@@ -67,4 +68,28 @@ function open_set_repo_defaults_modal_button(app) {
   );
 }
 
-module.exports = {open_map_modal_button, open_set_repo_defaults_modal_button};
+function show_untriaged_filter_button(
+  app,
+  triage_team_data_obj,
+  user_app_home_state_obj
+) {
+  // The app home 'Untriaged' filter button
+  app.action('show_untriaged_filter_button', async ({ack, body, context, client}) => {
+    // Here we acknowledge receipt
+    await ack();
+
+    await show_all_untriaged_cards({
+      triage_team_data_obj,
+      user_app_home_state_obj,
+      body,
+      context,
+      client,
+    });
+  });
+}
+
+module.exports = {
+  open_map_modal_button,
+  open_set_repo_defaults_modal_button,
+  show_untriaged_filter_button,
+};

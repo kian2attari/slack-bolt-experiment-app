@@ -5,6 +5,6 @@ module.exports = {
   getProjectList: require('./getProjectList'),
   getNumOfCardsPerColumn: require('./getNumOfCardsPerColumn'),
   getRepoLabelsList: require('./getRepoLabelsList'),
-  getRepoData: require('./getRepoData'),
+  getFullRepoData: require('./getFullRepoData'),
   getAllUntriaged: require('./getAllUntriaged'),
 };

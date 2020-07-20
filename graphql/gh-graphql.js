@@ -55,6 +55,8 @@ const call_gh_graphql = async (query, variables) => {
         repo_owner: variables.repo_owner,
         repo_name: variables.repo_name,
       };
+      console.log('variables', variables)
+      console.log('init_variables', init_variables);
       if (
         typeof init_variables.repo_owner === 'undefined' ||
         typeof init_variables.repo_name === 'undefined'
@@ -66,6 +68,7 @@ const call_gh_graphql = async (query, variables) => {
         await init(init_variables);
       }
     }
+    console.log('variables pre grahpqlWithAuth', variables);
     const data = await graphqlWithAuth(query, variables);
 
     const response = JSON.stringify(data, undefined, 2);
@@ -89,6 +92,12 @@ const call_gh_graphql = async (query, variables) => {
   }
 };
 
+function Graphql_call_error(error_type, error_list) {
+  this.type = error_type;
+  this.error_list = error_list;
+}
+
 module.exports = {
   call_gh_graphql,
+  Graphql_call_error,
 };

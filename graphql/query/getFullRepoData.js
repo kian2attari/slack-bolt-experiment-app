@@ -1,5 +1,5 @@
 module.exports = `
-query getRepoData($repo_owner: String!, $repo_name: String!) {
+query getFullRepoData($repo_owner: String!, $repo_name: String!) {
     repository(name: $repo_name, owner: $repo_owner) {
       id
       projects(first: 5, orderBy: {field: UPDATED_AT, direction: ASC}) {
@@ -64,4 +64,4 @@ query getRepoData($repo_owner: String!, $repo_name: String!) {
       }
     }
   }  
-`
+`;

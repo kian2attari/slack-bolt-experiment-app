@@ -8,11 +8,16 @@ module.exports = (
 ) => {
   // This can be a specific GitHub repo, or it can be a special selector like "all untriaged", and possibly "internal issues" and "external issues"
   const repo_selection = user_app_home_state_obj.currently_selected_repo;
+  // If the user is trying to view a specific repo, then we should fetch the needed data
+  // TODO add update untriaged function to the TraigeTeamData class
+  // if (repo_selection.repo_path !== 'All Untriaged') {
+  //   TriageTeamData.get_full_repo_data(repo_selection);
+  // }
 
   console.log(': ------------------------------');
   console.log('BaseAppHome user_app_home_state_obj', user_app_home_state_obj);
   console.log(': ------------------------------');
-
+  // TODO turn this into a function so it can be used for the column names too
   const filter_buttons_block = {
     'type': 'actions',
     'elements': [
@@ -68,28 +73,29 @@ module.exports = (
     'elements': [],
   };
 
-  if (repo_selection.repo_path === '' || repo_selection.repo_id === '') {
-    selection_block.elements = [
-      external_select_element('repo_selection', 'Select a repository'),
-    ];
-    console.log(': --------------------------------------------------');
-    console.log('EMPTY SELECTION selection_block.elements', selection_block.elements);
-    console.log(': --------------------------------------------------');
+  // this can never happen under the current design
+  // if (repo_selection.repo_path === '' || repo_selection.repo_id === '') {
+  //   selection_block.elements = [
+  //     external_select_element('main_view_scope_selection', 'Select a repository'),
+  //   ];
+  //   console.log(': --------------------------------------------------');
+  //   console.log('EMPTY SELECTION selection_block.elements', selection_block.elements);
+  //   console.log(': --------------------------------------------------');
 
-    return {
-      'type': 'home',
-      'blocks': [
-        selection_block,
-        {
-          'type': 'divider',
-        },
-      ],
-    };
-  }
+  //   return {
+  //     'type': 'home',
+  //     'blocks': [
+  //       selection_block,
+  //       {
+  //         'type': 'divider',
+  //       },
+  //     ],
+  //   };
+  // }
 
   selection_block.elements = [
     external_select_element(
-      'repo_selection',
+      'main_view_scope_selection',
       'Select a repository',
       SubBlocks.option_obj(repo_selection.repo_path, repo_selection.repo_id)
     ),
@@ -153,7 +159,7 @@ module.exports = (
   // else {
   //   // If not even a repo is selected, then just show the repo select menu with no initial option!
   // selection_block.elements = [
-  //   external_select_element('repo_selection', 'Select a repository'),
+  //   external_select_element('main_view_scope_selection', 'Select a repository'),
   // ];
   // }
 

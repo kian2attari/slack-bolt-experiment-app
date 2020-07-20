@@ -1,8 +1,6 @@
 const SubBlocks = require('../SubBlocks');
 
-module.exports = (
-  selected_repo = {repo_path: undefined, selected_project_name: undefined}
-) => {
+module.exports = (selected_repo = {repo_path: undefined}) => {
   return {
     'type': 'modal',
     'private_metadata': JSON.stringify(selected_repo),
