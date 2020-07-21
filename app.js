@@ -1,7 +1,7 @@
 const {App, LogLevel, ExpressReceiver} = require('@slack/bolt');
 const express = require('express');
 const {mutation, graphql} = require('./graphql');
-const {Messages, Modals} = require('./blocks');
+const {Messages} = require('./blocks');
 const {
   actions_listener,
   events_listener,
@@ -27,9 +27,6 @@ const app = new App({
 /* -------------------------------------------------------------------------- */
 /*                             SECTION Data layer                             */
 /* -------------------------------------------------------------------------- */
-
-// Object to map GH usernames to Slack usernames
-// const gh_slack_username_map = {};
 
 // Temporary hardcoding of channel id just to make testing/development easier
 // TODO: Remove this hardcoding
@@ -174,233 +171,18 @@ shortcuts_listener.modify_github_username(app);
 /*                   SECTION Listening for view submissions                   */
 /* -------------------------------------------------------------------------- */
 
-app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
-  // Acknowledge the view_submission event
-  await ack();
+views_listener.setup_triage_team_view(app, triage_team_data_obj);
 
-  console.log(view.state.values);
-
-  const selected_users_array =
-    view.state.values.users_select_input.triage_users.selected_users;
-  const user = body.user.id;
-
-  console.log('selected_users_array', selected_users_array);
-
-  const {selected_channel} = view.state.values.channel_select_input.triage_channel;
-
-  // Message to send user
-  const msg =
-    selected_users_array.length !== 0
-      ? 'Team members assigned successfully'
-      : 'There was an error with your submission';
-
-  // Assign the members to the team
-  selected_users_array.forEach(user_id => triage_team_data_obj.set_team_member(user_id));
-
-  // Set the team channel
-  // TODO maybe we should update the DB at this point
-  const team_channel_id = triage_team_data_obj.assign_team_channel(selected_channel);
-
-  if (team_channel_id !== selected_channel) {
-    console.log('Team channel assignment failed');
-    return;
-  }
-
-  console.log('triage_team_data_obj', triage_team_data_obj);
-
-  // Message the user
-  try {
-    await app.client.chat.postMessage({
-      token: context.botToken,
-      channel: user,
-      text: msg,
-    });
-
-    const team_member_ids = triage_team_data_obj.team_data.team_members.keys();
-
-    // Message the team members that were added to ask for their github usernames
-    for (const slack_user_id of team_member_ids) {
-      app.client.chat.postMessage({
-        token: context.botToken,
-        channel: slack_user_id,
-        text:
-          `Hey <@${slack_user_id}>! ` +
-          "You've been added to the triage team. Tell me your GitHub username.",
-        blocks: Messages.UsernameMapMessage(slack_user_id),
-      });
-    }
-  } catch (error) {
-    console.error(error);
-  }
-});
-
-views_listener.ModifyRepoSubscriptionsModalView(
+views_listener.modify_repo_subscriptions_view(
   app,
   triage_team_data_obj,
   user_app_home_state_obj
 );
 
-app.view('map_username_modal', async ({ack, body, view, context}) => {
-  // Acknowledge the view_submission event
-  await ack();
+views_listener.map_username_modal_view(app, triage_team_data_obj);
 
-  console.log(view.state.values);
+views_listener.repo_new_issue_defaults_view(app, triage_team_data_obj);
 
-  const github_username =
-    view.state.values.map_username_block.github_username_input.value;
-
-  console.log('github username', github_username);
-
-  // RegExp for checking the username
-  const github_username_checker = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
-
-  const valid_github_username = github_username_checker.test(github_username);
-
-  console.log(': --------------------------------------------');
-  console.log('valid_github_username', valid_github_username);
-  console.log(': --------------------------------------------');
-
-  const slack_user_id = body.user.id;
-
-  console.log('slack_user_id ', slack_user_id);
-
-  if (!valid_github_username) {
-    // TODO maybe open a modal
-    console.log(`${github_username} is not a valid github username`);
-    try {
-      await app.client.chat.postMessage({
-        token: context.botToken,
-        channel: slack_user_id,
-        text: `Hey <@${slack_user_id}>,  ${github_username} is not a valid GitHub username. Please double check your spelling. `,
-      });
-    } catch (error) {
-      console.error(error);
-    }
-    return;
-  }
-
-  const slack_id_to_gh_username_match = triage_team_data_obj.get_team_member_by_github_username(
-    github_username
-  );
-  console.log(': ------------------------------------------------------------');
-  console.log('1 slack_id_to_gh_username_match', slack_id_to_gh_username_match);
-  console.log(': ------------------------------------------------------------');
-  /* REVIEW potentially message the user or open a confirmation modal of some sort if the user already has a github username 
-  setup. This would actually be better done on the actual modal before submission. The modal should show the person's current
-  github name, and it should be a confirm type modal 
-  TODO all the above stuff */
-  // if (Object.keys(github_username_to_slack_id_match).length !== 0) {
-  //   // Message the user
-  //   try {
-  //     await app.client.chat.postMessage({
-  //       token: context.botToken,
-  //       channel: slack_user_id,
-  //       text:
-  //         `<@${slack_user_id}>, ` +
-  //         'your Slack and Github usernames were associated successfully! Your GitHub username is currently set to' +
-  //         ` ${github_username}. ` +
-  //         "If that doesn't look right, click the enter github username button again.",
-  //     });
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  //   return;
-  // }
-  // TODO just check if its not equal to zero and say that a la above
-  if (Object.keys(slack_id_to_gh_username_match).length === 0) {
-    // We map the github username to that Slack username
-    triage_team_data_obj.set_team_member(slack_user_id, github_username);
-
-    console.log(': ------------------------------------------------------------');
-    console.log('2 slack_id_to_gh_username_match', slack_id_to_gh_username_match);
-    console.log(': ------------------------------------------------------------');
-
-    console.log(': ------------------------------------------');
-    console.log(
-      'Success map added check',
-      triage_team_data_obj.get_team_member_by_github_username(github_username)
-    );
-    console.log(': ------------------------------------------');
-
-    // Message the user
-    try {
-      await app.client.chat.postMessage({
-        token: context.botToken,
-        channel: slack_user_id,
-        text:
-          `<@${slack_user_id}>, ` +
-          'your Slack and Github usernames were associated successfully! Your GitHub username is currently set to' +
-          ` ${github_username}. ` +
-          "If that doesn't look right, click the enter github username button again.",
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  }
-});
-
-// Listens for the submission of the untriaged issue flow/settings modal
-app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => {
-  // Acknowledge the view_submission event
-  await ack();
-
-  const slack_user_id = body.user.id;
-
-  const view_values = view.state.values;
-
-  const {repo_path} = JSON.parse(view.private_metadata);
-
-  const default_untriaged_issues_label =
-    view_values.untriaged_label_block_input.setup_default_triage_label_list
-      .selected_option;
-
-  const default_untriaged_issues_project =
-    view_values.untriaged_project_block_input.setup_default_project_selection
-      .selected_option;
-
-  // set default project name
-  triage_team_data_obj.set_default_untriaged_project(repo_path, {
-    project_name: default_untriaged_issues_project.text.text,
-    project_id: default_untriaged_issues_project.value,
-  });
-  // Link repo to said project
-  // await graphql.call_gh_graphql(mutation.linkRepoToOrgLevelProject, {
-  //   project_id: default_untriaged_issues_project.value,
-  //   repo_id: triage_team_data_obj.get_team_repo_subscriptions(repo_path).repo_id,
-  // });
-
-  // set default label obj
-  triage_team_data_obj.set_untriaged_label(repo_path, {
-    label_id: default_untriaged_issues_label.value,
-    label_name: default_untriaged_issues_label.text.text,
-  });
-
-  console.log(': --------------------------------------------------------------');
-  console.log('default_untriaged_issues_label', default_untriaged_issues_label);
-  console.log(': --------------------------------------------------------------');
-
-  console.log(': ------------------------------------------------------------------');
-  console.log('default_untriaged_issues_project', default_untriaged_issues_project);
-  console.log(': ------------------------------------------------------------------');
-
-  console.log(': ------------------------------------------------------------------');
-  console.log(
-    'untriaged settings repo with defaults applied',
-    triage_team_data_obj.team_data.subscribed_repo_map.get(repo_path).untriaged_settings
-  );
-  console.log(': ------------------------------------------------------------------');
-
-  // Success! Message the user
-  try {
-    await app.client.chat.postMessage({
-      token: context.botToken,
-      channel: slack_user_id,
-      text: `Hi <@${slack_user_id}>, the default label and project for new/untriaged issues was assigned successfully!`,
-    });
-  } catch (error) {
-    console.error(error);
-  }
-});
 // !SECTION Listening for view submissions
 /* -------------------------------------------------------------------------- */
 /*                     SECTION Where webhooks are received                    */
