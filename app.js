@@ -7,6 +7,7 @@ const {
   events_listener,
   options_listener,
   views_listener,
+  shortcuts_listener,
 } = require('./listeners');
 const {UserAppHomeState, TriageTeamData} = require('./models');
 
@@ -57,7 +58,6 @@ console.log(': ------------------------------------------');
 console.log('triage_team_data_obj', triage_team_data_obj);
 console.log(': ------------------------------------------');
 // !SECTION
-
 
 /* ----------------------- SECTION Listening for events ---------------------- */
 
@@ -158,112 +158,15 @@ options_listener.untriaged_defaults_selection.setup_default_triage_label_list(
 
 // !SECTION
 
-
 /* -------------------------------------------------------------------------- */
 /*                       SECTION Listening for shortcuts                       */
 /* -------------------------------------------------------------------------- */
 
-app.shortcut('setup_triage_workflow', async ({shortcut, ack, context, client}) => {
-  try {
-    // Acknowledge shortcut request
-    await ack();
+shortcuts_listener.setup_triage_workflow(app);
 
-    // Call the views.open method using one of the built-in WebClients
-    const result = await client.views.open({
-      // The token you used to initialize your app is stored in the `context` object
-      token: context.botToken,
-      trigger_id: shortcut.trigger_id,
-      view: Modals.SetupShortcutStaticModal,
-    });
+shortcuts_listener.modify_repo_subscriptions(app, triage_team_data_obj);
 
-    console.log(result);
-  } catch (error) {
-    console.error(error);
-  }
-});
-
-app.shortcut('modify_repo_subscriptions', async ({shortcut, ack, context, client}) => {
-  try {
-    // Acknowledge shortcut request
-    await ack();
-
-    // Call the views.open method using one of the built-in WebClients
-    const result = await client.views.open({
-      // The token you used to initialize your app is stored in the `context` object
-      token: context.botToken,
-      trigger_id: shortcut.trigger_id,
-      view: Modals.ModifyRepoSubscriptionsModal(
-        triage_team_data_obj.get_team_repo_subscriptions().keys()
-      ),
-    });
-
-    console.log(result);
-  } catch (error) {
-    console.error(error);
-  }
-});
-
-// TODO potentially seperate the add/remove repo shortcuts
-// app.shortcut('add_repo_subscription', async ({shortcut, ack, context, client}) => {
-//   try {
-//     // Acknowledge shortcut request
-//     await ack();
-
-//     // Call the views.open method using one of the built-in WebClients
-//     const result = await client.views.open({
-//       // The token you used to initialize your app is stored in the `context` object
-//       token: context.botToken,
-//       trigger_id: shortcut.trigger_id,
-//       view: Modals.AddRepoSubscriptionModal(
-//         triage_team_data_obj.get_team_repo_subscriptions().keys()
-//       ),
-//     });
-
-//     console.log(result);
-//   } catch (error) {
-//     console.error(error);
-//   }
-// });
-
-// app.shortcut('remove_repo_subscription', async ({shortcut, ack, context, client}) => {
-//   try {
-//     // Acknowledge shortcut request
-//     await ack();
-
-//     // Call the views.open method using one of the built-in WebClients
-//     const result = await client.views.open({
-//       // The token you used to initialize your app is stored in the `context` object
-//       token: context.botToken,
-//       trigger_id: shortcut.trigger_id,
-//       view: Modals.ModifyRepoSubscriptionsModal(
-//         triage_team_data_obj.get_team_repo_subscriptions().keys()
-//       ),
-//     });
-
-//     console.log(result);
-//   } catch (error) {
-//     console.error(error);
-//   }
-// });
-
-app.shortcut('modify_github_username', async ({shortcut, ack, context, client}) => {
-  try {
-    // Acknowledge shortcut request
-    await ack();
-
-    const user_id = shortcut.user.id;
-
-    // Call the views.open method using one of the built-in WebClients
-    client.chat.postMessage({
-      token: context.botToken,
-      channel: user_id,
-      text: `Hey <@${user_id}>! Click here to change your GitHub username`,
-      blocks: Messages.UsernameMapMessage(user_id),
-    });
-  } catch (error) {
-    console.error(error);
-  }
-});
+shortcuts_listener.modify_github_username(app);
 
 // !SECTION Listening for shortcuts
 
