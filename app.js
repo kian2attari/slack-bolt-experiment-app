@@ -1,14 +1,13 @@
 const {App, LogLevel, ExpressReceiver} = require('@slack/bolt');
 const express = require('express');
 const {query, mutation, graphql} = require('./graphql');
-const {AppHome, Messages, Modals, SubBlocks} = require('./blocks');
+const {Messages, Modals, SubBlocks} = require('./blocks');
 const {SafeAccess} = require('./helper-functions');
 const {
   actions_listener,
   events_listener,
   options_listener,
   views_listener,
-  common_functions,
 } = require('./listeners');
 const {UserAppHomeState, TriageTeamData} = require('./models');
 
@@ -101,275 +100,31 @@ actions_listener.setup_defaults.modal_repo_selection(app);
 
 // app.action('setup_default_modal_column_selection', ({ack}) => ack());
 
-// Acknowledges arbitrary button clicks (ex. open a link in a new tab)
-app.action('link_button', async ({ack}) => ack());
+actions_listener.buttons.link_button(app);
 
 /* ------------- ANCHOR Responding to the repo name selection ------------ */
-
-app.action('main_view_scope_selection', async ({ack, body, context, client}) => {
-  await ack();
-  try {
-    const action_body = body.actions[0];
-
-    const {selected_option} = action_body;
-
-    const selected_repo_path = selected_option.text.text;
-
-    const selected_repo_id = selected_option.value;
-
-    console.log('selected_repo_path', selected_repo_path);
-
-    console.log('selected_repo_id', selected_repo_id);
-
-    user_app_home_state_obj.set_selected_repo({
-      repo_path: selected_repo_path,
-      repo_id: selected_repo_id,
-    });
-
-    // If the selection is All untriaged, then just show those cards
-    if (
-      selected_repo_path === default_selected_repo.repo_path &&
-      selected_repo_id === default_selected_repo.repo_id
-    ) {
-      common_functions.show_all_untriaged_cards({
-        triage_team_data_obj,
-        user_app_home_state_obj,
-        body,
-        context,
-        client,
-      });
-
-      return;
-    }
-
-    const updated_home_view = AppHome.BaseAppHome(user_app_home_state_obj);
-    // QUESTION: should i use views.update or views.publish to update the app home view?
-    /* view.publish is the method that your app uses to push a view to the Home tab */
-    await client.views.update({
-      /* retrieves your xoxb token from context */
-      token: context.botToken,
-
-      /* View to be updated */
-      view_id: body.view.id,
-
-      /* the view payload that appears in the app home */
-      view: updated_home_view,
-    });
-  } catch (error) {
-    console.error(error);
-  }
-});
+actions_listener.main_level_filter_selection(
+  app,
+  triage_team_data_obj,
+  user_app_home_state_obj,
+  default_selected_repo
+);
 
 /* ------------- ANCHOR Responding to project name selection ------------------- */
-app.action('project_selection', async ({ack, body, context, client}) => {
-  await ack();
-
-  try {
-    const action_body = body.actions[0];
-
-    const {selected_option} = action_body;
-
-    console.log(': --------------------------------');
-    console.log('selected_option project_name', selected_option);
-    console.log(': --------------------------------');
-
-    const project_name = selected_option.text.text;
-
-    const project_id = selected_option.value;
-
-    user_app_home_state_obj.currently_selected_repo.currently_selected_project.set_project(
-      project_name,
-      project_id
-    );
-
-    console.log(': ------------------------------------------------');
-    console.log(
-      'user_app_home_state_obj current column',
-      user_app_home_state_obj.currently_selected_repo.currently_selected_project
-        .currently_selected_column
-    );
-    console.log(': ------------------------------------------------');
-
-    const home_view = AppHome.BaseAppHome(user_app_home_state_obj);
-    // console.log(JSON.stringify(home_view.blocks, null, 4));
-
-    /* view.publish is the method that your app uses to push a view to the Home tab */
-    await client.views.update({
-      /* retrieves your xoxb token from context */
-      token: context.botToken,
-
-      /* View to be updated */
-      view_id: body.view.id,
-
-      /* the view payload that appears in the app home */
-      view: home_view,
-    });
-  } catch (error) {
-    console.error(error);
-  }
-});
+actions_listener.repo_level_filter.project_selection(app, user_app_home_state_obj);
 
 /* ------------- ANCHOR Responding to column selection ------------------- */
 // TODO add column select menu to BaseAppHome
-app.action('column_selection', async ({ack, body, context, client}) => {
-  // TODO account for deleting
-  await ack();
-
-  try {
-    const action_body = body.actions[0];
-
-    const {selected_option} = action_body;
-
-    const column_name = selected_option.text.text;
-
-    const column_id = selected_option.value;
-
-    const selected_project =
-      user_app_home_state_obj.currently_selected_repo.currently_selected_project;
-
-    selected_project.currently_selected_column.set_column(column_name, column_id);
-    // TODO Columns must be a map
-    // const cards_in_selected_column = triage_team_data_obj.subscribed_repo_map
-    //   .get(user_app_home_state_obj.currently_selected_repo.repo_path)
-    //   .repo_project_map.get(
-    //     user_app_home_state_obj.currently_selected_repo
-    //       .currently_selected_project.project_name
-    //   ).columns;
-
-    const cards_in_selected_column = triage_team_data_obj.get_cards_by_column(
-      user_app_home_state_obj.get_selected_repo_path(),
-      selected_project.project_name,
-      column_name
-    );
-
-    console.log('cards_in_selected_column', cards_in_selected_column);
-
-    const card_blocks = AppHome.CardsAppHome(cards_in_selected_column);
-    console.log(': ------------------------');
-    console.log('card_blocks');
-    console.log(': ------------------------');
-
-    const home_view = AppHome.BaseAppHome(user_app_home_state_obj, card_blocks);
-    // (issue_blocks = blocks.CardsAppHome(cards_array, label_block)),
-    console.log(JSON.stringify(home_view, null, 4));
-
-    /* view.publish is the method that your app uses to push a view to the Home tab */
-    await client.views.update({
-      /* retrieves your xoxb token from context */
-      token: context.botToken,
-
-      /* View to be updated */
-      view_id: body.view.id,
-
-      // the view payload that appears in the app home
-      view: home_view,
-    });
-  } catch (error) {
-    console.error(error);
-  }
-});
+actions_listener.repo_level_filter.column_selection(
+  app,
+  triage_team_data_obj,
+  user_app_home_state_obj
+);
 
 /* ------------- ANCHOR Responding to label assignment on issue ------------- */
 
 /* ------ TODO - add a clear all labels button ----- */
-
-app.action('label_list', async ({ack, body}) => {
-  await ack();
-  console.log(': ----------------');
-  console.log('body', body);
-  console.log(': ----------------');
-
-  try {
-    const action_body = body.actions[0];
-
-    console.log('body payload', action_body);
-
-    const {selected_options} = action_body;
-    console.log(': ----------------------------------');
-    console.log('selected_options', selected_options);
-    console.log(': ----------------------------------');
-
-    const {initial_options} = action_body;
-    console.log(': --------------------------------');
-    console.log('initial_options', initial_options);
-    console.log(': --------------------------------');
-
-    const initial_label_names = initial_options.map(option => {
-      return option.text.text;
-    });
-
-    const selected_label_names = selected_options.map(option => {
-      return option.text.text;
-    });
-
-    console.log(': --------------------------------');
-    console.log('selected_label_names', selected_label_names);
-    console.log(': --------------------------------');
-
-    console.log(': --------------------------------');
-    console.log('initial_label_names', initial_label_names);
-    console.log(': --------------------------------');
-
-    // ES6 doesn't have a set/arrau difference operator, so this just find the symmetric difference between the two
-    const label_difference = initial_label_names
-      .filter(initial_label => !selected_label_names.includes(initial_label))
-      .concat(
-        selected_label_names.filter(
-          selected_label => !initial_label_names.includes(selected_label)
-        )
-      );
-
-    // TODO compare the selected_label_ids to the actual label_ids of the card. If they are different, do stuff below
-    if (label_difference.length !== 0) {
-      /* The card_id is the same for all labels, so we just grab it from the first initial or selected option. One of them has to be there
-      otherwise there wouldn't have been a symmetric difference. */
-      const card_id =
-        SafeAccess(() => selected_options[0].value) ||
-        SafeAccess(() => initial_options[0].value);
-
-      const variables_clearAllLabels = {
-        element_node_id: card_id,
-      };
-
-      // clear the current labels first
-      await graphql.call_gh_graphql(mutation.clearAllLabels, variables_clearAllLabels);
-
-      const repo_labels_map = triage_team_data_obj.get_team_repo_subscriptions(
-        user_app_home_state_obj.get_selected_repo_path()
-      ).repo_label_map;
-
-      const selected_label_ids = selected_label_names.map(
-        label_name => repo_labels_map.get(label_name).id
-      );
-
-      console.log(': --------------------------------');
-      console.log('repo_labels_map', repo_labels_map);
-      console.log(': --------------------------------');
-
-      console.log(': --------------------------------');
-      console.log('selected_label_ids', selected_label_ids);
-      console.log(': --------------------------------');
-
-      const variables_addLabelToIssue = {
-        label_ids: selected_label_ids,
-        ...variables_clearAllLabels,
-      };
-
-      if (selected_label_ids.length !== 0) {
-        // REVIEW should I await the second one?
-        await graphql.call_gh_graphql(mutation.clearAllLabels, variables_clearAllLabels);
-        await graphql.call_gh_graphql(
-          mutation.addLabelToIssue,
-          variables_addLabelToIssue
-        );
-
-        // If successful, make sure to pull the new labels/change their state in the object. Tho it's best to rely on the webhooks
-      }
-    }
-  } catch (err) {
-    console.error(err);
-  }
-});
+actions_listener.label_assignment(app, triage_team_data_obj, user_app_home_state_obj);
 
 // !SECTION
 

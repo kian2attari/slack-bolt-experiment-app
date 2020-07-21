@@ -88,8 +88,14 @@ function show_untriaged_filter_button(
   });
 }
 
+// Acknowledges arbitrary button clicks (ex. open a link in a new tab)
+function link_button(app) {
+  app.action('link_button', async ({ack}) => ack());
+}
+
 module.exports = {
   open_map_modal_button,
   open_set_repo_defaults_modal_button,
   show_untriaged_filter_button,
+  link_button,
 };

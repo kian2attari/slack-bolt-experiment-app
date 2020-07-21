@@ -76,7 +76,7 @@ module.exports = (
   // this can never happen under the current design
   // if (repo_selection.repo_path === '' || repo_selection.repo_id === '') {
   //   selection_block.elements = [
-  //     external_select_element('main_view_scope_selection', 'Select a repository'),
+  //     external_select_element('main_level_filter_selection', 'Select a repository'),
   //   ];
   //   console.log(': --------------------------------------------------');
   //   console.log('EMPTY SELECTION selection_block.elements', selection_block.elements);
@@ -95,7 +95,7 @@ module.exports = (
 
   selection_block.elements = [
     external_select_element(
-      'main_view_scope_selection',
+      'main_level_filter_selection',
       'Select a repository',
       SubBlocks.option_obj(repo_selection.repo_path, repo_selection.repo_id)
     ),
@@ -159,7 +159,7 @@ module.exports = (
   // else {
   //   // If not even a repo is selected, then just show the repo select menu with no initial option!
   // selection_block.elements = [
-  //   external_select_element('main_view_scope_selection', 'Select a repository'),
+  //   external_select_element('main_level_filter_selection', 'Select a repository'),
   // ];
   // }
 
