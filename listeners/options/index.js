@@ -1,3 +1,4 @@
 module.exports = {
-  repo_proj_col_selections: require('./repo_proj_col_selections'),
+  project_col_selection: require('./repoProjectAndColumnSelection'),
+  main_level_filter_selection: require('./mainLevelFilterOptions'),
 };

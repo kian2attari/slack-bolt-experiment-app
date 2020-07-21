@@ -1,6 +1,6 @@
 const {SubBlocks} = require('../../blocks');
 
-function repo_selection(app, triage_team_data_obj) {
+module.exports = (app, triage_team_data_obj) => {
   app.options('main_level_filter_selection', async ({options, ack}) => {
     try {
       // TODO try using options directly
@@ -42,6 +42,4 @@ function repo_selection(app, triage_team_data_obj) {
       console.error(error);
     }
   });
-}
-
-module.exports = {repo_selection};
+};
