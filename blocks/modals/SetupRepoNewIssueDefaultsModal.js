@@ -43,7 +43,7 @@ module.exports = (selected_repo = {repo_path: undefined}) => {
             'text': 'Select repo',
             'emoji': true,
           },
-          'action_id': 'setup_defaults_modal_repo_selection',
+          'action_id': 'setup_defaults_repo_selection',
           ...(typeof selected_repo.repo_path !== 'undefined'
             ? {'initial_option': SubBlocks.option_obj(selected_repo.repo_path)}
             : {}),
@@ -83,7 +83,7 @@ function set_label_project_column_blocks() {
           'text': 'Select label',
           'emoji': true,
         },
-        'action_id': 'setup_default_modal_label_list',
+        'action_id': 'setup_default_triage_label_list',
       },
     },
     {
@@ -102,7 +102,7 @@ function set_label_project_column_blocks() {
           'text': 'Select project',
           'emoji': true,
         },
-        'action_id': 'setup_default_modal_project_selection',
+        'action_id': 'setup_default_project_selection',
       },
     },
   ];

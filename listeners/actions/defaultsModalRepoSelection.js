@@ -2,14 +2,14 @@ const {Modals} = require('../../blocks');
 
 function modal_repo_selection(app) {
   app.action(
-    'setup_defaults_modal_repo_selection',
+    'setup_defaults_repo_selection',
     async ({ack, body, context, client}) => {
       console.log(': ----------------');
-      console.log('setup_defaults_modal_repo_selection context', context);
+      console.log('setup_defaults_repo_selection context', context);
       console.log(': ----------------');
 
       console.log(': ----------');
-      console.log('setup_defaults_modal_repo_selection body', body);
+      console.log('setup_defaults_repo_selection body', body);
       console.log(': ----------');
 
       await ack();
