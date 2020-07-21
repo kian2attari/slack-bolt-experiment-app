@@ -18,7 +18,9 @@ class TriageTeamData {
 
   set_team_member(slack_user_id, github_username = 'no github username set') {
     this.team_data.team_members.set(slack_user_id, github_username);
-    console.log(`Slack user ${slack_user_id} added to team`);
+    console.log(
+      `Slack user ${slack_user_id} added to team with github username ${github_username}`
+    );
   }
 
   get_team_member_by_github_username(potential_github_username) {

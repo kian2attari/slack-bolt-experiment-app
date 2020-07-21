@@ -43,7 +43,6 @@ function app_home_opened(
       }
 
       console.log('app_home_opened user_app_home_state_obj', user_app_home_state_obj);
-      // TODO HIGH if default repo is not set, then return app home state object with the selected repo as All Untriaged
       const home_view = AppHome.BaseAppHome(user_app_home_state_obj);
       await client.views.publish({
         /* retrieves your xoxb token from context */

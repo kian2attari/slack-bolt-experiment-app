@@ -95,47 +95,7 @@ actions_listener.buttons.show_untriaged_filter_button(
   user_app_home_state_obj
 );
 
-app.action('setup_repo_defaults_repo_modal', async ({ack, body, context, client}) => {
-  console.log(': ----------------');
-  console.log('setup_repo_defaults_repo_modal context', context);
-  console.log(': ----------------');
-
-  console.log(': ----------');
-  console.log('setup_repo_defaults_repo_modal body', body);
-  console.log(': ----------');
-
-  await ack();
-  try {
-    const action_body = body.actions[0];
-
-    const {selected_option} = action_body;
-
-    const selected_repo_path = selected_option.text.text;
-
-    // const selected_repo_id = selected_option.value;
-
-    console.log('selected_repo_path', selected_repo_path);
-
-    const selected_repo_obj = {
-      repo_path: selected_repo_path,
-      selected_project_name: undefined,
-    };
-    const updated_modal = Modals.SetupRepoNewIssueDefaultsModal(selected_repo_obj);
-
-    await client.views.update({
-      /* retrieves your xoxb token from context */
-      token: context.botToken,
-
-      /* View to be updated */
-      view_id: body.view.id,
-
-      /* the view payload that appears in the modal */
-      view: updated_modal,
-    });
-  } catch (error) {
-    console.error(error);
-  }
-});
+actions_listener.setup_defaults.modal_repo_selection(app);
 
 // app.action('setup_default_modal_label_list', async ({ack}) => ack());
 
@@ -418,7 +378,7 @@ app.action('label_list', async ({ack, body}) => {
 options_listener.repo_proj_col_selections.repo_selection(app, triage_team_data_obj);
 
 // Same as the repo_selection option, just has to be seperated for this action_id
-app.options('setup_repo_defaults_repo_modal', async ({options, ack}) => {
+app.options('setup_defaults_modal_repo_selection', async ({options, ack}) => {
   try {
     // TODO try using options directly
     console.log('options', options);
@@ -515,7 +475,6 @@ app.options('setup_default_modal_project_selection', async ({options, ack}) => {
       query.getOrgAndUserLevelProjects,
       {repo_id}
     );
-    // TODO highest priority add OAuth
     const org_level_projects = SafeAccess(
       () => org_level_projects_response.node.owner.projects.nodes
     );
@@ -892,6 +851,9 @@ app.view('map_username_modal', async ({ack, body, view, context}) => {
   const slack_id_to_gh_username_match = triage_team_data_obj.get_team_member_by_github_username(
     github_username
   );
+  console.log(': ------------------------------------------------------------');
+  console.log('1 slack_id_to_gh_username_match', slack_id_to_gh_username_match);
+  console.log(': ------------------------------------------------------------');
   /* REVIEW potentially message the user or open a confirmation modal of some sort if the user already has a github username 
   setup. This would actually be better done on the actual modal before submission. The modal should show the person's current
   github name, and it should be a confirm type modal 
@@ -913,13 +875,13 @@ app.view('map_username_modal', async ({ack, body, view, context}) => {
   //   }
   //   return;
   // }
-
-  if (slack_id_to_gh_username_match.length === 0) {
+  // TODO just check if its not equal to zero and say that a la above
+  if (Object.keys(slack_id_to_gh_username_match).length === 0) {
     // We map the github username to that Slack username
     triage_team_data_obj.set_team_member(slack_user_id, github_username);
 
     console.log(': ------------------------------------------------------------');
-    console.log('slack_id_to_gh_username_match', slack_id_to_gh_username_match);
+    console.log('2 slack_id_to_gh_username_match', slack_id_to_gh_username_match);
     console.log(': ------------------------------------------------------------');
 
     console.log(': ------------------------------------------');
@@ -1110,6 +1072,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
         console.log('untriaged_label id', untriaged_label_id);
         console.log(': --------------------------------------------------');
 
+        // REVIEW maybe we only assign the card to the org-wide repo?
         if (label_id === untriaged_label_id) {
           const variables_assignIssueToProject = {
             issue_id: issue_node_id,
@@ -1289,8 +1252,9 @@ function check_for_mentions({
       const mentioned_slack_user = triage_team_data_obj.get_team_member_by_github_username(
         github_username
       ).slack_user_id;
-
-      console.log(`mentioned slack user: ${mentioned_slack_user}`);
+      console.log(': --------------------------------------------------------------');
+      console.log('contains_mention -> mentioned_slack_user', mentioned_slack_user);
+      console.log(': --------------------------------------------------------------');
 
       // If the mentioned username is associated with a Slack username, mention that person
       const mention_event_data = {
