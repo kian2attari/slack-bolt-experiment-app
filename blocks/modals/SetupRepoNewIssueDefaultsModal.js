@@ -88,7 +88,6 @@ function set_label_project_column_blocks() {
     },
     {
       'type': 'input',
-      // REVIEW if assigning new issues to a project is not possible, take this out and simplify this whole file. The only needed block in that case is the label dropdown.
       'block_id': 'untriaged_project_block_input',
       'label': {
         'type': 'plain_text',
@@ -106,30 +105,5 @@ function set_label_project_column_blocks() {
         'action_id': 'setup_default_modal_project_selection',
       },
     },
-    // OLD This feature is currently commented out since the tools team is debating the value of the need's triage column in its entirety.
-    // If the project has been selected, show the column list
-    // ...(Object.prototype.hasOwnProperty.call(repo_obj, 'selected_project_name') &&
-    // typeof repo_obj.selected_project_name !== 'undefined'
-    //   ? [
-    //       {
-    //         'type': 'input',
-    //         'label': {
-    //           'type': 'plain_text',
-    //           'text': 'Default project column for New/Untriaged issues',
-    //           'emoji': true,
-    //         },
-    //         'element': {
-    //           'type': 'external_select',
-    //           'min_query_length': 0,
-    //           'placeholder': {
-    //             'type': 'plain_text',
-    //             'text': 'Select column',
-    //             'emoji': true,
-    //           },
-    //           'action_id': 'setup_default_modal_column_selection',
-    //         },
-    //       },
-    //     ]
-    //   : []),
   ];
 }

@@ -13,7 +13,7 @@ async function show_all_untriaged_cards(context_data_obj) {
 
   console.log('context_data_obj', context_data_obj);
 
-  const repo_path = 'slackapi/dummy-kian-test-repo';
+  const repo_path = 'kian-org/gitwave-test';
 
   // TODO GET ALL EXTERNAL UNTRIAGED ISSUES FROM ORG PROJECT BOARD
   const repo_project_id = SafeAccess(

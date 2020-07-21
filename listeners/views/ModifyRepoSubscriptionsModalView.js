@@ -61,7 +61,7 @@ module.exports = (app, triage_team_data, app_home_state) => {
         token: context.botToken,
         channel: slack_user_id,
         // TODO Check if mentions are setup and change the message based on that
-        text: `*${subscribe_repo}* doesn't seem to be a valid repo. Please check your spelling <@${slack_user_id}>.`,
+        text: `I can't find *${subscribe_repo}*. Have you installed the GitWave GitHub App on this repo/organization? Also please double check your spelling! <@${slack_user_id}>.`,
       });
       return;
     }

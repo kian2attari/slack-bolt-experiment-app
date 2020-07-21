@@ -7,4 +7,5 @@ module.exports = {
   getRepoLabelsList: require('./getRepoLabelsList'),
   getFullRepoData: require('./getFullRepoData'),
   getAllUntriaged: require('./getAllUntriaged'),
+  getOrgAndUserLevelProjects: require('./getOrgAndUserLevelProjects'),
 };

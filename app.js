@@ -1,6 +1,6 @@
 const {App, LogLevel, ExpressReceiver} = require('@slack/bolt');
 const express = require('express');
-const {mutation, graphql} = require('./graphql');
+const {query, mutation, graphql} = require('./graphql');
 const {AppHome, Messages, Modals, SubBlocks} = require('./blocks');
 const {SafeAccess} = require('./helper-functions');
 const {
@@ -136,52 +136,6 @@ app.action('setup_repo_defaults_repo_modal', async ({ack, body, context, client}
     console.error(error);
   }
 });
-
-// app.action(
-//   'setup_default_modal_project_selection',
-//   async ({ack, body, context, client}) => {
-//     console.log(': ----------------');
-//     console.log('setup_default_modal_project_selection context', context);
-//     console.log(': ----------------');
-
-//     console.log(': ----------');
-//     console.log('setup_default_modal_project_selection body', body);
-//     console.log(': ----------');
-
-//     await ack();
-//     try {
-//       const action_body = body.actions[0];
-
-//       const {selected_option} = action_body;
-
-//       const selected_project_name = selected_option.text.text;
-//       // TODO remove hardcoding
-//       const repo_path = 'slackapi/dummy-kian-test-repo';
-
-//       const selected_repo_obj = {
-//         repo_path,
-//         selected_project_name,
-//       };
-
-//       console.log('selected_repo_obj', selected_repo_obj);
-
-//       const updated_modal = blocks.SetupRepoNewIssueDefaultsModal(selected_repo_obj);
-
-//       await client.views.update({
-//         /* retrieves your xoxb token from context */
-//         token: context.botToken,
-
-//         /* View to be updated */
-//         view_id: body.view.id,
-
-//         /* the view payload that appears in the modal */
-//         view: updated_modal,
-//       });
-//     } catch (error) {
-//       console.error(error);
-//     }
-//   }
-// );
 
 // app.action('setup_default_modal_label_list', async ({ack}) => ack());
 
@@ -553,16 +507,31 @@ app.options('setup_default_modal_project_selection', async ({options, ack}) => {
 
     const selected_repo_path = selected_repo_metadata_obj.repo_path;
 
-    const subscribed_repo_projects = triage_team_data_obj.get_team_repo_subscriptions(
+    const {repo_id} = triage_team_data_obj.get_team_repo_subscriptions(
       selected_repo_path
-    ).repo_project_map;
+    );
 
-    if (subscribed_repo_projects.size !== 0) {
-      const project_options_block_list = Array.from(
-        subscribed_repo_projects.values()
-      ).map(project => {
-        return SubBlocks.option_obj(project.name, project.id);
-      });
+    const org_level_projects_response = await graphql.call_gh_graphql(
+      query.getOrgAndUserLevelProjects,
+      {repo_id}
+    );
+    // TODO highest priority add OAuth
+    const org_level_projects = SafeAccess(
+      () => org_level_projects_response.node.owner.projects.nodes
+    );
+
+    // TODO HIGHEST the projects returned here should be the projects of the Organization/User not the repo
+
+    // const subscribed_repo_projects = triage_team_data_obj.get_team_repo_subscriptions(
+    //   selected_repo_path
+    // ).repo_project_map;
+
+    if (org_level_projects.size !== 0) {
+      const project_options_block_list = Array.from(org_level_projects.values()).map(
+        project => {
+          return SubBlocks.option_obj(project.name, project.id);
+        }
+      );
 
       console.log('project_options_block_list', project_options_block_list);
 
@@ -1001,6 +970,11 @@ app.view('repo_new_issue_defaults_modal', async ({ack, body, view, context}) => 
     project_name: default_untriaged_issues_project.text.text,
     project_id: default_untriaged_issues_project.value,
   });
+  // Link repo to said project
+  // await graphql.call_gh_graphql(mutation.linkRepoToOrgLevelProject, {
+  //   project_id: default_untriaged_issues_project.value,
+  //   repo_id: triage_team_data_obj.get_team_repo_subscriptions(repo_path).repo_id,
+  // });
 
   // set default label obj
   triage_team_data_obj.set_untriaged_label(repo_path, {
@@ -1314,7 +1288,7 @@ function check_for_mentions({
 
       const mentioned_slack_user = triage_team_data_obj.get_team_member_by_github_username(
         github_username
-      );
+      ).slack_user_id;
 
       console.log(`mentioned slack user: ${mentioned_slack_user}`);
 

@@ -9,6 +9,11 @@ class TriageTeamData {
       subscribed_repo_map: new Map(),
       team_members: new Map(),
     };
+    // TODO HIGHEST PRIORITY change all instances of untriaged project to be here
+    this.team_untriaged_org_project = {
+      project_name: '',
+      project_id: '',
+    };
   }
 
   set_team_member(slack_user_id, github_username = 'no github username set') {
@@ -19,10 +24,10 @@ class TriageTeamData {
   get_team_member_by_github_username(potential_github_username) {
     for (const [slack_user_id, github_username] of this.team_data.team_members) {
       if (github_username === potential_github_username) {
-        return [slack_user_id, github_username];
+        return {slack_user_id, github_username};
       }
     }
-    return [];
+    return {};
   }
 
   // TODO change this so that only a repo_path needs to be passed in and it will use new_repo_obj function
