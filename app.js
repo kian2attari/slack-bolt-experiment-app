@@ -1,7 +1,6 @@
 const {App, LogLevel, ExpressReceiver} = require('@slack/bolt');
 const express = require('express');
 const {mutation, graphql} = require('./graphql');
-const {Messages} = require('./blocks');
 const {
   actions_listener,
   events_listener,
@@ -9,6 +8,7 @@ const {
   views_listener,
   shortcuts_listener,
 } = require('./listeners');
+const {check_for_mentions, send_mention_message} = require('./helper-functions');
 const {UserAppHomeState, TriageTeamData} = require('./models');
 
 // Create a Bolt Receiver
@@ -269,7 +269,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
         };
 
         // TODO: instead of channel id, send over the users_triage_team object or don't and do it in the function
-        check_for_mentions(mention_event_data);
+        check_for_mentions(app, mention_event_data, triage_team_data_obj);
       } else if (action === 'labeled') {
         /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
         // const issue_label_array = request.issue.labels;
@@ -357,7 +357,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
           is_issue_closed: true,
         };
 
-        send_mention_message(mention_event_data);
+        send_mention_message(app, mention_event_data);
       }
 
       const mention_event_data = {
@@ -370,7 +370,7 @@ expressReceiver.router.post('/webhook', (req, res) => {
         content_create_date: comment_create_date,
       };
 
-      check_for_mentions(mention_event_data);
+      check_for_mentions(app, mention_event_data, triage_team_data_obj);
     }
   } catch (error) {
     console.error(error);
@@ -397,96 +397,9 @@ expressReceiver.router.post('/webhook', (req, res) => {
 /*                        SECTION Function definitions                        */
 /* -------------------------------------------------------------------------- */
 
-// TODO: Get user's timezone and display the date/time with respect to it
-/**
- *
- *
- * @param {{channel_id:string, title:string, body:string, url:string, creator:string, avatar_url:string, create_date:string, mentioned_slack_user:string, is_issue_closed:boolean }} mention_event_data
- */
-function send_mention_message(mention_event_data) {
-  const {
-    channel_id,
-    title,
-    url,
-    creator,
-    create_date,
-    mentioned_slack_user,
-    is_issue_closed,
-  } = mention_event_data;
-  app.client.chat.postMessage({
-    // Since there is no context we just use the original token
-    token: process.env.SLACK_BOT_TOKEN,
-    // Conditional on whether the message should go to channel or just to a user as a DM
-    ...(is_issue_closed
-      ? {
-          channel: channel_id,
-          blocks: Messages.GithubMentionMessage(mention_event_data),
-        }
-      : {
-          channel: mentioned_slack_user,
-          blocks: Messages.GithubMentionMessage(
-            Object.assign(mention_event_data, {
-              mentioned_slack_user: `@${mentioned_slack_user}`,
-            })
-          ),
-        }),
-
-    text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`,
-  });
-}
-
 // // TODO: Function that lets user see all the username mappings with a slash command
 // function view_username_mappings(username_mappings) {
 //   console.log(username_mappings);
 // }
-
-// Function that checks for github username mentions in a body of text
-function check_for_mentions({
-  channel_id,
-  title,
-  text_body,
-  content_url,
-  content_creator,
-  creator_avatar_url,
-  content_create_date,
-}) {
-  /* Since the regex contains a global operator, matchAll can used to get all the matches & the groups as an iterable.
-  In this first version, we don't need to use substring(1) to drop the @ since contains_mention would also have just the usernames. */
-
-  const contains_mention = text_body.match(/\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi);
-
-  // Checks to see if the body mentions a username
-  if (contains_mention) {
-    contains_mention.forEach(mentioned_username => {
-      const github_username = mentioned_username.substring(1);
-
-      console.log(`mentioned gh username: ${github_username}`);
-
-      const mentioned_slack_user = triage_team_data_obj.get_team_member_by_github_username(
-        github_username
-      ).slack_user_id;
-      console.log(': --------------------------------------------------------------');
-      console.log('contains_mention -> mentioned_slack_user', mentioned_slack_user);
-      console.log(': --------------------------------------------------------------');
-
-      // If the mentioned username is associated with a Slack username, mention that person
-      const mention_event_data = {
-        channel_id,
-        title,
-        body: text_body,
-        url: content_url,
-        creator: content_creator,
-        avatar_url: creator_avatar_url,
-        create_date: content_create_date,
-        mentioned_slack_user,
-        is_issue_closed: false,
-      };
-
-      if (mentioned_slack_user) {
-        send_mention_message(mention_event_data);
-      }
-    });
-  }
-}
 
 // !SECTION
