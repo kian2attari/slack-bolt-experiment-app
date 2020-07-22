@@ -5,6 +5,7 @@ const {
   actions_listener,
   events_listener,
   options_listener,
+  messages_listener,
   views_listener,
   shortcuts_listener,
 } = require('./listeners');
@@ -54,6 +55,11 @@ const triage_team_data_obj = new TriageTeamData();
 console.log(': ------------------------------------------');
 console.log('triage_team_data_obj', triage_team_data_obj);
 console.log(': ------------------------------------------');
+// !SECTION
+
+/* ----------------------- SECTION Listening for messages ---------------------- */
+messages_listener.triage_channel(app);
+
 // !SECTION
 
 /* ----------------------- SECTION Listening for events ---------------------- */
