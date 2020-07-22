@@ -13,6 +13,7 @@ const jwt_token = async () => {
 };
 
 let graphqlWithAuth;
+// TODO Create actual instances of a class, one instance per token level
 
 let has_init_run = false;
 
@@ -55,7 +56,7 @@ const call_gh_graphql = async (query, variables) => {
         repo_owner: variables.repo_owner,
         repo_name: variables.repo_name,
       };
-      console.log('variables', variables)
+      console.log('variables', variables);
       console.log('init_variables', init_variables);
       if (
         typeof init_variables.repo_owner === 'undefined' ||
