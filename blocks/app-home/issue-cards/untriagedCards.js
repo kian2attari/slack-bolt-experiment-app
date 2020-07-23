@@ -99,13 +99,13 @@ exports.untriaged_cards = card_array => {
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': `${starting_card_text} ${card_data.title} \n ${card_data.body}`,
+          'text': `${starting_card_text} ${card_data.title} \n ${card_data.body} \n`,
         },
         'accessory': {
           'type': 'button',
           'text': {
             'type': 'plain_text',
-            'text': 'View Issue',
+            'text': 'View Issue on GitHub',
             'emoji': true,
           },
           'url': card_data.url,
