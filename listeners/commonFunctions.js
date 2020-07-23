@@ -13,8 +13,6 @@ async function show_all_untriaged_cards(context_data_obj) {
 
   console.log('context_data_obj', context_data_obj);
 
-  const repo_path = 'kian-org/gitwave-test';
-
   // TODO GET ALL EXTERNAL UNTRIAGED ISSUES FROM ORG PROJECT BOARD
   const repo_project_id = SafeAccess(
     () => triage_team_data_obj.get_default_untriaged_project().project_id
@@ -35,7 +33,7 @@ async function show_all_untriaged_cards(context_data_obj) {
       token: context.botToken,
       trigger_id,
       // TODO select the repo by default
-      view: Modals.SetupRepoNewIssueDefaultsModal(repo_path),
+      view: Modals.SetupRepoNewIssueDefaultsModal(),
     });
     return;
   }
@@ -61,8 +59,6 @@ async function show_all_untriaged_cards(context_data_obj) {
   const untriaged_blocks = AppHome.AppHomeIssueCards.untriaged_cards(untriaged_issues);
 
   const home_view = AppHome.BaseAppHome(user_app_home_state_obj, untriaged_blocks);
-
-  console.log(JSON.stringify(home_view, null, 4));
 
   console.log(': ----------');
   console.log('open_map_modal_button context', context);

@@ -45,7 +45,7 @@ module.exports = (app, triage_team_data, app_home_state) => {
     );
 
     if (typeof subscribe_repo === 'undefined' && unsubscribe_repo === null) {
-      console.error('No repos specified by user');
+      console.log('No repos specified by user');
       return;
     }
 
@@ -101,7 +101,7 @@ module.exports = (app, triage_team_data, app_home_state) => {
             "you can't simultaneously subscribe and unsubscribe from" +
             ` *${unsubscribe_repo}*`,
         });
-        console.error(
+        console.log(
           // eslint-disable-next-line prefer-template
           'User tried to simultaneously subscribe and unsubscribe to repo ' +
             subscribe_repo_obj.repo_path

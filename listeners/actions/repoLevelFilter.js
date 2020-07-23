@@ -92,8 +92,6 @@ function column_selection(app, triage_team_data_obj, user_app_home_state_obj) {
       console.log(': ------------------------');
 
       const home_view = AppHome.BaseAppHome(user_app_home_state_obj, card_blocks);
-      // (issue_blocks = blocks.CardsAppHome(cards_array, label_block)),
-      console.log(JSON.stringify(home_view, null, 4));
 
       /* view.publish is the method that your app uses to push a view to the Home tab */
       await client.views.update({

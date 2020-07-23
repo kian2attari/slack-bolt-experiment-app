@@ -69,7 +69,7 @@ exports.untriaged_cards = card_array => {
 
   const issues_block = card_array.flatMap(card => {
     const card_data = card.content;
-    const card_id = card_data.id;
+    // const card_id = card_data.id;
     const card_labels = card_data.labels.nodes;
     // The labels that the issues already have selected
     // const label_initial_options = card_labels.map(label => {
@@ -97,23 +97,18 @@ exports.untriaged_cards = card_array => {
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': `*${card_data.title}* \n ${card_data.body}`,
+          'text': `*${card_data.repository.name}*: ${card_data.title} \n ${card_data.body}`,
         },
-      },
-      {
-        'type': 'actions',
-        'elements': [
-          {
-            'type': 'button',
-            'text': {
-              'type': 'plain_text',
-              'text': 'View Issue',
-              'emoji': true,
-            },
-            'url': card_data.url,
-            'action_id': 'link_button',
+        'accessory': {
+          'type': 'button',
+          'text': {
+            'type': 'plain_text',
+            'text': 'View Issue',
+            'emoji': true,
           },
-        ],
+          'url': card_data.url,
+          'action_id': 'link_button',
+        },
       },
       /* The GitHub GraphQL API needs both the issue ID and 
               the label id to assign a label. The block_id is set as 

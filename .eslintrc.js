@@ -11,7 +11,6 @@ module.exports = {
   rules: {
     'global-require': 'off',
     'camelcase': 'off',
-    'import/prefer-default-export': 'off',
     'no-use-before-define': ['error', {'functions': false}],
     'no-console': 'off',
     // Modified no-restricted-syntax to remove the restriction on ForOf statements.
