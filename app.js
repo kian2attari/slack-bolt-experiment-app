@@ -9,7 +9,7 @@ const {
   views_listener,
   shortcuts_listener,
 } = require('./listeners');
-const {db} = require('./db');
+const {db_client} = require('./db');
 const {UserAppHomeState, TriageTeamData} = require('./models');
 
 // Create a Bolt Receiver
@@ -30,7 +30,6 @@ const app = new App({
 /* -------------------------------------------------------------------------- */
 
 /* ---------------------------------------------- ANCHOR connect to DB ---------------------------------------------- */
-
 // TODO get this from DB
 const default_selected_repo = {
   repo_path: 'All Untriaged',
@@ -55,6 +54,8 @@ console.log('triage_team_data_obj', triage_team_data_obj);
 console.log(': ------------------------------------------');
 // !SECTION
 
+// TODO Organize these listeners into their own modules by function
+
 /* ----------------------- SECTION Listening for messages ---------------------- */
 // TODO pull traige-sdk channel id
 /* TODO could use a middleware ex valid_triage_channel. It would take the channel_id and check 
@@ -66,7 +67,6 @@ messages_listener.triage_channel(app);
 /* ----------------------- SECTION Listening for events ---------------------- */
 
 /* -------------------------- ANCHOR App Home View events -------------------------- */
-
 // Loads the app home when the app home is opened!
 // ANCHOR App home opened
 events_listener.app_home.app_home_opened(

@@ -53,22 +53,17 @@ class TriageTeamData {
       : this.team_data.subscribed_repo_map.get(repo_path);
   }
 
-  get_default_untriaged_project(repo_path) {
-    const untriaged_project_obj = this.team_data.subscribed_repo_map.get(repo_path)
-      .untriaged_settings.repo_default_untriaged_project;
+  get_default_untriaged_project() {
+    const untriaged_project_obj = this.team_untriaged_org_project;
     // If a default project hasn't been set, return an empty object
-    return untriaged_project_obj.project_name.length !== 0 &&
+    return untriaged_project_obj.project_name.length !== 0 ||
       untriaged_project_obj.project_id.length !== 0
       ? untriaged_project_obj
       : {};
   }
 
-  set_default_untriaged_project(repo_path, project_obj) {
-    return Object.assign(
-      this.team_data.subscribed_repo_map.get(repo_path).untriaged_settings
-        .repo_default_untriaged_project,
-      project_obj
-    );
+  set_default_untriaged_project(project_obj) {
+    return Object.assign(this.team_untriaged_org_project, project_obj);
   }
 
   get_untriaged_label(repo_path) {
@@ -99,7 +94,7 @@ class TriageTeamData {
    *
    * Creates a repo object
    * @param {string} subscribe_repo_path
-   * @returns {{repo_owner: string, repo_name: string, repo_path: string, untriaged_settings: { label_id: string, label_name: string, repo_default_untriaged_project: {project_name:string, project_id:string }}, repo_label_map: Map<string,object>, repo_project_map: Map<string,object>}} A repo object
+   * @returns {{repo_owner: string, repo_name: string, repo_path: string, untriaged_settings: { label_id: string, label_name: string, team_untriaged_org_project: {project_name:string, project_id:string }}, repo_label_map: Map<string,object>, repo_project_map: Map<string,object>}} A repo object
    * @memberof TriageTeamData
    */
   // Creates a new repo object
@@ -121,10 +116,6 @@ class TriageTeamData {
         untriaged_label: {
           label_id: '',
           label_name: '',
-        },
-        repo_default_untriaged_project: {
-          project_name: '',
-          project_id: '',
         },
       },
       // Projects are mapped from project_name -> {project_id, project_columns_map:}

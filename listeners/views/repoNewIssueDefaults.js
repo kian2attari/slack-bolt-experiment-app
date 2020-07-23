@@ -18,7 +18,7 @@ module.exports = (app, triage_team_data_obj) => {
         .selected_option;
 
     // set default project name
-    triage_team_data_obj.set_default_untriaged_project(repo_path, {
+    triage_team_data_obj.set_default_untriaged_project({
       project_name: default_untriaged_issues_project.text.text,
       project_id: default_untriaged_issues_project.value,
     });

@@ -38,12 +38,10 @@ function issue_labeled(triage_team_data_obj, app, req, res) {
   // TODO the app should ignore issues with multiple triage labels
   // REVIEW maybe we only assign the card to the org-wide repo?
   if (label_id === untriaged_label_id) {
+    // TODO maybe only one project id is needed
     const variables_assignIssueToProject = {
       issue_id: issue_node_id,
-      project_ids: [
-        triage_team_data_obj.get_team_repo_subscriptions(repo_path).untriaged_settings
-          .repo_default_untriaged_project.project_id,
-      ],
+      project_ids: [triage_team_data_obj.get_default_untriaged_project().project_id],
     };
 
     // TODO: Create a card in the org-wide repo to indicate the presence of this untriaged issue

@@ -17,7 +17,7 @@ async function show_all_untriaged_cards(context_data_obj) {
 
   // TODO GET ALL EXTERNAL UNTRIAGED ISSUES FROM ORG PROJECT BOARD
   const repo_project_id = SafeAccess(
-    () => triage_team_data_obj.get_default_untriaged_project(repo_path).project_id
+    () => triage_team_data_obj.get_default_untriaged_project().project_id
   );
 
   const trigger_id = SafeAccess(() => context_data_obj.body.trigger_id);

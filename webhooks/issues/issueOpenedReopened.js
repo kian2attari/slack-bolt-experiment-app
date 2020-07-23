@@ -33,14 +33,6 @@ function issue_opened_reopened(triage_team_data_obj, app, req, res) {
     element_node_id: issue_node_id,
     label_ids: [untriaged_label_id],
   };
-  // TODO seperate this. The adding of the untriaged label event should trigger this.
-  // const variables_assignIssueToProject = {
-  //   issue_id: issue_node_id,
-  //   project_ids: [
-  //     triage_team_data_obj.get_team_repo_subscriptions(repo_path).untriaged_settings
-  //       .repo_default_untriaged_project.project_id,
-  //   ],
-  // };
 
   // eslint-disable-next-line no-unused-vars
   const addLabelMutation = graphql

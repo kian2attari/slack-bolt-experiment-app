@@ -18,7 +18,7 @@ module.exports = card_array => {
     console.log('card_labels', card_labels);
 
     console.log('label_initial_options', label_initial_options);
-
+    // TODO show repo name/whether it's internal and from who it is
     // TODO add the triage label buttons
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
     // TODO if the issue is closed, then change somthing about visually to indicate the status
