@@ -1,8 +1,6 @@
 const {App, LogLevel, ExpressReceiver} = require('@slack/bolt');
 const {json} = require('express');
-const {mutation, graphql} = require('./graphql');
-const {github_event} = require('./webhooks');
-// const {GitHubWebhookListener} = require('./webhooks/githubWebhookListener');
+const {github_event} = require('./webhooks/webhookEvents');
 const {
   actions_listener,
   events_listener,
@@ -11,7 +9,7 @@ const {
   views_listener,
   shortcuts_listener,
 } = require('./listeners');
-const {check_for_mentions, send_mention_message} = require('./helper-functions');
+const {db} = require('./db');
 const {UserAppHomeState, TriageTeamData} = require('./models');
 
 // Create a Bolt Receiver
@@ -31,9 +29,7 @@ const app = new App({
 /*                             SECTION Data layer                             */
 /* -------------------------------------------------------------------------- */
 
-// Temporary hardcoding of channel id just to make testing/development easier
-// TODO: Remove this hardcoding
-const temp_channel_id = 'C015FH00GVA';
+/* ---------------------------------------------- ANCHOR connect to DB ---------------------------------------------- */
 
 // TODO get this from DB
 const default_selected_repo = {
@@ -201,258 +197,7 @@ views_listener.repo_new_issue_defaults_view(app, triage_team_data_obj);
 
 expressReceiver.router.use(json({type: 'application/json'}));
 
-github_event(expressReceiver.router);
-
-// Parsing JSON Middleware
-// expressReceiver.router.use(json());
-
-// expressReceiver.router.post('/gh-webhooks', (req, res) => {});
-
-// TODO modularize this
-// const { json, Router } = require('express');
-
-// const myRouter = Router();
-// myRouter.use(bodyParser.json())
-// myRouter.post('/gh_wehbook', () => {
-// });
-
-// exports.myRouter = myRouter;
-
-// expressReceiver.router.use(myRouter);
-
-// -- Check for mentions
-// github.on('issues', ['opened', 'reopened'], () => {
-// });
-
-// -- Enforce triage labels mutual exclusivity and management of the untriaged label
-// github.on('issues.opened', (request) => {
-//   // TODO: add the untriaged label
-// });
-
-// github.on('issues.labeled', (request) => {
-//   // The issue should only have either one of the triage labels or the untriaged label
-//   // TODO: find out if the labels are valid, and if not, message the triage channel
-// });
-// github.on('issues.unlabeled', (request) => {
-//   // When there are no remaining triage labels nor the untriaged label on an issue, apply untriaged automatically
-//   // TODO:
-// });
-
-// github.on('issues', () => {
-
-// })
-
-// // -- Notify users of mentions
-// github.on('issues', ['opened'], () => {
-
-// });
-
-// const { EventEmitter } = require('events');
-
-// class GitHubWebhookListener extends EventEmitter {
-//   constructor(router) {
-//     router.post('/webhook', () => {
-//       this.emit(req.headers['x-github-event'] + '.' + request.action, ...);
-//       this.emit(req.headers['x-github-event']);
-//     })
-//   }
-// }
-
-// const github = new GitHubWebhookListener(router);
-
-// github.on('issues', (...) => {
-
-// });
-
-// Receive github webhooks here!
-// expressReceiver.router.post('/gh-webhooks', (req, res) => {
-//   // TODO do this in express.json()
-//   if (req.headers['content-type'] !== 'application/json') {
-//     return res.send('Send webhook as application/json');
-//   }
-
-//   /* -------- TODO organize this to use swtich cases or modular design (array based?) -------- */
-
-//   try {
-//     const request = req.body;
-//     const {action} = request;
-
-//     // eslint-disable-next-line no-unused-vars
-//     const {full_name: repo_path, id: repo_id} = request.repository;
-
-//     console.log(': --------------------');
-//     console.log('repo_path', repo_path);
-//     console.log(': --------------------');
-
-//     // TODO: Handle other event types. Currently, it's just issue-related events
-//     if (req.headers['x-github-event'] === 'issues') {
-//       // TODO Use destructuring here
-//       const issue_url = request.issue.html_url;
-//       const issue_title = request.issue.title;
-//       const issue_body = request.issue.body;
-//       const issue_creator = request.issue.user.login;
-//       const creator_avatar_url = request.issue.user.avatar_url;
-//       const issue_create_date = new Date(request.issue.created_at);
-//       const issue_node_id = request.issue.node_id;
-
-//       const repo_obj = triage_team_data_obj.get_team_repo_subscriptions(repo_path);
-//       console.log(': ------------------');
-//       console.log('repo_obj', repo_obj);
-//       console.log(': ------------------');
-
-//       // QUESTION: Should editing the issue also cause the untriaged label to be added?
-//       if (action === 'opened' || action === 'reopened') {
-//         const untriaged_label_id = repo_obj.untriaged_settings.untriaged_label.label_id;
-//         const variables_addLabelToIssue = {
-//           element_node_id: issue_node_id,
-//           label_ids: [untriaged_label_id],
-//         };
-//         // TODO seperate this. The adding of the untriaged label event should trigger this.
-//         // const variables_assignIssueToProject = {
-//         //   issue_id: issue_node_id,
-//         //   project_ids: [
-//         //     triage_team_data_obj.get_team_repo_subscriptions(repo_path).untriaged_settings
-//         //       .repo_default_untriaged_project.project_id,
-//         //   ],
-//         // };
-
-//         // eslint-disable-next-line no-unused-vars
-//         const addLabelMutation = graphql
-//           .call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, {
-//             repo_owner: repo_obj.repo_owner,
-//             repo_name: repo_obj.repo_name,
-//           })
-//           .then(addLabelMutation_response => {
-//             console.log('addLabelMutation_response', addLabelMutation_response);
-//             return addLabelMutation_response;
-//           })
-//           .catch(error => console.error(error));
-
-//         console.log(': ----------------------------------');
-//         console.log('addLabelMutation', addLabelMutation);
-//         console.log(': ----------------------------------');
-
-//         const mention_event_data = {
-//           channel_id: temp_channel_id,
-//           title: issue_title,
-//           text_body: issue_body,
-//           content_url: issue_url,
-//           content_creator: issue_creator,
-//           creator_avatar_url,
-//           content_create_date: issue_create_date,
-//         };
-
-//         // TODO: instead of channel id, send over the users_triage_team object or don't and do it in the function
-//         check_for_mentions(app, mention_event_data, triage_team_data_obj);
-//       } else if (action === 'labeled') {
-//         /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
-//         // const issue_label_array = request.issue.labels;
-
-//         const label_id = request.label.node_id;
-//         const untriaged_label_id = repo_obj.untriaged_settings.untriaged_label.label_id;
-
-//         // TODO if the label is question, put it under the question column
-//         console.log(': ------------------');
-//         console.log('label_id', label_id);
-//         console.log(': ------------------');
-
-//         console.log(': --------------------------------------------------');
-//         console.log('untriaged_label id', untriaged_label_id);
-//         console.log(': --------------------------------------------------');
-//         /* TODO if the applied label was a triage label, there should not be any other triage label currently applied to it. If there is:
-//         Message the team to let the know it happened */
-//         // TODO the app should ignore issues with multiple triage labels
-//         // REVIEW maybe we only assign the card to the org-wide repo?
-//         if (label_id === untriaged_label_id) {
-//           const variables_assignIssueToProject = {
-//             issue_id: issue_node_id,
-//             project_ids: [
-//               triage_team_data_obj.get_team_repo_subscriptions(repo_path)
-//                 .untriaged_settings.repo_default_untriaged_project.project_id,
-//             ],
-//           };
-
-//           // TODO: Create a card in the org-wide repo to indicate the presence of this untriaged issue
-//           // Assigns the project to the selected issue
-//           // TODO: let the user select a default project
-//           const assignIssueToProjectMutation = graphql
-//             .call_gh_graphql(
-//               mutation.assignIssueToProject,
-//               variables_assignIssueToProject
-//             )
-//             .then(assignIssueToProjectMutation_response => {
-//               console.log(
-//                 'assignIssueToProjectMutation_response',
-//                 assignIssueToProjectMutation_response
-//               );
-//               return assignIssueToProjectMutation_response;
-//             })
-//             .catch(error => console.error(error));
-
-//           console.log(': ----------------------------------');
-//           console.log('assignIssueToProjectMutation', assignIssueToProjectMutation);
-//           console.log(': ----------------------------------');
-//         }
-//       } else if (action === 'unlabeled') {
-//         // const label_id = request.label.node_id
-//         // console.log(label_id)
-//         // console.log(untriaged_label.label_id)
-//         // if (label_id == untriaged_label.label_id) {
-//         //   const addCardToColumn_variables = {"issue": {"projectColumnId" : untriaged_label.column_id, "contentId": issue_node_id}}
-//         //   graphql.call_gh_graphql(mutation.addCardToColumn, addCardToColumn_variables)
-//         // }
-//         const label_id = request.label.node_id;
-//         const untriaged_label_id = repo_obj.untriaged_settings.untriaged_label.label_id;
-//         // TODO if there are neither the untriaged label nor any of the triage labels now, add the untriaged label
-//         console.log(': ------------------');
-//         console.log('label_id', label_id);
-//         console.log(': ------------------');
-
-//         console.log(': --------------------------------------------------');
-//         console.log('untriaged_label id', untriaged_label_id);
-//         console.log(': --------------------------------------------------');
-//       }
-//     } else if (req.headers['x-github-event'] === 'issue_comment') {
-//       const issue_url = request.issue.html_url;
-//       const issue_title = request.issue.title;
-//       const comment_body = request.comment.body;
-//       const comment_creator = request.comment.user.login;
-//       const creator_avatar_url = request.comment.user.avatar_url;
-//       const comment_create_date = new Date(request.comment.created_at);
-
-//       if (req.body.issue.state === 'closed') {
-//         const mention_event_data = {
-//           channel_id: temp_channel_id,
-//           title: `Comment on closed issue: ${issue_title}`,
-//           body: comment_body,
-//           url: issue_url,
-//           creator: comment_creator,
-//           avatar_url: creator_avatar_url,
-//           create_date: comment_create_date,
-//           mentioned_slack_user: '!channel',
-//           is_issue_closed: true,
-//         };
-//         // TODO make a new function that sends a message to the team and adds the untriaged label to said issue
-//         send_mention_message(app, mention_event_data);
-//       }
-
-//       const mention_event_data = {
-//         channel_id: temp_channel_id,
-//         title: `New comment on issue: ${issue_title}`,
-//         text_body: comment_body,
-//         content_url: issue_url,
-//         content_creator: comment_creator,
-//         creator_avatar_url,
-//         content_create_date: comment_create_date,
-//       };
-
-//       check_for_mentions(app, mention_event_data, triage_team_data_obj);
-//     }
-//   } catch (error) {
-//     console.error(error);
-//   }
-//   res.send('Webhook initial test was received');
-// });
+github_event(expressReceiver.router, triage_team_data_obj, app);
 
 // !SECTION
 
@@ -466,16 +211,5 @@ github_event(expressReceiver.router);
 
   console.log('⚡️ Bolt app is running!');
 })();
-
-// !SECTION
-
-/* -------------------------------------------------------------------------- */
-/*                        SECTION Function definitions                        */
-/* -------------------------------------------------------------------------- */
-
-// // TODO: Function that lets user see all the username mappings with a slash command
-// function view_username_mappings(username_mappings) {
-//   console.log(username_mappings);
-// }
 
 // !SECTION
