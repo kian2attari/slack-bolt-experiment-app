@@ -86,9 +86,11 @@ exports.untriaged_cards = card_array => {
 
     console.log('card_labels', card_labels);
 
+    const starting_card_text = card_data.closed
+      ? `**CLOSED** ${card_data.repository.name}:`
+      : `*${card_data.repository.name}*:`;
+
     // console.log('label_initial_options', label_initial_options);
-    // TODO show repo name/whether it's internal and from who it is
-    // TODO add the triage label buttons
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
     // TODO if the issue is closed, then change somthing about visually to indicate the status
 
@@ -97,7 +99,7 @@ exports.untriaged_cards = card_array => {
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': `*${card_data.repository.name}*: ${card_data.title} \n ${card_data.body}`,
+          'text': `${starting_card_text} ${card_data.title} \n ${card_data.body}`,
         },
         'accessory': {
           'type': 'button',
