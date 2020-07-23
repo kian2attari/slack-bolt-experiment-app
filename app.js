@@ -1,6 +1,7 @@
 const {App, LogLevel, ExpressReceiver} = require('@slack/bolt');
 const express = require('express');
 const {mutation, graphql} = require('./graphql');
+const {db} = require('./db');
 const {
   actions_listener,
   events_listener,
@@ -28,6 +29,8 @@ const app = new App({
 /* -------------------------------------------------------------------------- */
 /*                             SECTION Data layer                             */
 /* -------------------------------------------------------------------------- */
+
+/* ---------------------------------------------- ANCHOR connect to DB ---------------------------------------------- */
 
 // Temporary hardcoding of channel id just to make testing/development easier
 // TODO: Remove this hardcoding
