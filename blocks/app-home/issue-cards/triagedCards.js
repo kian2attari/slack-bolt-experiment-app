@@ -1,4 +1,4 @@
-module.exports = card_array => {
+exports.triaged_cards = card_array => {
   const issues_block = card_array.flatMap(card => {
     const card_data = card.content;
     const card_id = card_data.id;
@@ -60,7 +60,7 @@ module.exports = card_array => {
         },
 
         'accessory': {
-          'action_id': 'label_list',
+          'action_id': 'assign_label',
           'type': 'multi_external_select',
           'placeholder': {
             'type': 'plain_text',

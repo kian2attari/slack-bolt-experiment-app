@@ -58,7 +58,7 @@ async function show_all_untriaged_cards(context_data_obj) {
   console.log(': ----------------------------------');
   const untriaged_issues = github_untriaged_cards_response.nodes[0].pendingCards.nodes;
 
-  const untriaged_blocks = AppHome.CardsAppHome(untriaged_issues);
+  const untriaged_blocks = AppHome.AppHomeIssueCards.untriaged_cards(untriaged_issues);
 
   const home_view = AppHome.BaseAppHome(user_app_home_state_obj, untriaged_blocks);
 

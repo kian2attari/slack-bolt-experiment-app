@@ -9,10 +9,6 @@ module.exports = (
   // This can be a specific GitHub repo, or it can be a special selector like "all untriaged", and possibly "internal issues" and "external issues"
   const repo_selection = user_app_home_state_obj.currently_selected_repo;
   // If the user is trying to view a specific repo, then we should fetch the needed data
-  // TODO add update untriaged function to the TraigeTeamData class
-  // if (repo_selection.repo_path !== 'All Untriaged') {
-  //   TriageTeamData.get_full_repo_data(repo_selection);
-  // }
 
   console.log(': ------------------------------');
   console.log('BaseAppHome user_app_home_state_obj', user_app_home_state_obj);

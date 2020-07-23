@@ -84,7 +84,9 @@ function column_selection(app, triage_team_data_obj, user_app_home_state_obj) {
 
       console.log('cards_in_selected_column', cards_in_selected_column);
 
-      const card_blocks = AppHome.CardsAppHome(cards_in_selected_column);
+      const card_blocks = AppHome.AppHomeIssueCards.triaged_cards(
+        cards_in_selected_column
+      );
       console.log(': ------------------------');
       console.log('card_blocks');
       console.log(': ------------------------');

@@ -2,7 +2,7 @@ const {SafeAccess} = require('../../helper-functions');
 const {mutation, graphql} = require('../../graphql');
 
 module.exports = (app, triage_team_data_obj, user_app_home_state_obj) => {
-  app.action('label_list', async ({ack, body}) => {
+  app.action('assign_label', async ({ack, body}) => {
     await ack();
     console.log(': ----------------');
     console.log('body', body);
