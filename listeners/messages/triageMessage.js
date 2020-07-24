@@ -32,6 +32,7 @@ module.exports = app => {
       user,
       ts,
       event_ts,
+      urgency: nature_of_message.urgency,
     }))(message);
 
     const update_obj = {
