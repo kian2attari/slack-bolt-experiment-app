@@ -9,7 +9,7 @@ const {
   views_listener,
   shortcuts_listener,
 } = require('./listeners');
-const {db_client} = require('./db');
+const {test_connect} = require('./db');
 const {UserAppHomeState, TriageTeamData} = require('./models');
 
 // Create a Bolt Receiver
@@ -28,8 +28,10 @@ const app = new App({
 /* -------------------------------------------------------------------------- */
 /*                             SECTION Data layer                             */
 /* -------------------------------------------------------------------------- */
-
 /* ---------------------------------------------- ANCHOR connect to DB ---------------------------------------------- */
+// Test DB connection
+test_connect();
+
 // TODO get this from DB
 const default_selected_repo = {
   repo_path: 'All Untriaged',
@@ -47,7 +49,7 @@ console.log(': ----------------------------------------');
 /* Data object for persistent triage team data such as team members (and their github usernames), 
 the repos the team is subscribed to, and the triage team's channel */
 
-// TODO store this in DB as team_channel_id -> triage_team_data_obj
+// TODO store this in DB as team_discussion_channel_id -> triage_team_data_obj
 const triage_team_data_obj = new TriageTeamData();
 console.log(': ------------------------------------------');
 console.log('triage_team_data_obj', triage_team_data_obj);

@@ -1,4 +1,5 @@
 const {Messages} = require('../../blocks');
+const {add_one_to_DB} = require('../../db');
 
 module.exports = (app, triage_team_data_obj) => {
   app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
@@ -13,7 +14,11 @@ module.exports = (app, triage_team_data_obj) => {
 
     console.log('selected_users_array', selected_users_array);
 
-    const {selected_channel} = view.state.values.channel_select_input.triage_channel;
+    const selected_discussion_channel =
+      view.state.values.channel_select_input.triage_channel.selected_channel;
+
+    // TODO ALSO GET seperate internal triage channel id. Updatge modal to include this
+    const selected_internal_triage_channel = selected_discussion_channel;
 
     // Message to send user
     const msg =
@@ -26,11 +31,22 @@ module.exports = (app, triage_team_data_obj) => {
       triage_team_data_obj.set_team_member(user_id)
     );
 
-    // Set the team channel
-    // TODO maybe we should update the DB at this point
-    const team_channel_id = triage_team_data_obj.assign_team_channel(selected_channel);
+    // Set the team channels
+    const assigned_channel_ids = triage_team_data_obj.assign_team_channel(
+      selected_discussion_channel,
+      selected_internal_triage_channel
+    );
 
-    if (team_channel_id !== selected_channel) {
+    console.log('assigned channel id', assigned_channel_ids);
+
+    // Create the object for the team
+    add_one_to_DB(selected_internal_triage_channel);
+
+    if (
+      assigned_channel_ids.team_discussion_channel_id !== selected_discussion_channel ||
+      assigned_channel_ids.team_internal_triage_channel_id !==
+        selected_internal_triage_channel
+    ) {
       console.log('Team channel assignment failed');
       return;
     }

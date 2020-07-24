@@ -20,7 +20,7 @@ module.exports = (app, triage_team_data, app_home_state) => {
 
     const user_app_home_state_obj = app_home_state;
 
-    if (triage_team_data_obj.team_channel_id.length === 0) {
+    if (triage_team_data_obj.team_discussion_channel_id.length === 0) {
       console.log(
         'You must create a triage team and assign them a channel before you can begin subscribing to repos!'
       );

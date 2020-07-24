@@ -3,8 +3,9 @@ const {query, graphql} = require('../graphql');
 
 class TriageTeamData {
   constructor() {
-    this.team_channel_id = '';
-    // This should be a mapping from team_channel_id ->
+    this.team_discussion_channel_id = '';
+    this.team_internal_triage_channel_id = '';
+    // This should be a mapping from team_discussion_channel_id ->
     this.team_data = {
       subscribed_repo_map: new Map(),
       team_members: new Map(),
@@ -35,7 +36,7 @@ class TriageTeamData {
   // TODO change this so that only a repo_path needs to be passed in and it will use new_repo_obj function
   subscribe_to_repo({repo_path}) {
     // TODO enforce this. Currently it just console logs to make testing and development less annoying
-    if (this.team_channel_id.length === 0) {
+    if (this.team_discussion_channel_id.length === 0) {
       console.log(
         `Cannot subscribe to ${repo_path}. User must first create a triage team.`
       );
@@ -79,9 +80,13 @@ class TriageTeamData {
     );
   }
 
-  assign_team_channel(channel_id) {
-    this.team_channel_id = channel_id;
-    return this.team_channel_id;
+  assign_team_channel(discussion_channel_id, team_internal_triage_channel_id) {
+    this.team_discussion_channel_id = discussion_channel_id;
+    this.team_internal_triage_channel_id = team_internal_triage_channel_id;
+    return {
+      team_discussion_channel_id: this.team_discussion_channel_id,
+      team_internal_triage_channel_id: this.team_internal_triage_channel_id,
+    };
   }
 
   get_cards_by_column(repo_path, project_name, column_name) {

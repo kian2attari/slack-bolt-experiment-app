@@ -20,17 +20,17 @@ function app_home_opened(
       console.log('triage_team_data_obj: ', triage_team_data_obj);
 
       // TODO change the issue section of the App Home to display a CTA to make a team
-      if (triage_team_data_obj.team_channel_id.length === 0) {
+      if (triage_team_data_obj.team_discussion_channel_id.length === 0) {
         console.log('There is currently no triage team');
         console.log('app_home_opened user_app_home_state_obj', user_app_home_state_obj);
         const home_view = AppHome.BaseAppHome(user_app_home_state_obj);
         await client.views.publish({
           /* retrieves your xoxb token from context */
           token: context.botToken,
-  
+
           /* the user that opened your app's app home */
           user_id: event.user,
-  
+
           /* the view payload that appears in the app home */
           view: home_view,
         });

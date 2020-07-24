@@ -51,7 +51,7 @@ function issue_opened_reopened(triage_team_data_obj, app, req, res) {
   console.log(': ----------------------------------');
 
   const mention_event_data = {
-    channel_id: triage_team_data_obj.team_channel_id,
+    channel_id: triage_team_data_obj.team_discussion_channel_id,
     title: issue_title,
     text_body: issue_body,
     content_url: issue_url,

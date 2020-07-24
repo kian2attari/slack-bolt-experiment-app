@@ -15,7 +15,7 @@ function issue_comment_created(triage_team_data_obj, app, req, res) {
 
   if (req.body.issue.state === 'closed') {
     const mention_event_data = {
-      channel_id: triage_team_data_obj.team_channel_id,
+      channel_id: triage_team_data_obj.team_discussion_channel_id,
       title: `Comment on closed issue: ${issue_title}`,
       body: comment_body,
       url: issue_url,
@@ -30,7 +30,7 @@ function issue_comment_created(triage_team_data_obj, app, req, res) {
   }
 
   const mention_event_data = {
-    channel_id: triage_team_data_obj.team_channel_id,
+    channel_id: triage_team_data_obj.team_discussion_channel_id,
     title: `New comment on issue: ${issue_title}`,
     text_body: comment_body,
     content_url: issue_url,
