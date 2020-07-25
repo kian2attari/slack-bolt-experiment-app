@@ -71,13 +71,15 @@ messages_listener.triage_channel(app);
 /* -------------------------- ANCHOR App Home View events -------------------------- */
 // Loads the app home when the app home is opened!
 // ANCHOR App home opened
-events_listener.app_home.app_home_opened(
+events_listener.app_home_opened(
   app,
   triage_team_data_obj,
   user_app_home_state_obj,
   default_selected_repo
 );
 
+// ANCHOR reaction added
+events_listener.reaction_added(app);
 // !SECTION
 
 /* ------------- SECTION Listening for actions ------------ */

@@ -19,6 +19,12 @@
       "options": {
         "printWidth": 200
       }
+    },
+    {
+      "files": "*.js",
+      "options": {
+        "parser": "jsdoc-parser"
+      }
     }
   ]
 }

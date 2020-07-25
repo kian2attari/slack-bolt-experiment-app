@@ -72,4 +72,4 @@ function app_home_opened(
   });
 }
 
-module.exports = {app_home_opened};
+exports.app_home_opened = app_home_opened;

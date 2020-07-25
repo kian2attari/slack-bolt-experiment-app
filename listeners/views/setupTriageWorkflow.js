@@ -1,5 +1,5 @@
 const {Messages} = require('../../blocks');
-const {add_one_to_DB} = require('../../db');
+const {add_new_triage_team_to_db} = require('../../db');
 
 module.exports = (app, triage_team_data_obj) => {
   app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
@@ -40,7 +40,7 @@ module.exports = (app, triage_team_data_obj) => {
     console.log('assigned channel id', assigned_channel_ids);
 
     // Create the object for the team
-    add_one_to_DB(selected_internal_triage_channel);
+    add_new_triage_team_to_db(selected_internal_triage_channel);
 
     if (
       assigned_channel_ids.team_discussion_channel_id !== selected_discussion_channel ||

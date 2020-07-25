@@ -3,4 +3,13 @@ const triage_circles_regexp = /:red-c:|:red-circle:|:red_circle:|:bluecir:|:blue
 
 const individual_circles_regexp = /red|blue|white/;
 
-module.exports = {triage_circles_regexp, individual_circles_regexp};
+const find_all_dots = /\./g;
+
+const find_all_underscores = /_/g;
+
+exports.reg_exp = {
+  triage_circles_regexp,
+  individual_circles_regexp,
+  find_all_dots,
+  find_all_underscores,
+};

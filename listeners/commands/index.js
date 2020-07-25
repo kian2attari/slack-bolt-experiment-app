@@ -1,1 +1,1 @@
-module.exports = {};
+exports.commands_listener = {};
