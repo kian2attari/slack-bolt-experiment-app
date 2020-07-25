@@ -21,7 +21,7 @@ const dbName = process.env.MONGODB_NAME;
  *   };
  * }} new_issue_obj
  */
-function add_new_internal_issue(new_issue_message_obj) {
+function add_new_internal_issue(new_issue_message_obj, message_user_callback) {
   // Use connect method to connect to the Server
   client.connect(err => {
     assert.equal(null, err);
@@ -62,12 +62,7 @@ function add_new_internal_issue(new_issue_message_obj) {
       assert.equal(null, error);
       const was_added = response.result.n === 1;
       console.log('Was the issue added successfully? :', was_added);
-      // REVIEW how can i return was_added to use is updateIssueTriage
-      if (!was_added) {
-        throw Error(
-          'Failed to store message in DB! Did you assign the triage team to the right channel?'
-        );
-      }
+      message_user_callback(was_added);
     });
   });
 }
