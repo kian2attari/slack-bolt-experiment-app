@@ -22,22 +22,21 @@ function reaction_added(app) {
       const db_issue_update_vars = {
         internal_triage_channel_id: channel,
         internal_triage_item: {
+          issue_message_ts,
           issue_triage_data: {
-            issue_message_ts,
             acting_team_member_user_id: user,
             reaction_last_update_ts: event_ts,
-            seen: false,
-            done: false,
+            status: 'untriaged',
           },
         },
       };
 
       switch (reaction) {
         case 'eyes':
-          db_issue_update_vars.seen = true;
+          db_issue_update_vars.internal_triage_item.issue_triage_data.status = 'seen';
           break;
         case 'white_check_mark':
-          db_issue_update_vars.done = true;
+          db_issue_update_vars.internal_triage_item.issue_triage_data.status = 'done';
           break;
         // no default
       }

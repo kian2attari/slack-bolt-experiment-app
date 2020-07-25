@@ -14,12 +14,11 @@ const dbName = process.env.MONGODB_NAME;
  * @param {{
  *   internal_triage_channel_id: String;
  *   internal_triage_item: {
+ *     issue_message_ts: String;
  *     issue_triage_data: {
- *       issue_message_ts: String;
  *       assigned_team_member_user_id: String;
  *       reaction_last_update_ts: String;
- *       seen: Boolean;
- *       done: Boolean;
+ *       status: String;
  *     };
  *   };
  * }} update_obj
@@ -42,7 +41,7 @@ function update_issue_triage_status(update_obj) {
 
     console.log('internal_triage_item', internal_triage_item);
     // the dots in the ts will confuse mongo, they need to be replaced with dashes.
-    const fixed_format_ts = internal_triage_item.issue_triage_data.issue_message_ts.replace(
+    const fixed_format_ts = internal_triage_item.issue_message_ts.replace(
       reg_exp.find_all_dots,
       '_'
     );
@@ -51,9 +50,9 @@ function update_issue_triage_status(update_obj) {
     // Question whats the best way to set multiple views here?
     const update_issue_obj = {};
 
-    const update_issue_obj_property = `internal_triage_items.${fixed_format_ts}`;
+    const update_issue_obj_property = `internal_triage_items.${fixed_format_ts}.issue_triage_data`;
 
-    update_issue_obj[update_issue_obj_property] = internal_triage_item;
+    update_issue_obj[update_issue_obj_property] = internal_triage_item.issue_triage_data;
 
     console.log('update issue obj', update_issue_obj);
 
