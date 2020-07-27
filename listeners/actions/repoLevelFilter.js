@@ -1,4 +1,5 @@
 const {AppHome} = require('../../blocks');
+const {TriageTeamData} = require('../../models');
 
 function project_selection(app, user_app_home_state_obj) {
   app.action('project_selection', async ({ack, body, context, client}) => {
@@ -76,7 +77,9 @@ function column_selection(app, triage_team_data_obj, user_app_home_state_obj) {
       //       .currently_selected_project.project_name
       //   ).columns;
 
-      const cards_in_selected_column = await get_cards_by_column(column_id);
+      const cards_in_selected_column = await TriageTeamData.get_cards_by_column(
+        column_id
+      );
 
       console.log('cards_in_selected_column', cards_in_selected_column);
 

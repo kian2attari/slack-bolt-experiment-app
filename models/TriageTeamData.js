@@ -221,7 +221,7 @@ class TriageTeamData {
         column_id,
       }
     );
-    return column_data_response.cards.nodes;
+    return column_data_response.node.cards.nodes;
   }
 }
 
