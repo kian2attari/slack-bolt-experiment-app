@@ -76,11 +76,7 @@ function column_selection(app, triage_team_data_obj, user_app_home_state_obj) {
       //       .currently_selected_project.project_name
       //   ).columns;
 
-      const cards_in_selected_column = triage_team_data_obj.get_cards_by_column(
-        user_app_home_state_obj.get_selected_repo_path(),
-        selected_project.project_name,
-        column_name
-      );
+      const cards_in_selected_column = await get_cards_by_column(column_id);
 
       console.log('cards_in_selected_column', cards_in_selected_column);
 

@@ -38,7 +38,7 @@ async function show_all_untriaged_cards(context_data_obj) {
     return;
   }
 
-  if (repo_project_id === null) {
+  if (!repo_project_id) {
     console.log('No subscribed repos or some other issue occurred with the repo');
     // TODO open a modal showing this error
     return;

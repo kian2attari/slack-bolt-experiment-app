@@ -89,18 +89,23 @@ class TriageTeamData {
     };
   }
 
-  get_cards_by_column(repo_path, project_name, column_name) {
-    return this.get_team_repo_subscriptions(repo_path)
-      .repo_project_map.get(project_name)
-      .columns.get(column_name).cards.nodes;
-  }
-
   /**
-   *
    * Creates a repo object
-   * @param {string} subscribe_repo_path
-   * @returns {{repo_owner: string, repo_name: string, repo_path: string, untriaged_settings: { label_id: string, label_name: string, team_untriaged_org_project: {project_name:string, project_id:string }}, repo_label_map: Map<string,object>, repo_project_map: Map<string,object>}} A repo object
+   *
    * @memberof TriageTeamData
+   * @param {string} subscribe_repo_path
+   * @returns {{
+   *   repo_owner: string;
+   *   repo_name: string;
+   *   repo_path: string;
+   *   untriaged_settings: {
+   *     label_id: string;
+   *     label_name: string;
+   *     team_untriaged_org_project: {project_name: string; project_id: string};
+   *   };
+   *   repo_label_map: Map<string, object>;
+   *   repo_project_map: Map<string, object>;
+   * }} A repo object
    */
   // Creates a new repo object
   static async new_repo_obj(subscribe_repo_path) {
@@ -147,16 +152,16 @@ class TriageTeamData {
   /**
    * Gets all the repo data with all the projects and columns and cards
    *
-   * @static
-   * @param {{owner, name}} repo_details
-   * @returns
    * @memberof TriageTeamData
+   * @param {{owner; name}} repo_details
+   * @static
+   * @returns {any}
    */
   static async get_full_repo_data(repo_obj) {
     console.log('repo obj', repo_obj);
     const {repo_owner, repo_name} = repo_obj;
 
-    const repo_data_response = await graphql.call_gh_graphql(query.getFullRepoData, {
+    const repo_data_response = await graphql.call_gh_graphql(query.getNewRepoBasicData, {
       repo_owner,
       repo_name,
     });
@@ -199,6 +204,24 @@ class TriageTeamData {
     console.log('processed_object', processed_object);
 
     return processed_object;
+  }
+
+  /**
+   * Fetches the cards of a column given its Node ID
+   *
+   * @memberof TriageTeamData
+   * @param {String} column_id
+   * @static
+   * @returns {[Cards]}
+   */
+  static async get_cards_by_column(column_id) {
+    const column_data_response = await graphql.call_gh_graphql(
+      query.getCardsByProjColumn,
+      {
+        column_id,
+      }
+    );
+    return column_data_response.cards.nodes;
   }
 }
 

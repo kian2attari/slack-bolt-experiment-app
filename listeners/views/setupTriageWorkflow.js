@@ -20,12 +20,6 @@ module.exports = (app, triage_team_data_obj) => {
     // TODO ALSO GET seperate internal triage channel id. Updatge modal to include this
     const selected_internal_triage_channel = selected_discussion_channel;
 
-    // Message to send user
-    const msg =
-      selected_users_array.length !== 0
-        ? 'Team members assigned successfully'
-        : 'There was an error with your submission';
-
     // Assign the members to the team
     selected_users_array.forEach(user_id =>
       triage_team_data_obj.set_team_member(user_id)
@@ -40,7 +34,6 @@ module.exports = (app, triage_team_data_obj) => {
     console.log('assigned channel id', assigned_channel_ids);
 
     // Create the object for the team
-    add_new_triage_team_to_db(selected_internal_triage_channel);
 
     if (
       assigned_channel_ids.team_discussion_channel_id !== selected_discussion_channel ||
@@ -53,29 +46,48 @@ module.exports = (app, triage_team_data_obj) => {
 
     console.log('triage_team_data_obj', triage_team_data_obj);
 
-    // Message the user
-    try {
-      await app.client.chat.postMessage({
-        token: context.botToken,
-        channel: user,
-        text: msg,
-      });
+    add_new_triage_team_to_db(
+      selected_internal_triage_channel,
+      async (error, response) => {
+        if (error !== null || response.result.n !== 1) {
+          // TODO if the error is tha the team aleady exists, explain this to the user
+          const error_msg =
+            "There was an error creating the team and adding it to the DB. Make sure it doesn't already exist";
 
-      const team_member_ids = triage_team_data_obj.team_data.team_members.keys();
+          console.error(error_msg);
 
-      // Message the team members that were added to ask for their github usernames
-      for (const slack_user_id of team_member_ids) {
-        app.client.chat.postMessage({
+          await app.client.chat.postMessage({
+            token: context.botToken,
+            channel: user,
+            text: error_msg,
+          });
+          return;
+        }
+
+        await app.client.chat.postMessage({
           token: context.botToken,
-          channel: slack_user_id,
-          text:
-            `Hey <@${slack_user_id}>! ` +
-            "You've been added to the triage team. Tell me your GitHub username.",
-          blocks: Messages.UsernameMapMessage(slack_user_id),
+          channel: user,
+          text: 'Team added successfully.',
         });
+
+        try {
+          const team_member_ids = triage_team_data_obj.team_data.team_members.keys();
+
+          // Message the team members that were added to ask for their github usernames
+          for (const slack_user_id of team_member_ids) {
+            app.client.chat.postMessage({
+              token: context.botToken,
+              channel: slack_user_id,
+              text:
+                `Hey <@${slack_user_id}>! ` +
+                "You've been added to the triage team. Tell me your GitHub username.",
+              blocks: Messages.UsernameMapMessage(slack_user_id),
+            });
+          }
+        } catch (err) {
+          console.error(err);
+        }
       }
-    } catch (error) {
-      console.error(error);
-    }
+    );
   });
 };
