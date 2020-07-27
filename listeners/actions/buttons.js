@@ -1,11 +1,7 @@
 const {Modals} = require('../../blocks');
 const {show_all_untriaged_cards} = require('../commonFunctions');
 
-/**
- *
- *
- * @param {App} app
- */
+/** @param {App} app */
 function open_map_modal_button(app, team_members_map) {
   app.action('open_map_modal_button', async ({ack, body, context, client}) => {
     // Here we acknowledge receipt
@@ -85,6 +81,14 @@ function show_untriaged_filter_button(
       context,
       client,
     });
+  });
+}
+
+function show_up_for_grabs_filter_button(app, triage_team_data_obj) {
+  app.action('show_up_for_grabs_filter_button', async ({ack, body, context, client}) => {
+    await ack();
+
+    // TODO get all the cards in the TODO column of the org-level project
   });
 }
 

@@ -5,7 +5,7 @@ class TriageTeamData {
   constructor() {
     this.team_discussion_channel_id = '';
     this.team_internal_triage_channel_id = '';
-    // This should be a mapping from team_discussion_channel_id ->
+
     this.team_data = {
       subscribed_repo_map: new Map(),
       team_members: new Map(),
@@ -14,6 +14,7 @@ class TriageTeamData {
     this.team_untriaged_org_project = {
       project_name: '',
       project_id: '',
+      project_columns: new Map(),
     };
   }
 
@@ -57,14 +58,39 @@ class TriageTeamData {
   get_default_untriaged_project() {
     const untriaged_project_obj = this.team_untriaged_org_project;
     // If a default project hasn't been set, return an empty object
+    // TODO remove this conditionality since a default untriaged project should always be assigned if a team exists
     return untriaged_project_obj.project_name.length !== 0 ||
       untriaged_project_obj.project_id.length !== 0
       ? untriaged_project_obj
       : {};
   }
 
-  set_default_untriaged_project(project_obj) {
-    return Object.assign(this.team_untriaged_org_project, project_obj);
+  async set_default_untriaged_project(project_obj) {
+    const org_proj_data_response = await graphql.call_gh_graphql(
+      query.getOrgProjectBasicData,
+      {org_proj_id: project_obj.project_id}
+    );
+
+    const project_columns = org_proj_data_response.node.columns.nodes;
+
+    const project_columns_map = new Map(
+      project_columns.nodes.map(column => [column.name, column])
+    );
+
+    const project_obj_with_columns = {...project_obj, ...project_columns_map};
+
+    console.log(
+      ': -----------------------------------------------------------------------------------'
+    );
+    console.log(
+      'set_default_untriaged_project -> project_obj_with_columns',
+      project_obj_with_columns
+    );
+    console.log(
+      ': -----------------------------------------------------------------------------------'
+    );
+
+    return Object.assign(this.team_untriaged_org_project, project_obj_with_columns);
   }
 
   get_untriaged_label(repo_path) {
@@ -130,13 +156,8 @@ class TriageTeamData {
       },
       // Projects are mapped from project_name -> {project_id, project_columns_map:}
       repo_project_map: new Map(),
-      // // TODO turn this get_cards_by_column method into a class method
-      // get_cards_by_column(project_name, column_name) {
-      //   return this.repo_project_map.get(project_name).columns.get(column_name).cards
-      //     .nodes;
-      // },
     };
-    const repo_obj_data = await this.get_full_repo_data(repo_obj);
+    const repo_obj_data = await this.get_basic_new_repo_data(repo_obj);
     console.log(': --------------------------------------------');
     console.log('new_repo_obj -> repo_obj_data', repo_obj_data);
     console.log(': --------------------------------------------');
@@ -157,7 +178,7 @@ class TriageTeamData {
    * @static
    * @returns {any}
    */
-  static async get_full_repo_data(repo_obj) {
+  static async get_basic_new_repo_data(repo_obj) {
     console.log('repo obj', repo_obj);
     const {repo_owner, repo_name} = repo_obj;
 

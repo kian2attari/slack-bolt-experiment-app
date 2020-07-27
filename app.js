@@ -46,10 +46,13 @@ console.log(': ----------------------------------------');
 console.log('user_app_home_state_obj', user_app_home_state_obj);
 console.log(': ----------------------------------------');
 
+// TODO get user's triage team channel ID
+
 /* Data object for persistent triage team data such as team members (and their github usernames), 
 the repos the team is subscribed to, and the triage team's channel */
 
 // TODO store this in DB as team_discussion_channel_id -> triage_team_data_obj
+// TODO remove this piece of state
 const triage_team_data_obj = new TriageTeamData();
 console.log(': ------------------------------------------');
 console.log('triage_team_data_obj', triage_team_data_obj);
