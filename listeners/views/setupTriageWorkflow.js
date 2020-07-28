@@ -1,31 +1,31 @@
 const {Messages} = require('../../blocks');
 const {TriageTeamData} = require('../../models');
 
-module.exports = (app, triage_team_data_obj) => {
+module.exports = app => {
   app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
     // Acknowledge the view_submission event
     await ack();
 
-    console.log(view.state.values);
+    const {values} = view.state;
 
-    const selected_users_array =
-      view.state.values.users_select_input.triage_users.selected_users;
     const user = body.user.id;
 
-    console.log('selected_users_array', selected_users_array);
+    const selected_users_array = values.users_select_input.triage_users.selected_users;
 
     const selected_discussion_channel =
-      view.state.values.discussion_channel_select_input.discussion_channel
-        .selected_channel;
+      values.discussion_channel_select_input.discussion_channel.selected_channel;
 
-    // TODO ALSO GET seperate internal triage channel id. Updatge modal to include this
     const selected_internal_triage_channel =
-      view.state.values.triage_channel_select_input.triage_channel.selected_channel;
+      values.triage_channel_select_input.triage_channel.selected_channel;
 
-    const create_new_team_result = await TriageTeamData.create_new_team(
+    const selected_github_org =
+      values.github_org_input_block.github_org_select_input.selected_option;
+
+    const create_new_team_result = await TriageTeamData.associate_team_with_installation(
       selected_users_array,
       selected_discussion_channel,
-      selected_internal_triage_channel
+      selected_internal_triage_channel,
+      selected_github_org
     );
 
     if (create_new_team_result.result.n !== 1) {

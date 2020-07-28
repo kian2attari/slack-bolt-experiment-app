@@ -17,6 +17,16 @@ exports.github_event = (router, triage_team_data_obj, app) => {
   // github_event.on('installation.deleted', (req, res) => {
   // });
 
+  // TODO Add new repo to that particular installation's document in the DB
+  // github_event.on('installation_repositories.added', (req, res) => {
+  //   new_gitwave_installation(req, res);
+  // });
+
+  // TODO Remove repo from that particular installation's document in the DB
+  // github_event.on('installation_repositories.removed', (req, res) => {
+  //   new_gitwave_installation(req, res);
+  // });
+
   github_event.on('issues.opened', (req, res) =>
     issue_actions.issue_opened_reopened(triage_team_data_obj, app, req, res)
   );

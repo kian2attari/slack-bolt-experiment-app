@@ -1,6 +1,6 @@
 const {Modals} = require('../../blocks');
 
-function github_org_select_input(app) {
+function setup_defaults_repo_selection(app) {
   app.action('setup_defaults_repo_selection', async ({ack, body, context, client}) => {
     await ack();
     try {
@@ -36,4 +36,4 @@ function github_org_select_input(app) {
   });
 }
 
-module.exports = {github_org_select_input};
+exports.setup_defaults_repo_selection = setup_defaults_repo_selection;

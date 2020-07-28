@@ -1,6 +1,7 @@
 const parseGH = require('parse-github-url');
 const {query, graphql} = require('../graphql');
 const {add_new_team_members, add_new_triage_team_to_db} = require('../db');
+const {update_document} = require('../db/updateDocument');
 
 class TriageTeamData {
   constructor() {
@@ -234,16 +235,26 @@ class TriageTeamData {
     return column_data_response.node.cards.nodes;
   }
 
-  static async create_new_team(
+  static async associate_team_with_installation(
     slack_user_ids,
     team_channel_id,
-    team_internal_triage_channel_id
+    team_internal_triage_channel_id,
+    selected_github_org
   ) {
-    return add_new_triage_team_to_db(
-      slack_user_ids,
+    const team_member_obj = slack_user_ids.reduce((accumulator, currentValue) => {
+      accumulator[currentValue] = null;
+      return accumulator;
+    }, {});
+
+    const filter = {'org_account.node_id': selected_github_org.value};
+
+    const new_obj = {
       team_channel_id,
-      team_internal_triage_channel_id
-    );
+      team_internal_triage_channel_id,
+      internal_triage_items: {},
+      team_members: team_member_obj,
+    };
+    return update_document(filter, new_obj);
   }
 }
 

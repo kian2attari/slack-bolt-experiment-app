@@ -95,7 +95,7 @@ module.exports = {
         'min_query_length': 0,
         'placeholder': {
           'type': 'plain_text',
-          'text': 'Select project',
+          'text': 'Select an Organization',
           'emoji': true,
         },
         'action_id': 'github_org_select_input',

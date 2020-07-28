@@ -101,7 +101,7 @@ actions_listener.buttons.show_untriaged_filter_button(
   user_app_home_state_obj
 );
 
-actions_listener.setup_defaults.github_org_select_input(app);
+actions_listener.setup_defaults.setup_defaults_repo_selection(app);
 
 // app.action('setup_default_triage_label_list', async ({ack}) => ack());
 
@@ -151,6 +151,7 @@ options_listener.project_col_selection.project_column_options(
   triage_team_data_obj
 );
 
+// Change the defaults for one particular repo
 options_listener.untriaged_defaults_selection.setup_defaults_repo_selection(
   app,
   triage_team_data_obj
