@@ -57,10 +57,10 @@ module.exports = (selected_repo = {repo_path: undefined}) => {
 };
 /**
  * Returns the blocks for picking the default label, project and column for new issues.
- * Should only be included in the view if the user has already picked a repository.
+ * Should only be included in the view if the user has already picked a repository. //*
  *
- //* @param {{repo_path: string, selected_project_name: string}} repo_obj
- * @returns An array of block kit elements
+ * @param {{repo_path: string; selected_project_name: string}} repo_obj
+ * @returns {any} An array of block kit elements
  */
 function set_label_project_column_blocks() {
   return [

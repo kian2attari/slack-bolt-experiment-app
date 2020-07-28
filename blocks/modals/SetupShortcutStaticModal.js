@@ -48,7 +48,25 @@ module.exports = {
     },
     {
       'type': 'input',
-      'block_id': 'channel_select_input',
+      'block_id': 'discussion_channel_select_input',
+      'element': {
+        'type': 'channels_select',
+        'action_id': 'discussion_channel',
+        'placeholder': {
+          'type': 'plain_text',
+          'text': 'Browse existing channels',
+          'emoji': true,
+        },
+      },
+      'label': {
+        'type': 'plain_text',
+        'text': 'Select a channel for the triage team to use',
+        'emoji': true,
+      },
+    },
+    {
+      'type': 'input',
+      'block_id': 'triage_channel_select_input',
       'element': {
         'type': 'channels_select',
         'action_id': 'triage_channel',
@@ -60,7 +78,7 @@ module.exports = {
       },
       'label': {
         'type': 'plain_text',
-        'text': 'Select a channel for the triage team to use',
+        'text': 'Select a channel for internal issue (ex. triage-sdk)',
         'emoji': true,
       },
     },

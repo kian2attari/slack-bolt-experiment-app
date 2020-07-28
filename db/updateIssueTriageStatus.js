@@ -56,14 +56,14 @@ function update_issue_triage_status(update_obj) {
 
     console.log('update issue obj', update_issue_obj);
 
-    const push_new_value = {
+    const add_new_issue_operation = {
       $set: update_issue_obj,
     };
 
     // Update a single document
     db_obj
       .collection('gitwave_team_data')
-      .updateOne(team_query, push_new_value, (error, response) => {
+      .updateOne(team_query, add_new_issue_operation, (error, response) => {
         assert.equal(null, error);
         console.log('success response', response);
       });

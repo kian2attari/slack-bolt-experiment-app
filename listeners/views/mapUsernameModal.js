@@ -68,7 +68,7 @@ module.exports = (app, triage_team_data_obj) => {
     // TODO just check if its not equal to zero and say that a la above
     if (Object.keys(slack_id_to_gh_username_match).length === 0) {
       // We map the github username to that Slack username
-      triage_team_data_obj.set_team_member(slack_user_id, github_username);
+      triage_team_data_obj.set_user_github_username(slack_user_id, github_username);
 
       console.log(': ------------------------------------------------------------');
       console.log('2 slack_id_to_gh_username_match', slack_id_to_gh_username_match);

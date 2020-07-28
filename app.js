@@ -20,6 +20,8 @@ const expressReceiver = new ExpressReceiver({
 // Initializes your app with your bot token, signing secret, and receiver
 // TODO remove debug setting when ready to prod
 const app = new App({
+  // Currently, this app runs on a single workspace
+  // TODO: start using the built-in OAuth support to go multi-workspace (or multi-org)
   token: process.env.SLACK_BOT_TOKEN,
   receiver: expressReceiver,
   logLevel: LogLevel.DEBUG,
@@ -29,8 +31,6 @@ const app = new App({
 /*                             SECTION Data layer                             */
 /* -------------------------------------------------------------------------- */
 /* ---------------------------------------------- ANCHOR connect to DB ---------------------------------------------- */
-// Test DB connection
-test_connect();
 
 // TODO get this from DB
 const default_selected_repo = {
@@ -213,6 +213,14 @@ github_event(expressReceiver.router, triage_team_data_obj, app);
 /* -------------------------------------------------------------------------- */
 
 (async () => {
+  // Test DB connection
+  try {
+    await test_connect();
+  } catch (error) {
+    console.error('Test connection to database failed.', error);
+    throw error;
+  }
+
   // Start your app
   await app.start(process.env.PORT || 3000);
 

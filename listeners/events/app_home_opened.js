@@ -1,13 +1,13 @@
 const {AppHome} = require('../../blocks');
 const {show_all_untriaged_cards} = require('../commonFunctions');
+const {find_triage_team_by_slack_user} = require('../../db');
 /**
  * Listens for the app_home_opened event
  *
- * @param {App} app - An instance of the Bolt App
+ * @param {App} app An instance of the Bolt App
  * @param {Object} triage_team_data_obj
  * @param {Object} user_app_home_state_obj
- *
- * @returns void
+ * @returns {any} Void
  */
 function app_home_opened(
   app,
@@ -16,9 +16,16 @@ function app_home_opened(
   default_selected_repo = {}
 ) {
   app.event('app_home_opened', async ({event, context, client}) => {
-    try {
-      console.log('triage_team_data_obj: ', triage_team_data_obj);
+    // Find the team (if there is one) that the current use is a member in.
+    // TODO: call function exported from db to find the right triage team
+    // EXTRA CREDIT: turn this section of code into a middleware that adds context.triageTeam, then you don't need to
+    // write this code more than once.
+    const team_data = await find_triage_team_by_slack_user(event.user);
+    console.log(': --------------------');
+    console.log('app_home_opened -> team_data', team_data);
+    console.log(': --------------------');
 
+    try {
       // TODO change the issue section of the App Home to display a CTA to make a team
       if (triage_team_data_obj.team_discussion_channel_id.length === 0) {
         console.log('There is currently no triage team');

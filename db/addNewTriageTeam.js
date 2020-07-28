@@ -1,31 +1,40 @@
 const {MongoClient} = require('mongodb');
-const assert = require('assert');
 
 // Connection URL
 const url = process.env.MONGODB_URI;
 
-// Create a new MongoClient
-const client = new MongoClient(url, {useUnifiedTopology: true});
-
 // Database Name
 const dbName = process.env.MONGODB_NAME;
 
-function add_new_triage_team_to_db(internal_triage_channel_id, message_user_callback) {
+async function add_new_triage_team_to_db(
+  user_id_array,
+  team_discussion_channel_id,
+  internal_triage_channel_id
+) {
+  // Create a new MongoClient
+  const client = new MongoClient(url, {useUnifiedTopology: true});
   // Use connect method to connect to the Server
 
-  client.connect(err => {
-    assert.equal(null, err);
-    console.log('Connected correctly to server');
+  await client.connect();
+  console.log('Connected successfully to DB server');
 
-    const db_obj = client.db(dbName);
+  const collection = await client.db(dbName).collection('gitwave_team_data');
 
-    console.log('db_obj', db_obj);
+  // TODO turn this into a helper function since add team member does the same thing
+  const team_member_obj = user_id_array.reduce((accumulator, currentValue) => {
+    accumulator[currentValue] = null;
+    return accumulator;
+  }, {});
 
-    const new_obj = {internal_triage_channel_id, internal_triage_items: {}};
+  const new_obj = {
+    internal_triage_channel_id,
+    team_discussion_channel_id,
+    internal_triage_items: {},
+    team_members: team_member_obj,
+  };
 
-    // Insert a single document
-    db_obj.collection('gitwave_team_data').insertOne(new_obj, message_user_callback);
-  });
+  // Insert a single document
+  return collection.insertOne(new_obj);
 }
 
 exports.add_new_triage_team_to_db = add_new_triage_team_to_db;

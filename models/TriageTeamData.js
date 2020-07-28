@@ -1,5 +1,6 @@
 const parseGH = require('parse-github-url');
 const {query, graphql} = require('../graphql');
+const {add_new_team_members, add_new_triage_team_to_db} = require('../db');
 
 class TriageTeamData {
   constructor() {
@@ -16,13 +17,6 @@ class TriageTeamData {
       project_id: '',
       project_columns: new Map(),
     };
-  }
-
-  set_team_member(slack_user_id, github_username = 'no github username set') {
-    this.team_data.team_members.set(slack_user_id, github_username);
-    console.log(
-      `Slack user ${slack_user_id} added to team with github username ${github_username}`
-    );
   }
 
   get_team_member_by_github_username(potential_github_username) {
@@ -104,15 +98,6 @@ class TriageTeamData {
         .untriaged_label,
       label_obj
     );
-  }
-
-  assign_team_channel(discussion_channel_id, team_internal_triage_channel_id) {
-    this.team_discussion_channel_id = discussion_channel_id;
-    this.team_internal_triage_channel_id = team_internal_triage_channel_id;
-    return {
-      team_discussion_channel_id: this.team_discussion_channel_id,
-      team_internal_triage_channel_id: this.team_internal_triage_channel_id,
-    };
   }
 
   /**
@@ -227,6 +212,10 @@ class TriageTeamData {
     return processed_object;
   }
 
+  static async add_team_members(slack_user_ids, triage_team_channel) {
+    return add_new_team_members(slack_user_ids, triage_team_channel);
+  }
+
   /**
    * Fetches the cards of a column given its Node ID
    *
@@ -243,6 +232,18 @@ class TriageTeamData {
       }
     );
     return column_data_response.node.cards.nodes;
+  }
+
+  static async create_new_team(
+    slack_user_ids,
+    team_channel_id,
+    team_internal_triage_channel_id
+  ) {
+    return add_new_triage_team_to_db(
+      slack_user_ids,
+      team_channel_id,
+      team_internal_triage_channel_id
+    );
   }
 }
 
