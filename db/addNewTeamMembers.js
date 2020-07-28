@@ -1,4 +1,5 @@
 const {MongoClient} = require('mongodb');
+const {reduce_array_to_obj} = require('../helper-functions');
 
 // Connection URL
 const url = process.env.MONGODB_URI;
@@ -16,10 +17,7 @@ async function add_new_team_members(slack_user_ids, team_channel_id) {
   console.log('Connected successfully to DB server');
   const collection = client.db(dbName).collection('gitwave_team_data');
 
-  const new_team_members_obj = slack_user_ids.reduce((accumulator, currentValue) => {
-    accumulator[currentValue] = null;
-    return accumulator;
-  }, {});
+  const new_team_members_obj = reduce_array_to_obj(slack_user_ids);
 
   const add_new_issue_operation = {
     $set: new_team_members_obj,

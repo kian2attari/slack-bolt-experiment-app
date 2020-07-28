@@ -60,7 +60,7 @@ module.exports = {
       },
       'label': {
         'type': 'plain_text',
-        'text': 'Select a channel for the triage team to use',
+        'text': 'Select a channel for the triage team',
         'emoji': true,
       },
     },
@@ -78,8 +78,27 @@ module.exports = {
       },
       'label': {
         'type': 'plain_text',
-        'text': 'Select a channel for internal issue (ex. triage-sdk)',
+        'text': 'Select a channel for internal issues (ex. triage-sdk)',
         'emoji': true,
+      },
+    },
+    {
+      'type': 'input',
+      'block_id': 'org_level_project_input',
+      'label': {
+        'type': 'plain_text',
+        'text': 'Select an org-level project',
+        'emoji': true,
+      },
+      'element': {
+        'type': 'external_select',
+        'min_query_length': 0,
+        'placeholder': {
+          'type': 'plain_text',
+          'text': 'Select project',
+          'emoji': true,
+        },
+        'action_id': 'setup_default_project_selection',
       },
     },
   ],

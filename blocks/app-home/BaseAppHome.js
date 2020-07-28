@@ -8,11 +8,7 @@ module.exports = (
 ) => {
   // This can be a specific GitHub repo, or it can be a special selector like "all untriaged", and possibly "internal issues" and "external issues"
   const repo_selection = user_app_home_state_obj.currently_selected_repo;
-  // If the user is trying to view a specific repo, then we should fetch the needed data
 
-  console.log(': ------------------------------');
-  console.log('BaseAppHome user_app_home_state_obj', user_app_home_state_obj);
-  console.log(': ------------------------------');
   // TODO turn this into a function so it can be used for the column names too
   const filter_buttons_block = {
     'type': 'actions',
@@ -68,26 +64,6 @@ module.exports = (
     'block_id': 'repo_proj_selection_block',
     'elements': [],
   };
-
-  // this can never happen under the current design
-  // if (repo_selection.repo_path === '' || repo_selection.repo_id === '') {
-  //   selection_block.elements = [
-  //     external_select_element('main_level_filter_selection', 'Select a repository'),
-  //   ];
-  //   console.log(': --------------------------------------------------');
-  //   console.log('EMPTY SELECTION selection_block.elements', selection_block.elements);
-  //   console.log(': --------------------------------------------------');
-
-  //   return {
-  //     'type': 'home',
-  //     'blocks': [
-  //       selection_block,
-  //       {
-  //         'type': 'divider',
-  //       },
-  //     ],
-  //   };
-  // }
 
   selection_block.elements = [
     external_select_element(
@@ -152,13 +128,6 @@ module.exports = (
     );
   }
 
-  // else {
-  //   // If not even a repo is selected, then just show the repo select menu with no initial option!
-  // selection_block.elements = [
-  //   external_select_element('main_level_filter_selection', 'Select a repository'),
-  // ];
-  // }
-
   console.log('post repo check type of selection block', typeof selection_block);
   console.log('post repo check selection_block', selection_block);
 
@@ -184,12 +153,16 @@ module.exports = (
 // TODO These are declared as functions so that they can be abstracted into their own modules if they happen to be used across different files
 
 /**
- *
- *
  * @param {string} action_id
  * @param {string} place_holder_text
- * @param {object} [initial_option={}]
- * @returns {{'action_id': string, 'type': string, 'min_query_length': number, 'placeholder': object, 'initial_option': object}} Select_block_object
+ * @param {object} [initial_option] Default is `{}`
+ * @returns {{
+ *   'action_id': string;
+ *   'type': string;
+ *   'min_query_length': number;
+ *   'placeholder': object;
+ *   'initial_option': object;
+ * }} Select_block_object
  */
 function external_select_element(action_id, place_holder_text, initial_option = {}) {
   return {

@@ -6,7 +6,6 @@ const getFirstColumnInProject = require('./getFirstColumnInProject');
 const getProjectList = require('./getProjectList');
 const getNumOfCardsPerColumn = require('./getNumOfCardsPerColumn');
 const getRepoLabelsList = require('./getRepoLabelsList');
-const getFullRepoData = require('./getFullRepoData');
 const getAllUntriaged = require('./getAllUntriaged');
 const getOrgAndUserLevelProjects = require('./getOrgAndUserLevelProjects');
 
@@ -18,7 +17,6 @@ module.exports = {
   getOrgProjectBasicData,
   getNumOfCardsPerColumn,
   getRepoLabelsList,
-  getFullRepoData,
   getAllUntriaged,
   getOrgAndUserLevelProjects,
   getNewRepoBasicData,

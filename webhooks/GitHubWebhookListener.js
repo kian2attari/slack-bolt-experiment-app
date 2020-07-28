@@ -9,7 +9,6 @@ class GitHubWebhookListener extends EventEmitter {
         return;
       }
       this.emit(req.headers['x-github-event'] + '.' + req.body.action, req, res); // eslint-disable-line prefer-template
-      this.emit(req.headers['x-github-event'], req, res);
     });
   }
 }

@@ -48,9 +48,7 @@ function setup_default_project_selection(app, triage_team_data_obj) {
   // Same as the project_selection modal, just has to have a seperate action ID
   app.options('setup_default_project_selection', async ({options, ack}) => {
     try {
-      // TODO try using options directly
-      console.log('options', options);
-
+      // TODO get a list of the orgs that the app has access to via DB
       const selected_repo_metadata_obj = JSON.parse(options.view.private_metadata);
 
       const selected_repo_path = selected_repo_metadata_obj.repo_path;
