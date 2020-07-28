@@ -176,8 +176,6 @@ options_listener.untriaged_defaults_selection.setup_default_triage_label_list(
 
 shortcuts_listener.setup_triage_workflow(app);
 
-shortcuts_listener.modify_repo_subscriptions(app, triage_team_data_obj);
-
 shortcuts_listener.modify_github_username(app);
 
 // !SECTION Listening for shortcuts
@@ -187,12 +185,6 @@ shortcuts_listener.modify_github_username(app);
 /* -------------------------------------------------------------------------- */
 
 views_listener.setup_triage_team_view(app, triage_team_data_obj);
-
-views_listener.modify_repo_subscriptions_view(
-  app,
-  triage_team_data_obj,
-  user_app_home_state_obj
-);
 
 views_listener.map_username_modal_view(app, triage_team_data_obj);
 
