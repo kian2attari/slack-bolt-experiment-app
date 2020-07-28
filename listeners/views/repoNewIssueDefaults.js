@@ -14,8 +14,7 @@ module.exports = (app, triage_team_data_obj) => {
         .selected_option;
 
     const default_untriaged_issues_project =
-      view_values.untriaged_project_block_input.setup_default_project_selection
-        .selected_option;
+      view_values.github_org_input_block.github_org_select_input.selected_option;
 
     // set default project name
     triage_team_data_obj.set_default_untriaged_project({

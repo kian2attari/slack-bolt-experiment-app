@@ -84,10 +84,10 @@ module.exports = {
     },
     {
       'type': 'input',
-      'block_id': 'org_level_project_input',
+      'block_id': 'github_org_input_block',
       'label': {
         'type': 'plain_text',
-        'text': 'Select an org-level project',
+        'text': 'Assign the GitHub org for this team',
         'emoji': true,
       },
       'element': {
@@ -98,7 +98,7 @@ module.exports = {
           'text': 'Select project',
           'emoji': true,
         },
-        'action_id': 'setup_default_project_selection',
+        'action_id': 'github_org_select_input',
       },
     },
   ],

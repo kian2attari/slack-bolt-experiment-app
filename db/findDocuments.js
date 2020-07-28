@@ -7,7 +7,7 @@ const url = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_NAME;
 
 // TODO: convert to an async function
-async function find_triage_team_by_slack_user(slack_user_id) {
+async function find_documents(filter, projection) {
   // Create a new MongoClient
   const client = new MongoClient(url, {useUnifiedTopology: true});
 
@@ -16,11 +16,11 @@ async function find_triage_team_by_slack_user(slack_user_id) {
   console.log('Connected successfully to DB server');
   const collection = client.db(dbName).collection('gitwave_team_data');
 
-  const user_team_array = await collection.find({team_members: slack_user_id}).toArray();
+  const user_team_array = await collection.find(filter, {projection}).toArray();
 
   await client.close();
 
   return user_team_array;
 }
 
-exports.find_triage_team_by_slack_user = find_triage_team_by_slack_user;
+exports.find_documents = find_documents;

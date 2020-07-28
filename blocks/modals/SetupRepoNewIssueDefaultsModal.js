@@ -88,10 +88,10 @@ function set_label_project_column_blocks() {
     },
     {
       'type': 'input',
-      'block_id': 'untriaged_project_block_input',
+      'block_id': 'github_org_input_block',
       'label': {
         'type': 'plain_text',
-        'text': 'Project that new issues should be assigned to',
+        'text': 'Assign the GitHub org for this team',
         'emoji': true,
       },
       'element': {
@@ -102,7 +102,7 @@ function set_label_project_column_blocks() {
           'text': 'Select project',
           'emoji': true,
         },
-        'action_id': 'setup_default_project_selection',
+        'action_id': 'github_org_select_input',
       },
     },
   ];
