@@ -5,6 +5,7 @@ const {find_triage_team_by_slack_user} = require('./findTriageTeamBySlackUser');
 const {add_new_team_members} = require('./addNewTeamMembers');
 const {add_new_document} = require('./addNewDocument');
 const {find_documents} = require('./findDocuments');
+const {find_valid_triage_channel} = require('./findValidTriageChannel');
 const {update_document} = require('./updateDocument');
 
 exports.Connection = Connection;
@@ -15,3 +16,4 @@ exports.add_new_team_members = add_new_team_members;
 exports.add_new_document = add_new_document;
 exports.find_documents = find_documents;
 exports.update_document = update_document;
+exports.find_valid_triage_channel = find_valid_triage_channel;
