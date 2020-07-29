@@ -1,7 +1,7 @@
 const {reg_exp} = require('../../constants');
 const {add_new_internal_issue, find_valid_triage_channel} = require('../../db');
 
-// Middleware to make sure that the message was posted in
+// Middleware to make sure that the message was posted in a triage channel
 async function validTriageChannelListener({message, next}) {
   const valid_triage_channel = await find_valid_triage_channel(message.channel);
 
