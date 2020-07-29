@@ -1,13 +1,13 @@
 const SubBlocks = require('../SubBlocks');
 
 module.exports = (
-  user_app_home_state_obj,
+  repo_obj,
   issue_blocks = undefined,
   // TODO remove more info blocks
   more_info_blocks = undefined
 ) => {
   // This can be a specific GitHub repo, or it can be a special selector like "all untriaged", and possibly "internal issues" and "external issues"
-  const repo_selection = user_app_home_state_obj.currently_selected_repo;
+  const repo_selection = repo_obj.currently_selected_repo;
 
   // TODO turn this into a function so it can be used for the column names too
   const filter_buttons_block = {

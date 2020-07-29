@@ -9,7 +9,7 @@ const {
   views_listener,
   shortcuts_listener,
 } = require('./listeners');
-const {test_connect} = require('./db');
+const {Connection} = require('./db');
 const {UserAppHomeState, TriageTeamData} = require('./models');
 
 // Create a Bolt Receiver
@@ -94,6 +94,8 @@ actions_listener.buttons.open_map_modal_button(
 
 // Opens the modal for setting default repos
 actions_listener.buttons.open_set_repo_defaults_modal_button(app);
+
+actions_listener.buttons.show_up_for_grabs_filter_button(app);
 
 actions_listener.buttons.show_untriaged_filter_button(
   app,
@@ -206,7 +208,7 @@ github_event(expressReceiver.router, triage_team_data_obj, app);
 (async () => {
   // Test DB connection
   try {
-    await test_connect();
+    await Connection.connectToMongoCollection();
   } catch (error) {
     console.error('Test connection to database failed.', error);
     throw error;

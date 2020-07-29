@@ -27,7 +27,7 @@ async function show_all_untriaged_cards(context_data_obj) {
   });
 
   const installation_id = db_query[0].gitwave_github_app_installation_id;
-  const repo_project_id = db_query.org_level_project_board.project_id;
+  const repo_project_id = db_query[0].org_level_project_board.project_id;
 
   const trigger_id = SafeAccess(() => context_data_obj.body.trigger_id);
 

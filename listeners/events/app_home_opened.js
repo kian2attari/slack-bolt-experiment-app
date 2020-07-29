@@ -20,6 +20,8 @@ function app_home_opened(
     // TODO: call function exported from db to find the right triage team
     // EXTRA CREDIT: turn this section of code into a middleware that adds context.triageTeam, then you don't need to
     // write this code more than once.
+    console.log('event.user', event.user);
+
     const team_data = await find_triage_team_by_slack_user(event.user);
     console.log(': --------------------');
     console.log('app_home_opened -> team_data', team_data);
@@ -43,7 +45,7 @@ function app_home_opened(
         return;
       }
       // Make sure the team is subscribed to at least one repo
-      if (Object.keys(team_data.subscribed_repos).size === 0) {
+      if (Object.keys(team_data[0].subscribed_repos).size === 0) {
         // TODO change the issue section of the App Home to display a CTA to subscribe to a repo
         console.log('The team is not currently subscribed to any repos');
         console.log('app_home_opened user_app_home_state_obj', user_app_home_state_obj);

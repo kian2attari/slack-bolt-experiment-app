@@ -18,6 +18,7 @@ query getCardsByProjColumn($column_id: ID!) {
               title
               labels(first: 12) {
                 nodes {
+                  name
                   id
                 }
               }

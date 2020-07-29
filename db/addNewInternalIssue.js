@@ -1,14 +1,6 @@
-const {MongoClient} = require('mongodb');
+const {Connection} = require('./dbConnection');
 const {reg_exp} = require('../constants');
 
-// Connection URL
-const url = process.env.MONGODB_URI;
-
-// Create a new MongoClient
-const client = new MongoClient(url, {useUnifiedTopology: true});
-
-// Database Name
-const dbName = process.env.MONGODB_NAME;
 /**
  * @param {{
  *   team_internal_triage_channel_id: String;
@@ -24,10 +16,9 @@ const dbName = process.env.MONGODB_NAME;
 async function add_new_internal_issue(new_issue_message_obj) {
   // Use connect method to connect to the Server
   try {
-    await client.connect();
-    const db_obj = client.db(dbName).collection('gitwave_team_data');
+    const collection = await Connection.connectToMongoCollection();
 
-    console.log('db_obj', db_obj);
+    console.log('collection', collection);
 
     const team_query = {
       team_internal_triage_channel_id:
@@ -56,7 +47,7 @@ async function add_new_internal_issue(new_issue_message_obj) {
     const push_new_value = {
       $set: new_issue_obj,
     };
-    return db_obj.updateOne(team_query, push_new_value);
+    return collection.updateOne(team_query, push_new_value);
     // Update a single document
   } catch (error) {
     console.error(error);

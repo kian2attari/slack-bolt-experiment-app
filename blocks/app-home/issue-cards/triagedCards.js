@@ -1,15 +1,17 @@
 exports.triaged_cards = card_array => {
   const issues_block = card_array.flatMap(card => {
     const card_data = card.content;
-    const card_id = card_data.id;
+    // const card_id = card_data.id;
     const card_labels = card_data.labels.nodes;
     const label_initial_options = card_labels.map(label => {
+      console.log('label', label);
       return {
         'text': {
           'type': 'plain_text',
           'text': label.name,
         },
-        'value': card_id,
+        // REVIEW TODO Why was the value originally card_id?
+        'value': label.id,
       };
     });
 
