@@ -230,4 +230,5 @@ module.exports = {
   show_untriaged_filter_button,
   link_button,
   show_up_for_grabs_filter_button,
+  show_assigned_to_user_filter_button,
 };
