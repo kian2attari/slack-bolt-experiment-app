@@ -1,5 +1,5 @@
 const SubBlocks = require('../SubBlocks');
-
+// TODO remove the default value for selected_button. It's only temporarily needed for the transition to statelessness
 module.exports = (
   repo_obj,
   issue_blocks = undefined,
