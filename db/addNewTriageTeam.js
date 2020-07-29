@@ -9,7 +9,7 @@ const dbName = process.env.MONGODB_NAME;
 async function add_new_triage_team_to_db(
   user_id_array,
   team_discussion_channel_id,
-  internal_triage_channel_id
+  team_internal_triage_channel_id
 ) {
   // Create a new MongoClient
   const client = new MongoClient(url, {useUnifiedTopology: true});
@@ -27,7 +27,7 @@ async function add_new_triage_team_to_db(
   }, {});
 
   const new_obj = {
-    internal_triage_channel_id,
+    team_internal_triage_channel_id,
     team_discussion_channel_id,
     internal_triage_items: {},
     team_members: team_member_obj,

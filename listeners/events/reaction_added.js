@@ -1,5 +1,6 @@
 const {triage_reactjis} = require('../../constants');
-const {update_issue_triage_status} = require('../../db');
+const {update_document} = require('../../db');
+const {reg_exp} = require('../../constants');
 
 // Listener middleware that filters out reactions that we dont care about
 async function triage_reactions_middleware({event, next}) {
@@ -11,6 +12,7 @@ async function triage_reactions_middleware({event, next}) {
 
 function reaction_added(app) {
   app.event('reaction_added', triage_reactions_middleware, async ({event}) => {
+    console.log('reaction added event', event);
     try {
       const {
         user,
@@ -19,32 +21,42 @@ function reaction_added(app) {
         item: {channel, ts: issue_message_ts},
       } = event;
 
-      const db_issue_update_vars = {
-        internal_triage_channel_id: channel,
-        internal_triage_item: {
-          issue_message_ts,
-          issue_triage_data: {
-            acting_team_member_user_id: user,
-            reaction_last_update_ts: event_ts,
-            status: 'untriaged',
-          },
-        },
+      const issue_triage_data = {
+        acting_team_member_user_id: user,
+        reaction_last_update_ts: event_ts,
+        status: 'untriaged',
       };
 
       switch (reaction) {
         case 'eyes':
-          db_issue_update_vars.internal_triage_item.issue_triage_data.status = 'seen';
+          issue_triage_data.status = 'seen';
           break;
         case 'white_check_mark':
-          db_issue_update_vars.internal_triage_item.issue_triage_data.status = 'done';
+          issue_triage_data.status = 'done';
           break;
         // no default
       }
 
-      console.log('db_issue_update_vars', db_issue_update_vars);
+      console.log('issue_triage_data', issue_triage_data);
+
+      const team_query_filter = {
+        team_internal_triage_channel_id: channel,
+      };
+
+      const fixed_format_ts = issue_message_ts.replace(reg_exp.find_all_dots, '_');
+
+      const update_issue_obj = {};
+
+      const update_issue_obj_property = `internal_triage_items.${fixed_format_ts}.issue_triage_data`;
+
+      update_issue_obj[update_issue_obj_property] = issue_triage_data;
+
+      console.log('update issue obj', update_issue_obj);
 
       // TODO update DB
-      update_issue_triage_status(db_issue_update_vars);
+      const response = await update_document(team_query_filter, update_issue_obj);
+
+      console.log('success response', response);
     } catch (error) {
       console.error(error);
     }

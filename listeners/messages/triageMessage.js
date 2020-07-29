@@ -37,7 +37,7 @@ module.exports = app => {
     }))(message);
 
     const new_issue_obj = {
-      internal_triage_channel_id: message.channel,
+      team_internal_triage_channel_id: message.channel,
       internal_triage_item: key_message_data,
     };
 

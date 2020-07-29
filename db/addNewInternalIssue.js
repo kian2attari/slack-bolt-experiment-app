@@ -1,5 +1,4 @@
 const {MongoClient} = require('mongodb');
-const assert = require('assert');
 const {reg_exp} = require('../constants');
 
 // Connection URL
@@ -12,7 +11,7 @@ const client = new MongoClient(url, {useUnifiedTopology: true});
 const dbName = process.env.MONGODB_NAME;
 /**
  * @param {{
- *   internal_triage_channel_id: String;
+ *   team_internal_triage_channel_id: String;
  *   internal_triage_item: {
  *     text: String;
  *     user: String;
@@ -21,6 +20,7 @@ const dbName = process.env.MONGODB_NAME;
  *   };
  * }} new_issue_obj
  */
+// eslint-disable-next-line consistent-return
 async function add_new_internal_issue(new_issue_message_obj) {
   // Use connect method to connect to the Server
   try {
@@ -30,7 +30,8 @@ async function add_new_internal_issue(new_issue_message_obj) {
     console.log('db_obj', db_obj);
 
     const team_query = {
-      team_internal_triage_channel_id: new_issue_message_obj.internal_triage_channel_id,
+      team_internal_triage_channel_id:
+        new_issue_message_obj.team_internal_triage_channel_id,
     };
 
     // TODO if this query returns nothing, then send a message to the user with an error! The team hasn't set a traige channel
