@@ -18,7 +18,7 @@ async function add_new_document(new_document_obj) {
 
   const insert_result = await collection.insertOne(new_document_obj);
 
-  await client.close();
+  // await client.close();
 
   return insert_result;
 }

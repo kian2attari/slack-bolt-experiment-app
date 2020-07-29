@@ -1,7 +1,6 @@
 const parseGH = require('parse-github-url');
 const {query, graphql} = require('../graphql');
-const {add_new_team_members, add_new_triage_team_to_db} = require('../db');
-const {update_document} = require('../db/updateDocument');
+const {add_new_team_members, update_document} = require('../db');
 
 class TriageTeamData {
   constructor() {

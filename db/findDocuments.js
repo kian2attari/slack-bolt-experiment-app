@@ -18,7 +18,7 @@ async function find_documents(filter, projection) {
 
   const user_team_array = await collection.find(filter, {projection}).toArray();
 
-  await client.close();
+  // await client.close();
 
   return user_team_array;
 }

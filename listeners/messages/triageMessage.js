@@ -43,11 +43,14 @@ module.exports = app => {
 
     console.log('new issue obj triage Message', new_issue_obj);
 
-    add_new_internal_issue(new_issue_obj, async db_success => {
-      const reply_message = db_success
-        ? `Hey there <@${message.user}>, thanks for your submitting your ${nature_of_message.text}! I've notified the team and they should respond shortly.`
-        : `Hey <@${message.user}>, I encountered an error while sending your ${nature_of_message.text} to our triage team's dashboard. Please '@' them directly for help with this.`;
-      await say(reply_message);
-    });
+    const response = await add_new_internal_issue(new_issue_obj);
+
+    const was_added = response.result.n === 1;
+    console.log('Was the issue added successfully? :', was_added);
+
+    const reply_message = was_added
+      ? `Hey there <@${message.user}>, thanks for your submitting your ${nature_of_message.text}! I've notified the team and they should respond shortly.`
+      : `Hey <@${message.user}>, I encountered an error while sending your ${nature_of_message.text} to our triage team's dashboard. Please '@' them directly for help with this.`;
+    await say(reply_message);
   });
 };

@@ -11,7 +11,8 @@ async function test_connect() {
   // Use connect method to connect to the Server
   await client.connect();
   console.log('Connected successfully to DB server');
-  await client.close();
+
+  // await client.close();
 }
 
 exports.test_connect = test_connect;

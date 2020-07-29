@@ -84,7 +84,7 @@ function show_untriaged_filter_button(
   });
 }
 
-function show_up_for_grabs_filter_button(app, triage_team_data_obj) {
+function show_up_for_grabs_filter_button(app) {
   app.action('show_up_for_grabs_filter_button', async ({ack, body, context, client}) => {
     await ack();
 

@@ -18,7 +18,7 @@ async function find_triage_team_by_slack_user(slack_user_id) {
 
   const user_team_array = await collection.find({team_members: slack_user_id}).toArray();
 
-  await client.close();
+  // await client.close();
 
   return user_team_array;
 }

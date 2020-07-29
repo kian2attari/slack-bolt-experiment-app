@@ -36,7 +36,7 @@ async function add_new_team_members(slack_user_ids, team_channel_id) {
     ': --------------------------------------------------------------------------'
   );
 
-  await client.close();
+  // await client.close();
 
   return insert_result;
 }
