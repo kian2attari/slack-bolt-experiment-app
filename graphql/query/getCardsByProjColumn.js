@@ -29,6 +29,7 @@ query getCardsByProjColumn($column_id: ID!) {
                   login
                 }
               }
+              closed
             }
           }
         }
