@@ -39,7 +39,7 @@ async function open_map_modal_button(app) {
     }
   });
 }
-
+// OLD and should be removed
 function open_set_repo_defaults_modal_button(app) {
   app.action(
     'open_set_repo_defaults_modal_button',
@@ -121,7 +121,8 @@ function show_up_for_grabs_filter_button(app) {
             repo_id: 'all_untriaged',
           },
         },
-        card_blocks
+        card_blocks,
+        'show_up_for_grabs_filter_button'
       );
 
       await client.views.publish({
@@ -198,7 +199,8 @@ function show_assigned_to_user_filter_button(app) {
               repo_id: 'all_untriaged',
             },
           },
-          card_blocks
+          card_blocks,
+          'show_assigned_to_user_filter_button'
         );
 
         console.log(': ----------');

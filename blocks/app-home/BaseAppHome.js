@@ -3,13 +3,12 @@ const SubBlocks = require('../SubBlocks');
 module.exports = (
   repo_obj,
   issue_blocks = undefined,
-  // TODO remove more info blocks
-  more_info_blocks = undefined
+  selected_button = 'show_untriaged_filter_button'
 ) => {
   // This can be a specific GitHub repo, or it can be a special selector like "all untriaged", and possibly "internal issues" and "external issues"
   const repo_selection = repo_obj.currently_selected_repo;
 
-  // TODO turn this into a function so it can be used for the column names too
+  // TODO the primary style should be applied to whatever button was specified in selected_button_parameter
   const filter_buttons_block = {
     'type': 'actions',
     'elements': [
@@ -20,7 +19,6 @@ module.exports = (
           'text': 'Untriaged',
           'emoji': true,
         },
-        'style': 'primary',
         'action_id': 'show_untriaged_filter_button',
         'value': 'untriaged',
       },
@@ -57,6 +55,12 @@ module.exports = (
     ],
   };
 
+  const selected_button_index = filter_buttons_block.elements.findIndex(
+    button => button.action_id === selected_button
+  );
+
+  filter_buttons_block.elements[selected_button_index].style = 'primary';
+
   // The block that contains the select_menu elements for filtering on the App Home page
   // If a repo hasn't been selected, it should select the no_subscribed_repos_option by default
   const selection_block = {
@@ -72,9 +76,6 @@ module.exports = (
       SubBlocks.option_obj(repo_selection.repo_path, repo_selection.repo_id)
     ),
   ];
-
-  console.log('pre repo check type of selection block', typeof selection_block);
-  console.log('pre repo check selection_block', selection_block);
 
   // A special selection was made!
   if (repo_selection.repo_path === 'All Untriaged') {
@@ -92,7 +93,7 @@ module.exports = (
         ...(typeof issue_blocks !== 'undefined' ? issue_blocks : []),
 
         // If the more info block has been provided, render it here
-        ...(typeof more_info_blocks !== 'undefined' ? more_info_blocks : []),
+        // ...(typeof more_info_blocks !== 'undefined' ? more_info_blocks : []),
       ],
     };
   }
@@ -145,13 +146,12 @@ module.exports = (
       ...(typeof issue_blocks !== 'undefined' ? issue_blocks : []),
 
       // If the more info block has been provided, render it here
-      ...(typeof more_info_blocks !== 'undefined' ? more_info_blocks : []),
+      // ...(typeof more_info_blocks !== 'undefined' ? more_info_blocks : []),
     ],
   };
 };
 
-// TODO These are declared as functions so that they can be abstracted into their own modules if they happen to be used across different files
-
+// TODO the initial option should be gotten from the previous state of the view
 /**
  * @param {string} action_id
  * @param {string} place_holder_text
