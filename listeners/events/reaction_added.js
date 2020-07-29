@@ -53,7 +53,6 @@ function reaction_added(app) {
 
       console.log('update issue obj', update_issue_obj);
 
-      // TODO update DB
       const response = await update_document(team_query_filter, update_issue_obj);
 
       console.log('success response', response);

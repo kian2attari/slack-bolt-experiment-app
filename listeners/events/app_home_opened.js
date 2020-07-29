@@ -20,7 +20,6 @@ function app_home_opened(
     // TODO: call function exported from db to find the right triage team
     // EXTRA CREDIT: turn this section of code into a middleware that adds context.triageTeam, then you don't need to
     // write this code more than once.
-    console.log('event.user', event.user);
 
     const team_data = await find_triage_team_by_slack_user(event.user);
     console.log(': --------------------');

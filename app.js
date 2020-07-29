@@ -18,7 +18,6 @@ const expressReceiver = new ExpressReceiver({
 });
 
 // Initializes your app with your bot token, signing secret, and receiver
-// TODO remove debug setting when ready to prod
 const app = new App({
   // Currently, this app runs on a single workspace
   // TODO: start using the built-in OAuth support to go multi-workspace (or multi-org)
@@ -46,12 +45,9 @@ console.log(': ----------------------------------------');
 console.log('user_app_home_state_obj', user_app_home_state_obj);
 console.log(': ----------------------------------------');
 
-// TODO get user's triage team channel ID
-
 /* Data object for persistent triage team data such as team members (and their github usernames), 
 the repos the team is subscribed to, and the triage team's channel */
 
-// TODO store this in DB as team_discussion_channel_id -> triage_team_data_obj
 // TODO remove this piece of state
 const triage_team_data_obj = new TriageTeamData();
 console.log(': ------------------------------------------');
@@ -62,9 +58,6 @@ console.log(': ------------------------------------------');
 // TODO Organize these listeners into their own modules by function
 
 /* ----------------------- SECTION Listening for messages ---------------------- */
-// TODO pull traige-sdk channel id
-/* TODO could use a middleware ex valid_triage_channel. It would take the channel_id and check 
-with the DB to see if its a valid channel_id that is in use and get the context data */
 messages_listener.triage_channel(app);
 
 // !SECTION
@@ -87,10 +80,7 @@ events_listener.reaction_added(app);
 
 /* ------------- SECTION Listening for actions ------------ */
 // Opens the username map modal
-actions_listener.buttons.open_map_modal_button(
-  app,
-  triage_team_data_obj.team_data.team_members
-);
+actions_listener.buttons.open_map_modal_button(app);
 
 // Opens the modal for setting default repos
 actions_listener.buttons.open_set_repo_defaults_modal_button(app);

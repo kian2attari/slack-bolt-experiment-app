@@ -7,10 +7,6 @@ const {find_documents} = require('../db');
 async function show_all_untriaged_cards(context_data_obj) {
   const {user_app_home_state_obj, context, client} = context_data_obj;
 
-  console.log(': ----------------------------------------------------------------------');
-  console.log('function show_all_untriaged_cards -> context_data_obj', context_data_obj);
-  console.log(': ----------------------------------------------------------------------');
-
   // Grab the user id depending on whether the thing that called the function as an event or an action
   const user_id =
     SafeAccess(() => context_data_obj.event.user) ||

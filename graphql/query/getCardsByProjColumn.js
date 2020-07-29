@@ -1,3 +1,4 @@
+// TODO get PR cards as well
 module.exports = `
 query getCardsByProjColumn($column_id: ID!) {
   node(id: $column_id) {
@@ -20,6 +21,12 @@ query getCardsByProjColumn($column_id: ID!) {
                 nodes {
                   name
                   id
+                }
+              }
+              assignees(first: 10) {
+                nodes {
+                  id
+                  login
                 }
               }
             }

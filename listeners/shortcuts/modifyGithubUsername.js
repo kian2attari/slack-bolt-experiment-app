@@ -7,7 +7,7 @@ module.exports = app => {
       await ack();
 
       const user_id = shortcut.user.id;
-
+      // TODO open the modal directly rather than send the usernamemap message
       // Call the views.open method using one of the built-in WebClients
       client.chat.postMessage({
         token: context.botToken,

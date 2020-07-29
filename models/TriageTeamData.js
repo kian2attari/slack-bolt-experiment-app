@@ -1,6 +1,10 @@
 const parseGH = require('parse-github-url');
 const {query, graphql} = require('../graphql');
-const {add_new_team_members, update_document} = require('../db');
+const {
+  add_new_team_members,
+  update_document,
+  find_triage_team_by_slack_user,
+} = require('../db');
 
 class TriageTeamData {
   constructor() {
@@ -269,6 +273,51 @@ class TriageTeamData {
     };
 
     return update_document(filter, new_obj);
+  }
+
+  static async set_user_github_username(slack_user_id, github_username) {
+    // RegExp for checking the username
+    const github_username_checker = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
+
+    const valid_github_username = github_username_checker.test(github_username);
+
+    console.log(': --------------------------------------------');
+    console.log('valid_github_username', valid_github_username);
+    console.log(': --------------------------------------------');
+
+    if (!valid_github_username) {
+      console.error('Invalid GH username');
+      throw Error('invalid_github_username');
+    }
+
+    const username_update_obj = {};
+
+    username_update_obj[`team_members.${slack_user_id}`] = github_username;
+
+    const db_user_filter = {};
+
+    db_user_filter[`team_members.${slack_user_id}`] = {$exists: true};
+
+    return update_document(db_user_filter, username_update_obj);
+  }
+
+  static async get_user_github_username(slack_user_id) {
+    // First we check to see if the user has already mapped a github username
+    const triage_team_members_response = await find_triage_team_by_slack_user(
+      slack_user_id,
+      {team_members: 1}
+    );
+
+    const slack_id_to_gh_username_match =
+      triage_team_members_response[0].team_members[slack_user_id];
+
+    console.log(': ------------------------------------------------------------');
+    console.log(
+      '1 slack_id_to_gh_username_match.team_members',
+      slack_id_to_gh_username_match
+    );
+    console.log(': ------------------------------------------------------------');
+    return slack_id_to_gh_username_match;
   }
 }
 

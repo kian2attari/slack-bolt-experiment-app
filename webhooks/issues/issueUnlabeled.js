@@ -1,3 +1,5 @@
+// TODO get rid of triage_team_data_obj
+// TODO make this async
 function issue_unlabeled(triage_team_data_obj, app, req, res) {
   console.log(`${req.headers['x-github-event']}.${req.body.action} arrived!`);
   const request = req.body;

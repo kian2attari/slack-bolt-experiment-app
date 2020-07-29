@@ -1,6 +1,6 @@
 const {mutation, graphql} = require('../../graphql');
 const {find_documents} = require('../../db');
-// TODO make this async
+// TODO get rid of triage_team_data_obj
 async function issue_labeled(triage_team_data_obj, app, req, res) {
   console.log(`${req.headers['x-github-event']}.${req.body.action} arrived!`);
   const request = req.body;
