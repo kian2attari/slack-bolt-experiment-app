@@ -60,34 +60,6 @@ class TriageTeamData {
       : {};
   }
 
-  async set_default_untriaged_project(project_obj) {
-    const org_proj_data_response = await graphql.call_gh_graphql(
-      query.getOrgProjectBasicData,
-      {org_proj_id: project_obj.project_id}
-    );
-
-    const project_columns = org_proj_data_response.node.columns.nodes;
-
-    const project_columns_map = new Map(
-      project_columns.nodes.map(column => [column.name, column])
-    );
-
-    const project_obj_with_columns = {...project_obj, ...project_columns_map};
-
-    console.log(
-      ': -----------------------------------------------------------------------------------'
-    );
-    console.log(
-      'set_default_untriaged_project -> project_obj_with_columns',
-      project_obj_with_columns
-    );
-    console.log(
-      ': -----------------------------------------------------------------------------------'
-    );
-
-    return Object.assign(this.team_untriaged_org_project, project_obj_with_columns);
-  }
-
   get_untriaged_label(repo_path) {
     return this.team_data.subscribed_repo_map.get(repo_path).untriaged_settings
       .untriaged_label;
@@ -120,6 +92,7 @@ class TriageTeamData {
    * }} A repo object
    */
   // Creates a new repo object
+  // TODO get rid of this since the subscription/unsubscription process is automated now
   static async new_repo_obj(subscribe_repo_path) {
     const {owner, name, repo} = parseGH(subscribe_repo_path);
     if (!(owner && name && repo)) throw new Error('Invalid GitHub repo URL!');
@@ -157,17 +130,18 @@ class TriageTeamData {
   }
 
   /**
-   * Gets all the repo data with all the projects and columns and cards
+   * Gets all the repo data with all the projects
    *
    * @memberof TriageTeamData
    * @param {{owner; name}} repo_details
    * @static
    * @returns {any}
    */
+  // TODO incorporate this with the setup modal since subscriptions are handled automatically now
   static async get_basic_new_repo_data(repo_obj) {
     console.log('repo obj', repo_obj);
     const {repo_owner, repo_name} = repo_obj;
-
+    // TODO this will need installation ID
     const repo_data_response = await graphql.call_gh_graphql(query.getNewRepoBasicData, {
       repo_owner,
       repo_name,
@@ -225,11 +199,12 @@ class TriageTeamData {
    * @static
    * @returns {[Cards]}
    */
-  static async get_cards_by_column(column_id) {
+  static async get_cards_by_column(column_id, installation_id) {
     const column_data_response = await graphql.call_gh_graphql(
       query.getCardsByProjColumn,
       {
         column_id,
+        installation_id,
       }
     );
     return column_data_response.node.cards.nodes;
@@ -254,6 +229,46 @@ class TriageTeamData {
       internal_triage_items: {},
       team_members: team_member_obj,
     };
+    return update_document(filter, new_obj);
+  }
+
+  static async set_org_level_project(project_obj, installation_id) {
+    const org_proj_data_response = await graphql.call_gh_graphql(
+      query.getOrgProjectBasicData,
+      {org_proj_id: project_obj.project_id},
+      installation_id
+    );
+
+    const project_columns = org_proj_data_response.node.columns.nodes;
+
+    const project_columns_map = project_columns.reduce(
+      (obj, column) => ({...obj, [column.name]: column}),
+      {}
+    );
+
+    console.log(': -----------------------------------------------------------------');
+    console.log('set_org_level_project -> project_columns_map', project_columns_map);
+    console.log(': -----------------------------------------------------------------');
+
+    const project_obj_with_columns = {...project_obj, ...project_columns_map};
+
+    console.log(
+      ': -----------------------------------------------------------------------------------'
+    );
+    console.log(
+      'set_org_level_project -> project_obj_with_columns',
+      project_obj_with_columns
+    );
+    console.log(
+      ': -----------------------------------------------------------------------------------'
+    );
+
+    const filter = {'gitwave_github_app_installation_id': installation_id};
+
+    const new_obj = {
+      org_level_project_board: project_obj_with_columns,
+    };
+
     return update_document(filter, new_obj);
   }
 }

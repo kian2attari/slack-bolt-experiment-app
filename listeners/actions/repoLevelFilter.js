@@ -1,5 +1,6 @@
 const {AppHome} = require('../../blocks');
 const {TriageTeamData} = require('../../models');
+const {find_documents} = require('../../db');
 
 function project_selection(app, user_app_home_state_obj) {
   app.action('project_selection', async ({ack, body, context, client}) => {
@@ -77,8 +78,19 @@ function column_selection(app, triage_team_data_obj, user_app_home_state_obj) {
       //       .currently_selected_project.project_name
       //   ).columns;
 
+      const db_user_filter = {};
+
+      db_user_filter[`team_members.${body.user.id}`] = {$exists: true};
+      // TODO Add org_level_project_board to DB
+      const db_query = await find_documents(db_user_filter, {
+        gitwave_github_app_installation_id: 1,
+      });
+
+      const installation_id = db_query[0].gitwave_github_app_installation_id;
+
       const cards_in_selected_column = await TriageTeamData.get_cards_by_column(
-        column_id
+        column_id,
+        installation_id
       );
 
       console.log('cards_in_selected_column', cards_in_selected_column);

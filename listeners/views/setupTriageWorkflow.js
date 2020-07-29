@@ -1,4 +1,4 @@
-const {Messages} = require('../../blocks');
+const {Messages, Modals} = require('../../blocks');
 const {TriageTeamData} = require('../../models');
 
 module.exports = app => {
@@ -29,7 +29,7 @@ module.exports = app => {
     );
 
     if (create_new_team_result.result.n !== 1) {
-      // TODO if the error is tha the team aleady exists, explain this to the user
+      // TODO if the error is that the team already exists, explain this to the user
       const error_msg =
         "There was an error creating the team and adding it to the DB. Make sure it doesn't already exist";
 
@@ -43,13 +43,22 @@ module.exports = app => {
       return;
     }
 
-    await app.client.chat.postMessage({
-      token: context.botToken,
-      channel: user,
-      text: 'Team added successfully.',
-    });
-
     try {
+      // Message the creator of the team
+      await app.client.chat.postMessage({
+        token: context.botToken,
+        channel: user,
+        text: 'Team added successfully.',
+      });
+
+      // Open the org-level project selection modal
+      await app.client.views.open({
+        token: context.botToken,
+        // Pass a valid trigger_id within 3 seconds of receiving it
+        trigger_id: body.trigger_id,
+        // Show the org-level project board selection modal. The parameter is the organization's node ID
+        view: Modals.setup_org_project_modal(selected_github_org.value),
+      });
       // Message the team members that were added to ask for their github usernames
       for (const slack_user_id of selected_users_array) {
         app.client.chat.postMessage({

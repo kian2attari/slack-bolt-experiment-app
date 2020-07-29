@@ -139,16 +139,14 @@ actions_listener.label_assignment(app, triage_team_data_obj, user_app_home_state
 // Responding to a repo_selection options with list of repos
 options_listener.main_level_filter_selection(app, triage_team_data_obj);
 
+/* TODO org_level_project_input doesnt belong with untriaged_defaults_selection. 
+a sub-module like setup_team_settings would make more sense */
+options_listener.untriaged_defaults_selection.org_level_project_input(app);
+
 options_listener.project_col_selection.repo_project_options(
   app,
   triage_team_data_obj,
   user_app_home_state_obj
-);
-
-options_listener.project_col_selection.project_column_options(
-  app,
-  user_app_home_state_obj,
-  triage_team_data_obj
 );
 
 // Change the defaults for one particular repo
@@ -188,7 +186,7 @@ views_listener.setup_triage_team_view(app, triage_team_data_obj);
 
 views_listener.map_username_modal_view(app, triage_team_data_obj);
 
-views_listener.repo_new_issue_defaults_view(app, triage_team_data_obj);
+views_listener.setup_org_project_modal_view(app, triage_team_data_obj);
 
 // !SECTION Listening for view submissions
 /* -------------------------------------------------------------------------- */

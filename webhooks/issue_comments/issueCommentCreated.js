@@ -2,6 +2,7 @@ const {check_for_mentions, send_mention_message} = require('../../helper-functio
 
 function issue_comment_created(triage_team_data_obj, app, req, res) {
   console.log(`${req.headers['x-github-event']} arrived!`);
+  // TODO refactor these constant declarations
   const request = req.body;
   // eslint-disable-next-line no-unused-vars
   const {full_name: repo_path, id: repo_id} = request.repository;

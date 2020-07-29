@@ -1,7 +1,8 @@
 const {check_for_mentions} = require('../../helper-functions');
 const {mutation, graphql} = require('../../graphql');
+const {find_documents} = require('../../db');
 
-function issue_opened_reopened(triage_team_data_obj, app, req, res) {
+async function issue_opened_reopened(triage_team_data_obj, app, req, res) {
   console.log(`${req.headers['x-github-event']}.${req.body.action} arrived!`);
   const request = req.body;
   // eslint-disable-next-line no-unused-vars
@@ -27,7 +28,15 @@ function issue_opened_reopened(triage_team_data_obj, app, req, res) {
   }
 
   // QUESTION: Should editing the issue also cause the untriaged label to be added?
+  const db_repo_filter = {};
 
+  db_repo_filter[`subscribed_repos.${repo_path}`] = {$exists: true};
+  // TODO Add org_level_project_board to DB
+  const db_query = await find_documents(db_repo_filter, {
+    gitwave_github_app_installation_id: 1,
+  });
+
+  const installation_id = db_query[0].gitwave_github_app_installation_id;
   const untriaged_label_id = repo_obj.untriaged_settings.untriaged_label.label_id;
   const variables_addLabelToIssue = {
     element_node_id: issue_node_id,
@@ -35,20 +44,23 @@ function issue_opened_reopened(triage_team_data_obj, app, req, res) {
   };
 
   // eslint-disable-next-line no-unused-vars
-  const addLabelMutation = graphql
-    .call_gh_graphql(mutation.addLabelToIssue, variables_addLabelToIssue, {
-      repo_owner: repo_obj.repo_owner,
-      repo_name: repo_obj.repo_name,
-    })
-    .then(addLabelMutation_response => {
-      console.log('addLabelMutation_response', addLabelMutation_response);
-      return addLabelMutation_response;
-    })
-    .catch(error => console.error(error));
 
-  console.log(': ----------------------------------');
-  console.log('addLabelMutation', addLabelMutation);
-  console.log(': ----------------------------------');
+  try {
+    const addLabelMutation = await graphql.call_gh_graphql(
+      mutation.addLabelToIssue,
+      variables_addLabelToIssue,
+      {
+        repo_owner: repo_obj.repo_owner,
+        repo_name: repo_obj.repo_name,
+        installation_id,
+      }
+    );
+    console.log(': ----------------------------------');
+    console.log('addLabelMutation', addLabelMutation);
+    console.log(': ----------------------------------');
+  } catch (error) {
+    console.error(error);
+  }
 
   const mention_event_data = {
     channel_id: triage_team_data_obj.team_discussion_channel_id,

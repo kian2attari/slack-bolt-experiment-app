@@ -1,6 +1,7 @@
 const {mutation, graphql} = require('../../graphql');
-
-function issue_labeled(triage_team_data_obj, app, req, res) {
+const {find_documents} = require('../../db');
+// TODO make this async
+async function issue_labeled(triage_team_data_obj, app, req, res) {
   console.log(`${req.headers['x-github-event']}.${req.body.action} arrived!`);
   const request = req.body;
   // eslint-disable-next-line no-unused-vars
@@ -46,21 +47,27 @@ function issue_labeled(triage_team_data_obj, app, req, res) {
 
     // TODO: Create a card in the org-wide repo to indicate the presence of this untriaged issue
     // Assigns the project to the selected issue
-    // TODO: let the user select a default project
-    const assignIssueToProjectMutation = graphql
-      .call_gh_graphql(mutation.assignIssueToProject, variables_assignIssueToProject)
-      .then(assignIssueToProjectMutation_response => {
-        console.log(
-          'assignIssueToProjectMutation_response',
-          assignIssueToProjectMutation_response
-        );
-        return assignIssueToProjectMutation_response;
-      })
-      .catch(error => console.error(error));
+    try {
+      const db_repo_filter = {};
 
-    console.log(': ----------------------------------');
-    console.log('assignIssueToProjectMutation', assignIssueToProjectMutation);
-    console.log(': ----------------------------------');
+      db_repo_filter[`subscribed_repos.${repo_path}`] = {$exists: true};
+      // TODO Add org_level_project_board to DB
+      const db_query = await find_documents(db_repo_filter, {
+        gitwave_github_app_installation_id: 1,
+      });
+
+      const installation_id = db_query[0].gitwave_github_app_installation_id;
+
+      const assignIssueToProjectMutation = await graphql.call_gh_graphql(
+        mutation.assignIssueToProject,
+        variables_assignIssueToProject,
+        installation_id
+      );
+
+      console.log('assignIssueToProjectMutation', assignIssueToProjectMutation);
+    } catch (error) {
+      console.error(error);
+    }
   }
   // Success
   res.send();
