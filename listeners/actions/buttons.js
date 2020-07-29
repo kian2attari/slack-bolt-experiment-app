@@ -80,7 +80,7 @@ function show_untriaged_filter_button(
     });
   });
 }
-
+// All the cards in the To Do column that have been triaged but not assigned
 function show_up_for_grabs_filter_button(app) {
   app.action('show_up_for_grabs_filter_button', async ({ack, body, context, client}) => {
     await ack();
@@ -133,11 +133,9 @@ function show_up_for_grabs_filter_button(app) {
     } catch (error) {
       console.error(error);
     }
-
-    // TODO get all the cards in the TODO column of the org-level project
   });
 }
-
+// All cards in the In Progress Column that are assigned to the user
 function show_assigned_to_user_filter_button(app) {
   app.action(
     'show_assigned_to_user_filter_button',
@@ -221,6 +219,88 @@ function show_assigned_to_user_filter_button(app) {
   );
 }
 
+// TODO theres a lot in common with the top function so the commonalities can def be abstracted into a separate function
+// All cards in the Done Column that are assigned to the user
+function show_done_by_user_filter_button(app) {
+  app.action('show_done_by_user_filter_button', async ({ack, body, context, client}) => {
+    await ack();
+
+    const user_id = body.user.id;
+
+    /* Grab the org level project board for the triage team that the user is a part of. 
+    We only need the project board data so a projection is passed in as the second parameter */
+    try {
+      const response = await find_triage_team_by_slack_user(user_id, {
+        org_level_project_board: 1,
+        gitwave_github_app_installation_id: 1,
+        team_members: 1,
+      });
+
+      const user_github_username = response[0].team_members[user_id];
+
+      console.log(
+        ': -----------------------------------------------------------------------------------------'
+      );
+      console.log(
+        'function show_assigned_to_user_filter_button -> user_github_username',
+        user_github_username
+      );
+      console.log(
+        ': -----------------------------------------------------------------------------------------'
+      );
+
+      const done_column = response[0].org_level_project_board.Done;
+
+      const installation_id = response[0].gitwave_github_app_installation_id;
+
+      const get_cards_by_proj_column_vars = {
+        column_id: done_column.id,
+      };
+
+      const cards_response = await graphql.call_gh_graphql(
+        query.getCardsByProjColumn,
+        get_cards_by_proj_column_vars,
+        installation_id
+      );
+
+      // We only want the cards that are assigned to this particular user so we gotta thin the stack out a bit
+      // We also want to make sure that anything in this column is closed
+      // TODO extract this filtering function into AppHomeIssueCards as its own cateogry (filtered_cards)
+      const filtered_cards_response = cards_response.node.cards.nodes.filter(
+        card =>
+          card.content.assignees.nodes.some(
+            user => user.login === user_github_username
+          ) && card.content.closed
+      );
+
+      const card_blocks = AppHome.AppHomeIssueCards.triaged_cards(
+        filtered_cards_response
+      );
+
+      const home_view = AppHome.BaseAppHome(
+        {
+          currently_selected_repo: {
+            repo_path: 'All Untriaged',
+            repo_id: 'all_untriaged',
+          },
+        },
+        card_blocks,
+        'show_done_by_user_filter_button'
+      );
+
+      await client.views.publish({
+        token: context.botToken,
+        user_id,
+        view: home_view,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+
+    // TODO get all the cards in the TODO column of the org-level project
+  });
+}
+
 // Acknowledges arbitrary button clicks (ex. open a link in a new tab)
 function link_button(app) {
   app.action('link_button', async ({ack}) => ack());
@@ -233,4 +313,5 @@ module.exports = {
   link_button,
   show_up_for_grabs_filter_button,
   show_assigned_to_user_filter_button,
+  show_done_by_user_filter_button,
 };
