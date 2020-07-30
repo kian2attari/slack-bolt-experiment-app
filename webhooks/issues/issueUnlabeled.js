@@ -1,27 +1,20 @@
-// TODO get rid of triage_team_data_obj
-// TODO make this async
-function issue_unlabeled(triage_team_data_obj, app, req, res) {
-  console.log(`${req.headers['x-github-event']}.${req.body.action} arrived!`);
+const {TriageTeamData} = require('../../models');
+
+async function issue_unlabeled(req, res) {
   const request = req.body;
+
+  const installation_id = request.installation.id;
   // eslint-disable-next-line no-unused-vars
-  const {full_name: repo_path, id: repo_id} = request.repository;
-
-  const repo_obj = triage_team_data_obj.get_team_repo_subscriptions(repo_path);
-  console.log(': ------------------');
-  console.log('repo_obj', repo_obj);
-  console.log(': ------------------');
-
-  if (typeof repo_obj === 'undefined') {
-    console.log(`${repo_path}: Team is not currently subscribed to this repo!`);
-    res.send();
-    return;
-  }
+  const {node_id: repo_id} = request.repository;
 
   /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
   // const issue_label_array = request.issue.labels;
 
   const label_id = request.label.node_id;
-  const untriaged_label_id = repo_obj.untriaged_settings.untriaged_label.label_id;
+  const untriaged_label_id = TriageTeamData.get_repo_untriaged_label(
+    repo_id,
+    installation_id
+  );
 
   // const label_id = request.label.node_id
   // console.log(label_id)

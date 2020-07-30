@@ -258,17 +258,6 @@ class TriageTeamData {
 
     const project_obj_with_columns = {...project_obj, ...project_columns_map};
 
-    console.log(
-      ': -----------------------------------------------------------------------------------'
-    );
-    console.log(
-      'set_org_level_project -> project_obj_with_columns',
-      project_obj_with_columns
-    );
-    console.log(
-      ': -----------------------------------------------------------------------------------'
-    );
-
     const filter = {'gitwave_github_app_installation_id': installation_id};
 
     const new_obj = {
@@ -304,7 +293,7 @@ class TriageTeamData {
     return update_document(db_user_filter, username_update_obj);
   }
 
-  static async get_user_github_username(slack_user_id) {
+  static async get_github_username_by_user_id(slack_user_id) {
     // First we check to see if the user has already mapped a github username
     const triage_team_members_response = await find_triage_team_by_slack_user(
       slack_user_id,
@@ -321,6 +310,30 @@ class TriageTeamData {
     );
     console.log(': ------------------------------------------------------------');
     return slack_id_to_gh_username_match;
+  }
+
+  static async get_user_id_by_github_username(github_username, installation_id) {
+    // First we check to see if the user has already mapped a github username
+    const triage_team_members_response = await find_documents(
+      {
+        gitwave_github_app_installation_id: installation_id,
+      },
+      {team_members: 1}
+    );
+
+    const {team_members} = triage_team_members_response[0];
+
+    const gh_username_to_slack_id_match = Object.keys(team_members).find(
+      key => team_members[key] === github_username
+    );
+
+    console.log(': ------------------------------------------------------------');
+    console.log(
+      '1 slack_id_to_gh_username_match.team_members',
+      gh_username_to_slack_id_match
+    );
+    console.log(': ------------------------------------------------------------');
+    return gh_username_to_slack_id_match;
   }
 
   static async add_labels_to_card(slack_user_id, {issue_id, label_id}) {
@@ -362,6 +375,42 @@ class TriageTeamData {
       console.error(error);
     }
   }
+
+  static async get_repo_untriaged_label(repo_node_id, installation_id) {
+    const getIdLabel_vars = {
+      label_name: 'Untriaged',
+      repo_id: repo_node_id,
+    };
+
+    const untriaged_label_response = await graphql.call_gh_graphql(
+      query.getIdLabel,
+      getIdLabel_vars,
+      installation_id
+    );
+    return untriaged_label_response.node.label.id;
+  }
+
+  static async get_team_channel_id(installation_id) {
+    const team_discussion_channel_id = await find_documents(
+      {
+        gitwave_github_app_installation_id: installation_id,
+      },
+      {team_channel_id: 1}
+    );
+
+    return team_discussion_channel_id[0].team_channel_id;
+  }
+
+  static async get_team_org_level_project_board(installation_id) {
+    const org_level_project_board_response = await find_documents(
+      {
+        gitwave_github_app_installation_id: installation_id,
+      },
+      {org_level_project_board: 1}
+    );
+
+    return org_level_project_board_response[0].org_level_project_board;
+  }
 }
 
-module.exports = TriageTeamData;
+exports.TriageTeamData = TriageTeamData;

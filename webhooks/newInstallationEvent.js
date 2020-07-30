@@ -1,4 +1,4 @@
-const {add_new_document} = require('../../db');
+const {add_new_document} = require('../db');
 
 exports.new_gitwave_installation = async (req, res) => {
   console.log('new installation -> req', req.body);
