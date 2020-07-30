@@ -16,7 +16,7 @@ exports.untriaged_cards = card_array => {
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': `${starting_card_text} ${card_data.title} \n ${card_data.body} \n`,
+          'text': `${starting_card_text} ${card_data.title}`,
         },
         'accessory': {
           'type': 'button',
@@ -27,6 +27,13 @@ exports.untriaged_cards = card_array => {
           },
           'url': card_data.url,
           'action_id': 'link_button',
+        },
+      },
+      {
+        'type': 'section',
+        'text': {
+          'type': 'plain_text',
+          'text': `${card_data.body} \n`,
         },
       },
       /* The GitHub GraphQL API needs both the issue ID and 
