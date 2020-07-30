@@ -51,7 +51,7 @@ async function issue_labeled(triage_team_data_obj, app, req, res) {
       const db_repo_filter = {};
 
       db_repo_filter[`subscribed_repos.${repo_path}`] = {$exists: true};
-      // TODO Add org_level_project_board to DB
+
       const db_query = await find_documents(db_repo_filter, {
         gitwave_github_app_installation_id: 1,
       });

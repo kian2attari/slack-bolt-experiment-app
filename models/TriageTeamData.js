@@ -1,11 +1,14 @@
 const parseGH = require('parse-github-url');
-const {query, graphql} = require('../graphql');
+const {query, graphql, mutation} = require('../graphql');
 const {
   add_new_team_members,
   update_document,
   find_triage_team_by_slack_user,
+  find_documents,
 } = require('../db');
 
+/* This is where all the DB operations are abstracted to. The goal is to avoid directly using the mongodb client methods throughout the 
+code (ex. update, find, set etc) and instead abstract the functionalities here (ex. assign label to issue -- which will do all the mongodb calls under the hood) */
 class TriageTeamData {
   constructor() {
     this.team_discussion_channel_id = '';
@@ -318,6 +321,46 @@ class TriageTeamData {
     );
     console.log(': ------------------------------------------------------------');
     return slack_id_to_gh_username_match;
+  }
+
+  static async add_labels_to_card(slack_user_id, {issue_id, label_id}) {
+    const db_user_filter = {};
+
+    db_user_filter[`team_members.${slack_user_id}`] = {$exists: true};
+
+    try {
+      const db_query = await find_documents(db_user_filter, {
+        gitwave_github_app_installation_id: 1,
+      });
+
+      const installation_id = db_query[0].gitwave_github_app_installation_id;
+
+      const variables_clearAllLabels = {
+        element_node_id: issue_id,
+      };
+
+      await graphql.call_gh_graphql(
+        mutation.clearAllLabels,
+        variables_clearAllLabels,
+        installation_id
+      );
+
+      const variables_addLabelToIssue = {
+        element_node_id: issue_id,
+        label_ids: [label_id],
+      };
+
+      await graphql.call_gh_graphql(
+        mutation.addLabelToIssue,
+        variables_addLabelToIssue,
+        installation_id
+      );
+
+      /* TODO if the label was assigned successfully, update the app home view so that either the issue card is removed 
+      from the page or the triage button that was clicked turns green */
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
 

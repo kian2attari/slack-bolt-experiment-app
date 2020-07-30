@@ -91,6 +91,8 @@ actions_listener.buttons.show_assigned_to_user_filter_button(app);
 
 actions_listener.buttons.show_done_by_user_filter_button(app);
 
+actions_listener.buttons.app_home_triage_buttons(app);
+
 actions_listener.buttons.show_untriaged_filter_button(
   app,
   triage_team_data_obj,

@@ -1,8 +1,9 @@
 const {Modals, AppHome} = require('../../blocks');
 const {show_all_untriaged_cards} = require('../commonFunctions');
-const {find_triage_team_by_slack_user} = require('../../db');
-const {graphql, query} = require('../../graphql');
+const {find_triage_team_by_slack_user, find_documents} = require('../../db');
+const {graphql, query, mutation} = require('../../graphql');
 const {TriageTeamData} = require('../../models');
+const {add_labels_to_card} = require('../../models/TriageTeamData');
 
 /** @param {App} app */
 async function open_map_modal_button(app) {
@@ -296,9 +297,26 @@ function show_done_by_user_filter_button(app) {
     } catch (error) {
       console.error(error);
     }
-
-    // TODO get all the cards in the TODO column of the org-level project
   });
+}
+
+function app_home_triage_buttons(app) {
+  const triage_buttons = [
+    'assign_bug_label',
+    'assign_tests_label',
+    'assign_discussion_label',
+    'assign_docs_label',
+    'assign_enhancement_label',
+    'assign_question_label',
+  ];
+
+  triage_buttons.forEach(button =>
+    app.action(button, async ({ack, body}) => {
+      await ack();
+
+      await add_labels_to_card(body.user.id, JSON.parse(body.actions[0].value));
+    })
+  );
 }
 
 // Acknowledges arbitrary button clicks (ex. open a link in a new tab)
@@ -314,4 +332,5 @@ module.exports = {
   show_up_for_grabs_filter_button,
   show_assigned_to_user_filter_button,
   show_done_by_user_filter_button,
+  app_home_triage_buttons,
 };

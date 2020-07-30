@@ -1,99 +1,16 @@
 exports.untriaged_cards = card_array => {
-  /* TODO change this so that the triage labels are generated dynamically for each repo and saved as part of repo props
-  when first getting label data. The app would know which labels are triage as their descriptions will start with TRIAGE: */
-  const label_buttons_block = {
-    'type': 'actions',
-    'elements': [
-      {
-        'type': 'button',
-        'text': {
-          'type': 'plain_text',
-          'text': 'Bug',
-          'emoji': true,
-        },
-        'action_id': 'assign_bug_label',
-        'value': 'untriaged',
-      },
-      {
-        'type': 'button',
-        'text': {
-          'type': 'plain_text',
-          'text': 'Discussion',
-          'emoji': true,
-        },
-        'action_id': 'assign_discussion_label',
-        'value': 'discussion',
-      },
-      {
-        'type': 'button',
-        'text': {
-          'type': 'plain_text',
-          'text': 'Docs',
-          'emoji': true,
-        },
-        'action_id': 'assign_docs_label',
-        'value': 'docs',
-      },
-      {
-        'type': 'button',
-        'text': {
-          'type': 'plain_text',
-          'text': 'Enhancement',
-          'emoji': true,
-        },
-        'action_id': 'assign_enhancement_label',
-        'value': 'enhancement',
-      },
-      {
-        'type': 'button',
-        'text': {
-          'type': 'plain_text',
-          'text': 'Question',
-          'emoji': true,
-        },
-        'action_id': 'assign_question_label',
-        'value': 'question',
-      },
-      {
-        'type': 'button',
-        'text': {
-          'type': 'plain_text',
-          'text': 'Tests',
-          'emoji': true,
-        },
-        'action_id': 'assign_test_label',
-        'value': 'tests',
-      },
-    ],
-  };
-
   const issues_block = card_array.flatMap(card => {
     const card_data = card.content;
+    const card_repo_triage_labels = card_data.repository.labels.nodes;
     // const card_id = card_data.id;
-    const card_labels = card_data.labels.nodes;
-    // The labels that the issues already have selected
-    // const label_initial_options = card_labels.map(label => {
-    //   return {
-    //     'text': {
-    //       'type': 'plain_text',
-    //       'text': label.name,
-    //     },
-    //     'value': card_id,
-    //   };
-    // });
+    // const card_labels = card_data.labels.nodes;
 
-    console.log('card_data', card_data);
-
-    console.log('card_labels', card_labels);
-
+    // Indicates whether the issue in question is closed
     const starting_card_text = card_data.closed
       ? `**CLOSED** ${card_data.repository.name}:`
       : `*${card_data.repository.name}*:`;
 
-    // console.log('label_initial_options', label_initial_options);
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
-    // TODO if the issue is closed, then change somthing about visually to indicate the status
-
     return [
       {
         'type': 'section',
@@ -125,7 +42,10 @@ exports.untriaged_cards = card_array => {
           'text': 'Triage this issue',
         },
       },
-      label_buttons_block,
+      // Passing in the id of the issue so that the label could be applied to said issue
+      // We only want the buttons to appear if the repo has triage labels defined properly. The spread operator makes it so that nothing is added to the array if the function returns {}
+      // EXTRA_TODO instead of just not returning anything, we could have a bit of text there to tell the user to create the labels on the repo
+      ...label_buttons_block(card_data.id, card_repo_triage_labels),
       {
         'type': 'context',
         'elements': [
@@ -152,3 +72,35 @@ exports.untriaged_cards = card_array => {
 
   return issues_block;
 };
+
+/**
+ * Creates the triage buttons for the Untriaged page on the app home. Uses the button value
+ * to send the issue_id and label_id.
+ *
+ * @param {any} issue_id
+ * @param {any} triage_label_array
+ * @returns {any} An action block whose elements consist of the triage buttons
+ */
+function label_buttons_block(issue_id, triage_label_array) {
+  const labels_block =
+    triage_label_array.length !== 0
+      ? [
+          {
+            'type': 'actions',
+            'elements': triage_label_array.map(label => {
+              return {
+                'type': 'button',
+                'text': {
+                  'type': 'plain_text',
+                  'text': label.name,
+                  'emoji': true,
+                },
+                'action_id': `assign_${label.name.toLowerCase()}_label`,
+                'value': JSON.stringify({issue_id, label_id: label.id}),
+              };
+            }),
+          },
+        ]
+      : [];
+  return labels_block;
+}

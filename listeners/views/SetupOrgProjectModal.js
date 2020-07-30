@@ -11,7 +11,7 @@ module.exports = app => {
     const db_user_filter = {};
 
     db_user_filter[`team_members.${user}`] = {$exists: true};
-    // TODO Add org_level_project_board to DB
+
     const db_query = await find_documents(db_user_filter, {
       gitwave_github_app_installation_id: 1,
     });

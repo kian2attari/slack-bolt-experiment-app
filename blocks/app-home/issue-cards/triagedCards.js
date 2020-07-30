@@ -14,7 +14,7 @@ exports.triaged_cards = card_array => {
         'value': label.id,
       };
     });
-
+    // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
     console.log('card_data', card_data);
 
     console.log('card_labels', card_labels);
@@ -30,7 +30,14 @@ exports.triaged_cards = card_array => {
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': `*${card_data.title}* \n ${card_data.body}`,
+          'text': `*${card_data.title}*`,
+        },
+      },
+      {
+        'type': 'section',
+        'text': {
+          'type': 'plain_text',
+          'text': card_data.body,
         },
       },
       {

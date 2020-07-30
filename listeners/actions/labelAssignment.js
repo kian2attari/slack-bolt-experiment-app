@@ -51,7 +51,6 @@ module.exports = (app, triage_team_data_obj, user_app_home_state_obj) => {
         const db_user_filter = {};
 
         db_user_filter[`team_members.${body.user.id}`] = {$exists: true};
-        // TODO Add org_level_project_board to DB
         const db_query = await find_documents(db_user_filter, {
           gitwave_github_app_installation_id: 1,
         });
