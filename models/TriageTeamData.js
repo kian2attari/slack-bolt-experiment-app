@@ -6,6 +6,7 @@ const {
   find_triage_team_by_slack_user,
   find_documents,
 } = require('../db');
+const {reg_exp} = require('../constants');
 
 /* This is where all the DB operations are abstracted to. The goal is to avoid directly using the mongodb client methods throughout the 
 code (ex. update, find, set etc) and instead abstract the functionalities here (ex. assign label to issue -- which will do all the mongodb calls under the hood) */
@@ -410,6 +411,60 @@ class TriageTeamData {
     );
 
     return org_level_project_board_response[0].org_level_project_board;
+  }
+
+  static async mark_element_as_untriaged(
+    labels,
+    element_node_id,
+    repo_node_id,
+    installation_id
+  ) {
+    const triage_label_count = labels.filter(label =>
+      reg_exp.find_triage_labels(label.description)
+    ).length;
+
+    // TODO turn this into its own function
+    // This means that the PR does not currently have any of the triage labels! We need to mark it as untriaged
+    if (triage_label_count === 1) {
+      console.log('The PR has already been triaged properly!');
+      return;
+    }
+
+    // An element cannot have more than one label. If that's the case, we remove all labels and mark it as untriaged.
+    // REVIEW would it be better to avoid clearing and just message the team?
+    if (triage_label_count > 1) {
+      const variables_clearAllLabels = {
+        element_node_id: repo_node_id,
+      };
+
+      // clear the current labels first
+      await graphql.call_gh_graphql(
+        mutation.clearAllLabels,
+        variables_clearAllLabels,
+        installation_id
+      );
+    }
+
+    const untriaged_label_id = await TriageTeamData.get_repo_untriaged_label(
+      repo_node_id,
+      installation_id
+    );
+    const variables_addLabelToIssue = {
+      element_node_id,
+      label_ids: [untriaged_label_id],
+    };
+
+    // eslint-disable-next-line no-unused-vars
+
+    try {
+      await graphql.call_gh_graphql(
+        mutation.addLabelToIssue,
+        variables_addLabelToIssue,
+        installation_id
+      );
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
 

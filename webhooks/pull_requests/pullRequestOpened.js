@@ -1,6 +1,6 @@
 const {check_for_mentions} = require('../../helper-functions');
 const {mutation, graphql} = require('../../graphql');
-const {reg_exp} = require('../../constants');
+const {triage_label_count} = require('../webhook_helper_functions');
 const {TriageTeamData} = require('../../models');
 
 async function pull_request_opened(app, req, res) {
@@ -18,31 +18,12 @@ async function pull_request_opened(app, req, res) {
     created_at,
   } = request.pull_request;
 
-  // TODO turn this into its own function
-  // This means that the PR does not currently have any of the triage labels! We need to mark it as untriaged
-  if (!labels.some(label => reg_exp.find_triage_labels(label.description))) {
-    const repo_node_id = repository.node_id;
-    const untriaged_label_id = await TriageTeamData.get_repo_untriaged_label(
-      repo_node_id,
-      installation_id
-    );
-    const variables_addLabelToIssue = {
-      element_node_id: issue_node_id,
-      label_ids: [untriaged_label_id],
-    };
-
-    // eslint-disable-next-line no-unused-vars
-
-    try {
-      await graphql.call_gh_graphql(
-        mutation.addLabelToIssue,
-        variables_addLabelToIssue,
-        installation_id
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  await TriageTeamData.mark_element_as_untriaged(
+    labels,
+    issue_node_id,
+    repository.node_id,
+    installation_id
+  );
 
   const mention_event_data = {
     title,

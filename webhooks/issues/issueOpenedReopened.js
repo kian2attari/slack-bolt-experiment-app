@@ -19,30 +19,12 @@ async function issue_opened_reopened(app, req, res) {
 
   // TODO if the issue doesn't have a triage label, add the untriaged label
   // QUESTION: Should editing the issue also cause the untriaged label to be added
-
-  const untriaged_label_id = await TriageTeamData.get_repo_untriaged_label(
+  await TriageTeamData.mark_element_as_untriaged(
+    issue_labels,
+    issue_node_id,
     repo_id,
     installation_id
   );
-  const variables_addLabelToIssue = {
-    element_node_id: issue_node_id,
-    label_ids: [untriaged_label_id],
-  };
-
-  // eslint-disable-next-line no-unused-vars
-
-  try {
-    const addLabelMutation = await graphql.call_gh_graphql(
-      mutation.addLabelToIssue,
-      variables_addLabelToIssue,
-      installation_id
-    );
-    console.log(': ----------------------------------');
-    console.log('addLabelMutation', addLabelMutation);
-    console.log(': ----------------------------------');
-  } catch (error) {
-    console.error(error);
-  }
 
   const mention_event_data = {
     title: issue_title,
