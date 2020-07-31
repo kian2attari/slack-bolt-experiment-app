@@ -5,30 +5,62 @@ const {send_mention_message} = require('./helper-functions');
 function check_review_requests(app) {
   return async () => {
     const {TriageTeamData} = require('./models');
-    const pending_review_requests = await TriageTeamData.get_pending_review_requests();
+    /* This is an array of objects, with each object representing a separate team/installation. 
+    Each team object then has an array of pending review requests. For each of those review requests,
+    we check if they fall within the range where we would want to send a reminder (ex. 1 day or 3 days), 
+    and if they do, the send_mention_message function is used to notify the user. Since 
+    send_mention_message is an asynchronous function, it wouldn't make sense to do this process
+    in a synchronous loop and get stuck every time a message needs to be sent. It would be better
+    to go through each team object, gather up the needed message_sending promises in an array, and then
+    use Promise.all() to fulfill all those promises concurrently. In promise_array, I use
+    a nested reduce function to do just this. The inner reduce function creates arrays of promises for each team,
+    while the outer reduce concatenates those arrays into one single array of promises to be passed into
+    Promises.all(...). I use reduce rather than a map for the inner loop because we are returning conditionally
+    (since only a set of the review requests actually need reminders sent), and map tries to apply the callback function
+    to every element. To use map, we'd need to filter first, and that's just more work for nothing. */
+    const pending_review_requests_by_team = await TriageTeamData.get_pending_review_requests();
 
-    pending_review_requests.forEach(team => {
-      // Each installation ID represents a seperate triage team/github org.
-      console.log('installation id', team.gitwave_github_app_installation_id);
-      team.pending_review_requests.forEach(review_request => {
-        console.log('review request timestamp', review_request.request_timestamp);
-        const {request_timestamp} = review_request;
-        const days_since = Math.round((Date.now() - request_timestamp) / 86400000); // we divide by the number of ms in a day to see how many days have passed
-        const minutes = Math.round((Date.now() - request_timestamp) / 60000);
-        console.log('days since', days_since);
-        console.log('minutes since', minutes);
-        if (days_since === 1 || days_since === 3) {
-          console.log('content create date', review_request.content_create_date);
-          send_mention_message(app, review_request);
-        }
-      });
-    });
+    console.log(pending_review_requests_by_team);
+    /* REVIEW to make this more scalable, this function can also be modified so that the promises are resolved in batches rather than all at once. 
+    For example, the Promises.all(...) can be placed in the outer reduce so that each team's batch of promises is done through each loop. In that case,
+    it would make more sense to use the async_array_map helper function rather than reduce for the outside since we wouldn't be returning anything */
+    const promise_array = pending_review_requests_by_team.reduce(
+      (review_requests, team) => {
+        console.log('team', team.pending_review_requests);
+        const review_request_promises = team.pending_review_requests.reduce(
+          (request_promises, review_request) => {
+            console.log('review request timestamp', review_request.request_timestamp);
+            const {request_timestamp} = review_request;
+            const days_since = Math.round((Date.now() - request_timestamp) / 86400000); // we divide by the number of ms in a day to see how many days have passed
+            // const minutes_since = Math.round((Date.now() - request_timestamp) / 60000);
+            console.log('days since', days_since);
+            // console.log('minutes since', minutes_since);
+            if (days_since === 1 || days_since === 3) {
+              console.log('sending a reminder to:', review_request.mentioned_slack_user);
+              return request_promises.concat(send_mention_message(app, review_request));
+            }
+            return request_promises;
+          },
+          []
+        );
+        return review_requests.concat(review_request_promises);
+      },
+      []
+    );
+
+    await Promise.all(promise_array);
   };
 }
 
 // Everyday, check the pending PR review requests of every team, and message the user the review was requested of after 1 day, and after 3 days
-// TODO change the cron_pattern to '0 10,17 * * *' so that the job is run everyday at 10am and 5pm or just '0 10 * * *' for 10 am
+// REVIEW change the cron_pattern to '0 10,15 * * *' so that the job is run everyday at 10am and 3pm or just '0 10 * * *' for 10 am etc
 const review_request_cron_job = app =>
-  new CronJob('* * * * *', check_review_requests(app), null, true, 'America/Los_Angeles');
+  new CronJob(
+    '0 10,17 * * *',
+    check_review_requests(app),
+    null,
+    true,
+    'America/Los_Angeles'
+  );
 
 exports.review_request_cron_job = review_request_cron_job;
