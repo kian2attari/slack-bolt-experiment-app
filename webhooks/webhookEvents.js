@@ -52,9 +52,9 @@ exports.github_event = (router, triage_team_data_obj, app) => {
   //   pull_request_actions.pull_request_assigned(app, req, res)
   // );
 
-  // github_event.on('pull_request.review_requested', (req, res) =>
-  //   pull_request_actions.pull_request_review_requested(app, req, res)
-  // );
+  github_event.on('pull_request.review_requested', (req, res) =>
+    pull_request_actions.pull_request_review_requested(app, req, res)
+  );
 
   // github_event.on('pull_request.labeled', (req, res) =>
   //   pull_request_actions.pull_request_labeled(app, req, res)

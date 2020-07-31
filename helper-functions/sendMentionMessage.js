@@ -20,12 +20,14 @@ module.exports = async (app, mention_event_data) => {
   const {TriageTeamData} = require('../models');
   const {
     title,
-    url,
+    html_url,
     creator,
-    create_date,
+    content_create_date,
     mentioned_slack_user,
+    requestor_login,
     is_closed,
     installation_id,
+    review_requested,
   } = mention_event_data;
   await app.client.chat.postMessage({
     // Since there is no context we just use the original token
@@ -44,7 +46,9 @@ module.exports = async (app, mention_event_data) => {
             })
           ),
         }),
-
-    text: `<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${create_date}. Link: ${url}`,
+    // Just in case there is an issue loading the blocks.
+    text: `${
+      review_requested ? `${requestor_login} requested your review ->` : ''
+    }<@${mentioned_slack_user}>! ${title} posted by ${creator} on ${content_create_date}. Link: ${html_url}`,
   });
 };
