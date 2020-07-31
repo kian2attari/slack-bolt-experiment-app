@@ -487,6 +487,18 @@ class TriageTeamData {
       console.error(err);
     }
   }
+
+  static async get_pending_review_requests(installation_id = null) {
+    const filter = installation_id
+      ? {gitwave_github_app_installation_id: installation_id}
+      : {};
+    const find_review_requests_response = await find_documents(filter, {
+      gitwave_github_app_installation_id: 1,
+      pending_review_requests: 1,
+    });
+
+    return find_review_requests_response;
+  }
 }
 
 exports.TriageTeamData = TriageTeamData;
