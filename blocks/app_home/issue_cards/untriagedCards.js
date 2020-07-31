@@ -7,7 +7,7 @@ exports.untriaged_cards = card_array => {
 
     // Indicates whether the issue in question is closed
     const starting_card_text = card_data.closed
-      ? `**CLOSED** ${card_data.repository.name}:`
+      ? `* *CLOSED* * ${card_data.repository.name}:`
       : `*${card_data.repository.name}*:`;
 
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
