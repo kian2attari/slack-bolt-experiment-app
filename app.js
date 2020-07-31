@@ -206,6 +206,7 @@ github_event(expressReceiver.router, triage_team_data_obj, app);
   // Test DB connection
   try {
     await Connection.connectToMongoCollection();
+    review_request_cron_job(app);
   } catch (error) {
     console.error('Test connection to database failed.', error);
     throw error;
