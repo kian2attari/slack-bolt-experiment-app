@@ -15,14 +15,17 @@ const {Messages} = require('../blocks');
  * }} mention_event_data
  */
 module.exports = async (app, mention_event_data) => {
+  // TriageTeamData is imported within this function scope because it would otherwise conflict with the require in the webhooks
+  // TODO fix this
+  const {TriageTeamData} = require('../models');
   const {
-    channel_id,
     title,
     url,
     creator,
     create_date,
     mentioned_slack_user,
     is_issue_closed,
+    installation_id,
   } = mention_event_data;
   await app.client.chat.postMessage({
     // Since there is no context we just use the original token
@@ -30,7 +33,7 @@ module.exports = async (app, mention_event_data) => {
     // Conditional on whether the message should go to channel or just to a user as a DM
     ...(is_issue_closed
       ? {
-          channel: channel_id,
+          channel: await TriageTeamData.get_team_channel_id(installation_id),
           blocks: Messages.GithubMentionMessage(mention_event_data),
         }
       : {

@@ -23,9 +23,11 @@ async function issue_comment_created(app, req, res) {
       create_date: comment_create_date,
       mentioned_slack_user: '!channel',
       is_issue_closed: true,
+      installation_id,
     };
     // TODO make a new function that sends a message to the team and adds the untriaged label to said issue
     await send_mention_message(app, mention_event_data);
+    return;
   }
 
   const mention_event_data = {

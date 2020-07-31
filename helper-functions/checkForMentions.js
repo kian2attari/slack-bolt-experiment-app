@@ -41,12 +41,9 @@ async function check_for_mentions(app, mention_metadata) {
       console.log(': --------------------------------------------------------------');
       console.log('contains_mention -> mentioned_slack_user', mentioned_slack_user);
       console.log(': --------------------------------------------------------------');
-      const team_discussion_channel_id = await TriageTeamData.get_team_channel_id(
-        installation_id
-      );
+
       // If the mentioned username is associated with a Slack username, mention that person
       const mention_event_data = {
-        team_discussion_channel_id,
         title,
         body: text_body,
         url: content_url,
@@ -55,6 +52,7 @@ async function check_for_mentions(app, mention_metadata) {
         create_date: content_create_date,
         mentioned_slack_user,
         is_issue_closed: false,
+        installation_id,
       };
 
       if (mentioned_slack_user) {
