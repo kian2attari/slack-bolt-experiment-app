@@ -6,9 +6,7 @@ exports.untriaged_cards = card_array => {
     // const card_labels = card_data.labels.nodes;
 
     // Indicates whether the issue in question is closed
-    const starting_card_text = card_data.closed
-      ? `* *CLOSED* * ${card_data.repository.name}:`
-      : `*${card_data.repository.name}*:`;
+    const closed_text = card_data.closed ? ':closed_lock_with_key:' : '';
 
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
     return [
@@ -16,7 +14,7 @@ exports.untriaged_cards = card_array => {
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': `${starting_card_text} ${card_data.title}`,
+          'text': `${closed_text} *${card_data.repository.name}*: ${card_data.title}`,
         },
         'accessory': {
           'type': 'button',

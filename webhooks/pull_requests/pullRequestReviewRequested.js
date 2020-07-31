@@ -44,8 +44,10 @@ async function pull_request_review_requested(app, req, res) {
     };
 
     if (mentioned_slack_user) {
-      await send_mention_message(app, mention_event_data);
-      // TODO add the request to the DB with the current time
+      await Promise.all([
+        send_mention_message(app, mention_event_data),
+        TriageTeamData.add_review_request(mention_event_data, installation_id),
+      ]);
     }
 
     res.send();

@@ -466,6 +466,25 @@ class TriageTeamData {
       console.error(error);
     }
   }
+
+  static async add_review_request(review_request, installation_id) {
+    const review_request_obj = {};
+    const current_date = new Date();
+
+    review_request_obj[
+      `pending_review_requests.${current_date.toLocaleDateString('en-US')}`
+    ] = review_request;
+
+    try {
+      await update_document(
+        {gitwave_github_app_installation_id: installation_id},
+        review_request_obj,
+        '$push'
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
 }
 
 exports.TriageTeamData = TriageTeamData;
