@@ -1,5 +1,4 @@
 const {check_for_mentions} = require('../../helper-functions');
-const {mutation, graphql} = require('../../graphql');
 const {TriageTeamData} = require('../../models');
 // TODO get rid of triage_team_data_obj
 async function issue_opened_reopened(app, req, res) {
@@ -36,7 +35,6 @@ async function issue_opened_reopened(app, req, res) {
     installation_id,
   };
 
-  // TODO: instead of channel id, send over the users_triage_team object or don't and do it in the function
   await check_for_mentions(app, mention_event_data);
 
   // Success

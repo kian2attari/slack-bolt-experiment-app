@@ -1,16 +1,14 @@
 const {check_for_mentions} = require('../../helper-functions');
-const {mutation, graphql} = require('../../graphql');
-const {triage_label_count} = require('../webhook_helper_functions');
 const {TriageTeamData} = require('../../models');
 
 async function pull_request_opened(app, req, res) {
   const request = req.body;
   const installation_id = request.installation.id;
+  const {repository} = request;
 
   const {
     labels,
     node_id: issue_node_id,
-    repository,
     title,
     body,
     html_url,
@@ -35,10 +33,7 @@ async function pull_request_opened(app, req, res) {
     installation_id,
   };
 
-  // TODO: instead of channel id, send over the users_triage_team object or don't and do it in the function
   await check_for_mentions(app, mention_event_data);
-
-  // TODO label opened PR with untriaged if none of the triage labels have been applied already
   // Success
   res.send();
 }
