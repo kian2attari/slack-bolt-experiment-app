@@ -468,12 +468,14 @@ class TriageTeamData {
   }
 
   static async add_review_request(review_request, installation_id) {
-    const review_request_obj = {};
-    const current_date = new Date();
-
-    review_request_obj[
-      `pending_review_requests.${current_date.toLocaleDateString('en-US')}`
-    ] = review_request;
+    // To figure out the number of days since the review request, subtract the request_timestamp from the current timestamp and divide by 86400000
+    const current_timestamp_in_ms = Date.now();
+    const review_request_obj = {
+      pending_review_requests: {
+        ...review_request,
+        request_timestamp: current_timestamp_in_ms,
+      },
+    };
 
     try {
       await update_document(
