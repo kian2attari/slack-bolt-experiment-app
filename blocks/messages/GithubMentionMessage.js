@@ -6,11 +6,14 @@ module.exports = ({
   avatar_url,
   date,
   mentioned_slack_user,
-}) =>
+}) => {
+  const is_issue = /issues\/\d*$/.test(gh_url);
+
+  const issue_or_pr = is_issue ? 'issue' : 'PR';
   /* The @ symbol for mentions is not concatenated here because the convention for mentioning is different 
-between mentioning users/groups/channels. To mention the channel, say when a closed issue is commented
-on, the special convention is <!channel>. */
-  [
+  between mentioning users/groups/channels. To mention the channel, say when a closed issue is commented
+  on, the special convention is <!channel>. */
+  return [
     {
       type: 'section',
       text: {
@@ -26,7 +29,7 @@ on, the special convention is <!channel>. */
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `*${title}*`,
+        text: `${issue_or_pr}: *${title}*`,
       },
     },
     {
@@ -52,7 +55,7 @@ on, the special convention is <!channel>. */
           type: 'button',
           text: {
             type: 'plain_text',
-            text: 'Visit issue page',
+            text: `Visit ${issue_or_pr} page`,
             emoji: true,
           },
           url: gh_url,
@@ -71,3 +74,4 @@ on, the special convention is <!channel>. */
       ],
     },
   ];
+};

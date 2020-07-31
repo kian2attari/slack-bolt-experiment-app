@@ -11,7 +11,7 @@ const {Messages} = require('../blocks');
  *   avatar_url: string;
  *   create_date: string;
  *   mentioned_slack_user: string;
- *   is_issue_closed: boolean;
+ *   is_closed: boolean;
  * }} mention_event_data
  */
 module.exports = async (app, mention_event_data) => {
@@ -24,14 +24,14 @@ module.exports = async (app, mention_event_data) => {
     creator,
     create_date,
     mentioned_slack_user,
-    is_issue_closed,
+    is_closed,
     installation_id,
   } = mention_event_data;
   await app.client.chat.postMessage({
     // Since there is no context we just use the original token
     token: process.env.SLACK_BOT_TOKEN,
     // Conditional on whether the message should go to channel or just to a user as a DM
-    ...(is_issue_closed
+    ...(is_closed
       ? {
           channel: await TriageTeamData.get_team_channel_id(installation_id),
           blocks: Messages.GithubMentionMessage(mention_event_data),
