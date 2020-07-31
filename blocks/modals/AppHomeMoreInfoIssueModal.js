@@ -3,9 +3,9 @@ module.exports = (array_column_info, project_name) => {
 
   // Creating a line of info for every column
   array_column_info.forEach(column => {
-    column_info +=
-      `*${column.name}:* ${column.cards.totalCount} ` +
-      (column.cards.totalCount == 1 ? 'card\n' : 'cards\n');
+    column_info += `*${column.name}:* ${column.cards.totalCount} ${
+      column.cards.totalCount === 1 ? 'card\n' : 'cards\n'
+    }`;
   });
 
   return {
@@ -35,7 +35,7 @@ module.exports = (array_column_info, project_name) => {
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': 'Number of cards in each column\n' + column_info,
+          'text': `Number of cards in each column\n${column_info}`,
         },
       },
     ],

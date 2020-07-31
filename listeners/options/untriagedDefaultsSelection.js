@@ -51,6 +51,7 @@ function setup_defaults_repo_selection(app, triage_team_data_obj) {
  * @param {any} app
  */
 function github_org_select_input(app) {
+  // eslint-disable-next-line no-unused-vars
   app.options('github_org_select_input', async ({options, ack}) => {
     try {
       // TODO get a list of the orgs that the app has access to via DB

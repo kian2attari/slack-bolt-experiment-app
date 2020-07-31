@@ -16,4 +16,4 @@ query getNumOfCardsByColumn($repo_owner: String!, $repo_name: String!, $project_
     }
   }
 }
-`
+`;

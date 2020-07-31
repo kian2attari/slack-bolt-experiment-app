@@ -5,4 +5,4 @@ mutation clearAllLabels($element_node_id: ID!) {
       clientMutationId
     }
   }
-`
+`;
