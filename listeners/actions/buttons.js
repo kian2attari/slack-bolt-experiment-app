@@ -299,8 +299,10 @@ function show_done_by_user_filter_button(app) {
   });
 }
 
-function app_home_triage_buttons(app) {
-  const triage_buttons = [
+function app_home_external_triage_buttons(app) {
+  // TODO autogenerate this list based on the triage labels for a repo
+  // EXTRA_TODO the internal and external button setup have a lot in common, pull that into a common function
+  const external_triage_buttons = [
     'assign_bug_label',
     'assign_tests_label',
     'assign_discussion_label',
@@ -309,7 +311,7 @@ function app_home_triage_buttons(app) {
     'assign_question_label',
   ];
 
-  triage_buttons.forEach(button =>
+  external_triage_buttons.forEach(button =>
     app.action(button, async ({ack, body}) => {
       await ack();
 
@@ -317,6 +319,34 @@ function app_home_triage_buttons(app) {
         body.user.id,
         JSON.parse(body.actions[0].value)
       );
+    })
+  );
+}
+
+function app_home_internal_triage_buttons(app) {
+  const internal_triage_buttons = ['assign_eyes_label', 'assign_checkmark_label'];
+
+  internal_triage_buttons.forEach(button =>
+    app.action(button, async ({ack, body, context, client}) => {
+      await ack();
+
+      const response = await find_triage_team_by_slack_user(body.user.id, {
+        team_internal_triage_channel_id: 1,
+      });
+
+      const {team_internal_triage_channel_id} = response[0];
+
+      const {name, message_ts: timestamp} = JSON.parse(body.actions[0].value);
+      try {
+        await client.reactions.add({
+          token: context.botToken,
+          channel: team_internal_triage_channel_id, // Review is there a better way to get this id?
+          name,
+          timestamp,
+        });
+      } catch (error) {
+        console.error(error);
+      }
     })
   );
 }
@@ -334,5 +364,6 @@ module.exports = {
   show_up_for_grabs_filter_button,
   show_assigned_to_user_filter_button,
   show_done_by_user_filter_button,
-  app_home_triage_buttons,
+  app_home_external_triage_buttons,
+  app_home_internal_triage_buttons,
 };

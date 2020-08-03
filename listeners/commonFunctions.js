@@ -12,18 +12,21 @@ async function show_all_untriaged_cards(context_data_obj) {
     SafeAccess(() => context_data_obj.event.user) ||
     SafeAccess(() => context_data_obj.body.user.id);
 
-  // TODO potentially move this get installation ID query to its own function
+  // EXTRA_TODO potentially move this get installation ID query to its own function
   const db_user_filter = {};
 
   db_user_filter[`team_members.${user_id}`] = {$exists: true};
-  // TODO Add org_level_project_board to DB
   const db_query = await find_documents(db_user_filter, {
     gitwave_github_app_installation_id: 1,
     org_level_project_board: 1,
+    internal_triage_items: 1,
   });
 
-  const installation_id = db_query[0].gitwave_github_app_installation_id;
-  const repo_project_id = db_query[0].org_level_project_board.project_id;
+  const {
+    internal_triage_items,
+    gitwave_github_app_installation_id: installation_id,
+    org_level_project_board: {project_id: repo_project_id},
+  } = db_query[0];
 
   const trigger_id = SafeAccess(() => context_data_obj.body.trigger_id);
 
@@ -53,9 +56,19 @@ async function show_all_untriaged_cards(context_data_obj) {
     installation_id
   );
 
-  const untriaged_issues = github_untriaged_cards_response.nodes[0].pendingCards.nodes;
+  const internal_issue_card_array = Object.values(internal_triage_items).filter(
+    issues => typeof issues.issue_triage_data === 'undefined'
+  );
 
-  const untriaged_blocks = AppHome.AppHomeIssueCards.untriaged_cards(untriaged_issues);
+  console.log('internal_issue_card_array', internal_issue_card_array);
+
+  const external_issue_card_array =
+    github_untriaged_cards_response.nodes[0].pendingCards.nodes;
+
+  const untriaged_blocks = AppHome.AppHomeIssueCards.untriaged_cards({
+    external_issue_card_array,
+    internal_issue_card_array,
+  });
 
   const home_view = AppHome.BaseAppHome(user_app_home_state_obj, untriaged_blocks);
 
