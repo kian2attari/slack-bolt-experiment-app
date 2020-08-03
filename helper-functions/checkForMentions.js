@@ -49,8 +49,8 @@ async function check_for_mentions(app, mention_metadata) {
       creator: content_creator,
       avatar_url: creator_avatar_url,
       content_create_date,
-      mentioned_slack_user,
-      is_issue_closed: false,
+      mentioned_slack_user: `@${mentioned_slack_user}`,
+      is_closed: false,
       installation_id,
     };
 

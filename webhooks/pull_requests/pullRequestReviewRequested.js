@@ -38,7 +38,7 @@ async function pull_request_review_requested(app, req, res) {
       content_creator: pull_request_creator.login,
       avatar_url: pull_request_creator.avatar_url,
       content_create_date,
-      mentioned_slack_user,
+      mentioned_slack_user: `@${mentioned_slack_user}`,
       review_requested: true,
       installation_id,
     };

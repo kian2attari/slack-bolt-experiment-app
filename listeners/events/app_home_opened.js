@@ -17,7 +17,6 @@ function app_home_opened(
 ) {
   app.event('app_home_opened', async ({event, context, client}) => {
     // Find the team (if there is one) that the current use is a member in.
-    // TODO: call function exported from db to find the right triage team
     // EXTRA CREDIT: turn this section of code into a middleware that adds context.triageTeam, then you don't need to
     // write this code more than once.
 
@@ -29,7 +28,7 @@ function app_home_opened(
     try {
       // TODO change the issue section of the App Home to display a CTA to make a team
       if (team_data.length === 0) {
-        console.log('There is currently no triage team');
+        console.log(`${event.user} currently is not associated with a triage team`);
         const home_view = AppHome.BaseAppHome(user_app_home_state_obj);
         await client.views.publish({
           /* retrieves your xoxb token from context */
