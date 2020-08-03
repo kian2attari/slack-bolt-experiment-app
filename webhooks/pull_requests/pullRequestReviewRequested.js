@@ -43,7 +43,7 @@ async function pull_request_review_requested(app, req, res) {
       installation_id,
     };
 
-    console.log('mentioned slack user', mentioned_slack_user);
+    console.log('mentioned slack user 1 ', mentioned_slack_user);
 
     if (mentioned_slack_user) {
       await TriageTeamData.add_review_request(mention_event_data, installation_id);

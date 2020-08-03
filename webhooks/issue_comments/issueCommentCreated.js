@@ -5,13 +5,13 @@ async function issue_comment_created(app, req, res) {
   const request = req.body;
 
   const installation_id = request.installation.id;
-  const {html_url, title} = request.issue;
+  const {html_url, title, state} = request.issue;
   const {body} = request.comment;
   const comment_creator = request.comment.user.login;
   const creator_avatar_url = request.comment.user.avatar_url;
   const content_create_date = new Date(request.comment.created_at);
 
-  if (req.body.issue.state === 'closed') {
+  if (state === 'closed') {
     const mention_event_data = {
       title: `Comment on closed issue: ${title}`,
       body,
@@ -27,7 +27,6 @@ async function issue_comment_created(app, req, res) {
     await send_mention_message(app, mention_event_data);
 
     res.send();
-    return;
   }
 
   const mention_event_data = {

@@ -330,7 +330,7 @@ class TriageTeamData {
 
     console.log(': ------------------------------------------------------------');
     console.log(
-      '1 slack_id_to_gh_username_match.team_members',
+      '1 get_user_id_by_github_username.team_members',
       gh_username_to_slack_id_match
     );
     console.log(': ------------------------------------------------------------');

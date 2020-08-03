@@ -38,10 +38,6 @@ exports.github_event = (router, triage_team_data_obj, app) => {
     issue_comment_actions.issue_comment_created(app, req, res)
   );
 
-  github_event.on('issue_comment.created', (req, res) =>
-    issue_comment_actions.issue_comment_created(app, req, res)
-  );
-
   github_event.on('pull_request.opened', (req, res) =>
     pull_request_actions.pull_request_opened(app, req, res)
   );
