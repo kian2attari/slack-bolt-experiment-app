@@ -1,6 +1,5 @@
 const {Connection} = require('./dbConnection');
 
-// TODO: convert to an async function
 async function find_valid_triage_channel(triage_channel_id) {
   const collection = await Connection.connectToMongoCollection();
 

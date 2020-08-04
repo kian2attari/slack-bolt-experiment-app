@@ -54,7 +54,6 @@ function github_org_select_input(app) {
   // eslint-disable-next-line no-unused-vars
   app.options('github_org_select_input', async ({options, ack}) => {
     try {
-      // TODO get a list of the orgs that the app has access to via DB
       // The query paramater is empty since we want to return all installations
       const orgs_response_array = await find_documents({}, {org_account: 1});
 

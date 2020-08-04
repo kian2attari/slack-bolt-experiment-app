@@ -30,8 +30,6 @@ const call_gh_graphql = async (query, variables, installation_id) => {
 
     return data;
   } catch (error) {
-    // REVIEW is there a better way to handle this?
-    // TODO improve error handling
     console.error(error);
     if (Array.isArray(error.errors)) {
       // This covers higher-level more logical graphQL errors raised on gitHub's end

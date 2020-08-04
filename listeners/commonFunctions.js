@@ -50,7 +50,6 @@ async function show_all_untriaged_cards(context_data_obj) {
     return;
   }
 
-  // TODO update method
   // Show all untriaged issues from all repos
   const github_untriaged_cards_response = await graphql.call_gh_graphql(
     query.getAllUntriaged,

@@ -6,11 +6,15 @@ async function issue_opened_reopened(app, req, res) {
   const installation_id = request.installation.id;
 
   const {node_id: repo_id} = request.repository;
-  // TODO Use destructuring here
-  const {title, body, html_url, labels, created_at} = request.issue;
-  const issue_creator = request.issue.user.login;
-  const creator_avatar_url = request.issue.user.avatar_url;
-  const issue_node_id = request.issue.node_id;
+  const {
+    title,
+    body,
+    html_url,
+    labels,
+    created_at,
+    node_id: issue_node_id,
+    user,
+  } = request.issue;
   const content_create_date = new Date(created_at);
 
   // TODO if the issue doesn't have a triage label, add the untriaged label
@@ -26,8 +30,8 @@ async function issue_opened_reopened(app, req, res) {
     title,
     body,
     html_url,
-    content_creator: issue_creator,
-    creator_avatar_url,
+    content_creator: user.login,
+    creator_avatar_url: user.avatar_url,
     content_create_date,
     installation_id,
   };

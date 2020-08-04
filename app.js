@@ -21,7 +21,7 @@ const expressReceiver = new ExpressReceiver({
 // Initializes your app with your bot token, signing secret, and receiver
 const app = new App({
   // Currently, this app runs on a single workspace
-  // TODO: start using the built-in OAuth support to go multi-workspace (or multi-org)
+  // EXTRA_TODO: start using the built-in OAuth support to go multi-workspace (or multi-org)
   token: process.env.SLACK_BOT_TOKEN,
   receiver: expressReceiver,
   logLevel: LogLevel.DEBUG,
@@ -161,7 +161,6 @@ options_listener.untriaged_defaults_selection.github_org_select_input(
   triage_team_data_obj
 );
 
-// TODO only show labels with description 'triage'
 options_listener.untriaged_defaults_selection.setup_default_triage_label_list(
   app,
   triage_team_data_obj

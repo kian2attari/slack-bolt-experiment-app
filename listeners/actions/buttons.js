@@ -216,8 +216,6 @@ function show_assigned_to_user_filter_button(app) {
       } catch (error) {
         console.error(error);
       }
-
-      // TODO get all the cards in the TODO column of the org-level project
     }
   );
 }
@@ -303,7 +301,7 @@ function show_done_by_user_filter_button(app) {
 }
 
 function app_home_external_triage_buttons(app) {
-  // TODO autogenerate this list based on the triage labels for a repo
+  // EXTRA_TODO autogenerate this list based on the triage labels for a repo
   // EXTRA_TODO the internal and external button setup have a lot in common, pull that into a common function
   const external_triage_buttons = [
     'assign_bug_label',
@@ -341,7 +339,7 @@ function app_home_internal_triage_buttons(app) {
         actions,
       } = body;
 
-      // TODO turn this find channel id query into its own function perhaps
+      // EXTRA_TODO turn this find channel id query into its own function perhaps
       const response = await find_triage_team_by_slack_user(reacting_user_id, {
         team_internal_triage_channel_id: 1,
       });

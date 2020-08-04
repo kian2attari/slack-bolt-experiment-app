@@ -1,6 +1,5 @@
 const {Messages} = require('../blocks');
 
-// TODO: Get user's timezone and display the date/time with respect to it
 /**
  * @param {{
  *   channel_id: string;
@@ -17,7 +16,6 @@ const {Messages} = require('../blocks');
 module.exports = async (app, mention_event_data) => {
   // TriageTeamData is imported within this function scope because it would otherwise conflict with the require in the webhooks
   // TODO fix this
-  // FIXME why are two messages being sent??????
   const {TriageTeamData} = require('../models');
   const {
     title,

@@ -46,7 +46,6 @@ module.exports = (app, triage_team_data_obj, user_app_home_state_obj) => {
           )
         );
 
-      // TODO compare the selected_label_ids to the actual label_ids of the card. If they are different, do stuff below
       if (label_difference.length !== 0) {
         const db_user_filter = {};
 

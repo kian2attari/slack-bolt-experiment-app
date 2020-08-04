@@ -10,7 +10,7 @@ exports.triaged_cards = card_array => {
           'type': 'plain_text',
           'text': label.name,
         },
-        // REVIEW TODO Why was the value originally card_id?
+        // REVIEW Why was the value originally card_id?
         'value': label.id,
       };
     });
@@ -20,10 +20,7 @@ exports.triaged_cards = card_array => {
     console.log('card_labels', card_labels);
 
     console.log('label_initial_options', label_initial_options);
-    // TODO show repo name/whether it's internal and from who it is
-    // TODO add the triage label buttons
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
-    // TODO if the issue is closed, then change somthing about visually to indicate the status
 
     return [
       {
@@ -76,7 +73,7 @@ exports.triaged_cards = card_array => {
             'text': 'Select a label',
           },
           'min_query_length': 0,
-          // TODO Initial Options
+          // TODO Initial Options stateless transition
           ...(label_initial_options.length !== 0 && {
             'initial_options': label_initial_options,
           }),

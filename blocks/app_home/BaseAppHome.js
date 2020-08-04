@@ -8,7 +8,6 @@ module.exports = (
   // This can be a specific GitHub repo, or it can be a special selector like "all untriaged", and possibly "internal issues" and "external issues"
   const repo_selection = repo_obj.currently_selected_repo;
 
-  // TODO the primary style should be applied to whatever button was specified in selected_button_parameter
   const filter_buttons_block = {
     'type': 'actions',
     'elements': [
@@ -99,7 +98,6 @@ module.exports = (
   }
 
   const project_selection = repo_selection.currently_selected_project || null;
-  // TODO this project selection level is only relevant if a repo is picked in the repo selector, so not when "untriaged", "internal", or "external", is picked
   if (project_selection.project_name !== '' && project_selection.project_id !== '') {
     selection_block.elements.push(
       external_select_element(

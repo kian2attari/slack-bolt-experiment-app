@@ -52,9 +52,9 @@ function project_selection(app, user_app_home_state_obj) {
   });
 }
 
-function column_selection(app, triage_team_data_obj, user_app_home_state_obj) {
+function column_selection(app, user_app_home_state_obj) {
   app.action('column_selection', async ({ack, body, context, client}) => {
-    // TODO account for deleting
+    // TODO account for deleting as well
     await ack();
 
     try {
@@ -70,7 +70,6 @@ function column_selection(app, triage_team_data_obj, user_app_home_state_obj) {
         user_app_home_state_obj.currently_selected_repo.currently_selected_project;
 
       selected_project.currently_selected_column.set_column(column_name, column_id);
-      // TODO Columns must be a map
       // const cards_in_selected_column = triage_team_data_obj.subscribed_repo_map
       //   .get(user_app_home_state_obj.currently_selected_repo.repo_path)
       //   .repo_project_map.get(
