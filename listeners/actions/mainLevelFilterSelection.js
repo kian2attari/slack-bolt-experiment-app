@@ -1,5 +1,5 @@
 const {AppHome} = require('../../blocks');
-const common_functions = require('../commonFunctions');
+const {show_all_untriaged_cards} = require('../commonFunctions');
 
 module.exports = (
   app,
@@ -32,7 +32,7 @@ module.exports = (
         selected_repo_path === default_selected_repo.repo_path &&
         selected_repo_id === default_selected_repo.repo_id
       ) {
-        common_functions.show_all_untriaged_cards({
+        show_all_untriaged_cards({
           triage_team_data_obj,
           user_app_home_state_obj,
           body,

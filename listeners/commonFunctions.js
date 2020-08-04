@@ -2,7 +2,8 @@ const {graphql, query} = require('../graphql');
 const {AppHome} = require('../blocks');
 const {Modals} = require('../blocks');
 const {SafeAccess} = require('../helper-functions');
-const {find_documents} = require('../db');
+const {find_documents, update_document} = require('../db');
+const {reg_exp} = require('../constants');
 
 async function show_all_untriaged_cards(context_data_obj) {
   const {user_app_home_state_obj, context, client} = context_data_obj;
@@ -25,7 +26,6 @@ async function show_all_untriaged_cards(context_data_obj) {
 
   const {
     internal_triage_items,
-    team_internal_triage_channel_id,
     gitwave_github_app_installation_id: installation_id,
     org_level_project_board: {project_id: repo_project_id},
   } = db_query[0];
@@ -85,4 +85,49 @@ async function show_all_untriaged_cards(context_data_obj) {
   });
 }
 
-module.exports = {show_all_untriaged_cards};
+async function update_internal_triage_status_in_db(event_metadata) {
+  try {
+    const {user, reaction, event_ts, channel, issue_message_ts} = event_metadata;
+
+    const issue_triage_data = {
+      acting_team_member_user_id: user,
+      reaction_last_update_ts: event_ts,
+      status: 'untriaged',
+    };
+
+    switch (reaction) {
+      case 'eyes':
+        issue_triage_data.status = 'seen';
+        break;
+      case 'white_check_mark':
+        issue_triage_data.status = 'done';
+        break;
+      // no default
+    }
+
+    console.log('issue_triage_data', issue_triage_data);
+
+    const team_query_filter = {
+      team_internal_triage_channel_id: channel,
+    };
+
+    const fixed_format_ts = issue_message_ts.replace(reg_exp.find_all_dots, '_');
+
+    const update_issue_obj = {};
+
+    const update_issue_obj_property = `internal_triage_items.${fixed_format_ts}.issue_triage_data`;
+
+    update_issue_obj[update_issue_obj_property] = issue_triage_data;
+
+    console.log('update issue obj', update_issue_obj);
+
+    const response = await update_document(team_query_filter, update_issue_obj);
+
+    console.log('success response', response);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+exports.update_internal_triage_status_in_db = update_internal_triage_status_in_db;
+exports.show_all_untriaged_cards = show_all_untriaged_cards;

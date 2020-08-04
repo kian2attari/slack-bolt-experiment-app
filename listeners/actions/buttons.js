@@ -1,5 +1,8 @@
 const {Modals, AppHome} = require('../../blocks');
-const {show_all_untriaged_cards} = require('../commonFunctions');
+const {
+  show_all_untriaged_cards,
+  update_internal_triage_status_in_db,
+} = require('../commonFunctions');
 const {find_triage_team_by_slack_user} = require('../../db');
 const {graphql, query} = require('../../graphql');
 const {TriageTeamData} = require('../../models');
@@ -333,14 +336,19 @@ function app_home_internal_triage_buttons(app) {
     app.action(button, async ({ack, body, context, client}) => {
       await ack();
 
+      const {
+        user: {id: reacting_user_id},
+        actions,
+      } = body;
+
       // TODO turn this find channel id query into its own function perhaps
-      const response = await find_triage_team_by_slack_user(body.user.id, {
+      const response = await find_triage_team_by_slack_user(reacting_user_id, {
         team_internal_triage_channel_id: 1,
       });
 
       const {team_internal_triage_channel_id} = response[0];
 
-      const {name, message_ts: timestamp} = JSON.parse(body.actions[0].value);
+      const {name, message_ts: timestamp} = JSON.parse(actions[0].value);
       try {
         await Promise.all([
           client.reactions.add({
@@ -353,7 +361,14 @@ function app_home_internal_triage_buttons(app) {
             token: context.botToken,
             channel: team_internal_triage_channel_id, // Review is there a better way to get this id?
             thread_ts: timestamp,
-            text: `<@${body.user.id}> ${response_text}`,
+            text: `<@${reacting_user_id}> ${response_text}`,
+          }),
+          update_internal_triage_status_in_db({
+            user: reacting_user_id,
+            reaction: button === 'assign_eyes_label' ? 'eyes' : 'white_check_mark',
+            event_ts: actions[0].action_ts,
+            channel: team_internal_triage_channel_id,
+            issue_message_ts: timestamp,
           }),
         ]);
       } catch (error) {
