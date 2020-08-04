@@ -4,7 +4,6 @@ const {reg_exp} = require('../../constants');
 
 // Listener middleware that filters out reactions that we dont care about
 async function triage_reactions_middleware({event, next}) {
-  // TODO HIGHEST LISTEN TO BOT ADDED
   if (triage_reacjis.includes(event.reaction)) {
     console.log('reaction', event.reaction);
     await next();

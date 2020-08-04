@@ -20,10 +20,12 @@ async function show_all_untriaged_cards(context_data_obj) {
     gitwave_github_app_installation_id: 1,
     org_level_project_board: 1,
     internal_triage_items: 1,
+    team_internal_triage_channel_id: 1,
   });
 
   const {
     internal_triage_items,
+    team_internal_triage_channel_id,
     gitwave_github_app_installation_id: installation_id,
     org_level_project_board: {project_id: repo_project_id},
   } = db_query[0];

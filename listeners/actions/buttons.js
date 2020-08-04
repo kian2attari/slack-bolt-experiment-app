@@ -330,6 +330,7 @@ function app_home_internal_triage_buttons(app) {
     app.action(button, async ({ack, body, context, client}) => {
       await ack();
 
+      // TODO turn this find channel id query into its own function perhaps
       const response = await find_triage_team_by_slack_user(body.user.id, {
         team_internal_triage_channel_id: 1,
       });
@@ -353,7 +354,10 @@ function app_home_internal_triage_buttons(app) {
 
 // Acknowledges arbitrary button clicks (ex. open a link in a new tab)
 function link_button(app) {
-  app.action('link_button', async ({ack}) => ack());
+  app.action('link_button', async ({ack}) => {
+    console.log('link button pressed!');
+    ack();
+  });
 }
 
 module.exports = {

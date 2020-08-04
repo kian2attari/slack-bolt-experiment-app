@@ -90,7 +90,7 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
             'text': 'View Issue',
             'emoji': true,
           },
-          'url': 'https://www.github.com', // HIGH TODO link to internal issue message via chat.getPermalink
+          'url': internal_issue.deep_link_to_message, // TODO HIGHEST use deep link instead of permalink
           'action_id': 'link_button',
         },
       },

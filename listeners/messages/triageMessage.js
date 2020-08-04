@@ -15,8 +15,6 @@ module.exports = app => {
     reg_exp.triage_circles_regexp,
     validTriageChannelListener,
     async ({context, message, say}) => {
-      console.log('message', message);
-
       // RegExp matches are inside of context.matches
       const triage_priority = context.matches[0];
 
@@ -50,6 +48,16 @@ module.exports = app => {
         issue_message_ts,
         urgency: nature_of_message.urgency,
       }))(message);
+
+      const {permalink} = await app.client.chat.getPermalink({
+        token: context.botToken,
+        channel: message.channel,
+        message_ts: key_message_data.issue_message_ts,
+      });
+
+      console.log('permalink', permalink);
+
+      key_message_data.deep_link_to_message = `slack://channel?team=${message.team}&id=${message.channel}&message=${message.ts}`;
 
       const new_issue_obj = {
         team_internal_triage_channel_id: message.channel,
