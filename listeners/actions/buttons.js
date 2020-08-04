@@ -324,9 +324,12 @@ function app_home_external_triage_buttons(app) {
 }
 
 function app_home_internal_triage_buttons(app) {
-  const internal_triage_buttons = ['assign_eyes_label', 'assign_checkmark_label'];
+  const internal_triage_buttons = new Map([
+    ['assign_eyes_label', 'is looking :eyes: into this!'],
+    ['assign_checkmark_label', 'has resolved :white_check_mark: this!'],
+  ]);
 
-  internal_triage_buttons.forEach(button =>
+  internal_triage_buttons.forEach((response_text, button) =>
     app.action(button, async ({ack, body, context, client}) => {
       await ack();
 
@@ -339,12 +342,20 @@ function app_home_internal_triage_buttons(app) {
 
       const {name, message_ts: timestamp} = JSON.parse(body.actions[0].value);
       try {
-        await client.reactions.add({
-          token: context.botToken,
-          channel: team_internal_triage_channel_id, // Review is there a better way to get this id?
-          name,
-          timestamp,
-        });
+        await Promise.all([
+          client.reactions.add({
+            token: context.botToken,
+            channel: team_internal_triage_channel_id, // Review is there a better way to get this id?
+            name,
+            timestamp,
+          }),
+          client.chat.postMessage({
+            token: context.botToken,
+            channel: team_internal_triage_channel_id, // Review is there a better way to get this id?
+            thread_ts: timestamp,
+            text: `<@${body.user.id}> ${response_text}`,
+          }),
+        ]);
       } catch (error) {
         console.error(error);
       }

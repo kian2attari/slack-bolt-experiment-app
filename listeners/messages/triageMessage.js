@@ -14,7 +14,7 @@ module.exports = app => {
   app.message(
     reg_exp.triage_circles_regexp,
     validTriageChannelListener,
-    async ({context, message, say}) => {
+    async ({context, message, client}) => {
       // RegExp matches are inside of context.matches
       const triage_priority = context.matches[0];
 
@@ -74,7 +74,12 @@ module.exports = app => {
       const reply_message = was_added
         ? `Hey there <@${message.user}>, thanks for your submitting your ${nature_of_message.text}! I've notified the team and they should respond shortly.`
         : `Hey <@${message.user}>, I encountered an error while sending your ${nature_of_message.text} to our triage team's dashboard. Please '@' them directly for help with this.`;
-      await say(reply_message);
+      await client.chat.postMessage({
+        text: reply_message,
+        token: context.botToken,
+        channel: message.channel,
+        thread_ts: message.ts,
+      });
     }
   );
 };
