@@ -64,19 +64,13 @@ function open_set_repo_defaults_modal_button(app) {
   );
 }
 
-function show_untriaged_filter_button(
-  app,
-  triage_team_data_obj,
-  user_app_home_state_obj
-) {
+function show_untriaged_filter_button(app) {
   // The app home 'Untriaged' filter button
   app.action('show_untriaged_filter_button', async ({ack, body, context, client}) => {
     // Here we acknowledge receipt
     await ack();
 
     await show_untriaged_cards({
-      triage_team_data_obj,
-      user_app_home_state_obj,
       body,
       context,
       client,

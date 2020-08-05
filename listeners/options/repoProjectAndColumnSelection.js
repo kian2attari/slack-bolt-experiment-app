@@ -1,5 +1,5 @@
 const {SubBlocks} = require('../../blocks');
-
+// DEPRECATED
 function repo_project_options(app, triage_team_data_obj, user_app_home_state_obj) {
   // Responding to a project_selection option with list of projects in a repo
   app.options('project_selection', async ({options, ack}) => {

@@ -2,6 +2,8 @@ const {AppHome} = require('../../blocks');
 const {TriageTeamData} = require('../../models');
 const {find_documents} = require('../../db');
 
+/* --------------------------------------------------- DEPRECATED --------------------------------------------------- */
+
 /* DEPRECATED this whole file. It's for filtering by repo on App Home, but that's not very useful unforunately. It's also stateful in its current implementation
 so it needs to be made stateless if you want to use it */
 

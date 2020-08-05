@@ -1,6 +1,6 @@
 const {check_for_mentions} = require('../../helper-functions');
 const {TriageTeamData} = require('../../models');
-// TODO get rid of triage_team_data_obj
+
 async function issue_opened_reopened(app, req, res) {
   const request = req.body;
   const installation_id = request.installation.id;

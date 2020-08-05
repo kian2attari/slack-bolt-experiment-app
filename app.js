@@ -10,7 +10,6 @@ const {
   shortcuts_listener,
 } = require('./listeners');
 const {Connection} = require('./db');
-const {UserAppHomeState, TriageTeamData} = require('./models');
 const {review_request_cron_job} = require('./cronJobs');
 
 // Create a Bolt Receiver
@@ -26,35 +25,6 @@ const app = new App({
   receiver: expressReceiver,
   logLevel: LogLevel.DEBUG,
 });
-
-/* -------------------------------------------------------------------------- */
-/*                             SECTION Data layer                             */
-/* -------------------------------------------------------------------------- */
-/* ---------------------------------------------- ANCHOR connect to DB ---------------------------------------------- */
-
-// TODO get this from DB
-const default_selected_repo = {
-  repo_path: 'All Untriaged',
-  repo_id: 'all_untriaged',
-};
-
-// Selection state is stored in the order Repo->Project->Column.
-// Internal object to store the current state of selections on App Home
-// TODO possible replace this entirely with the private_metadata property
-const user_app_home_state_obj = new UserAppHomeState(default_selected_repo);
-console.log(': ----------------------------------------');
-console.log('user_app_home_state_obj', user_app_home_state_obj);
-console.log(': ----------------------------------------');
-
-/* Data object for persistent triage team data such as team members (and their github usernames), 
-the repos the team is subscribed to, and the triage team's channel */
-
-// TODO remove this piece of state
-const triage_team_data_obj = new TriageTeamData();
-console.log(': ------------------------------------------');
-console.log('triage_team_data_obj', triage_team_data_obj);
-console.log(': ------------------------------------------');
-// !SECTION
 
 // TODO Organize these listeners into their own modules by function
 
@@ -91,13 +61,9 @@ actions_listener.buttons.app_home_external_triage_buttons(app);
 
 actions_listener.buttons.app_home_internal_triage_buttons(app);
 
-actions_listener.buttons.show_untriaged_filter_button(
-  app,
-  triage_team_data_obj,
-  user_app_home_state_obj
-);
+actions_listener.buttons.show_untriaged_filter_button(app);
 
-actions_listener.setup_defaults.setup_defaults_repo_selection(app);
+// actions_listener.setup_defaults.setup_defaults_repo_selection(app);
 
 // app.action('setup_default_triage_label_list', async ({ack}) => ack());
 
@@ -106,12 +72,7 @@ actions_listener.setup_defaults.setup_defaults_repo_selection(app);
 actions_listener.buttons.link_button(app);
 
 /* ------------- ANCHOR Responding to the repo name selection ------------ */
-actions_listener.main_level_filter_selection(
-  app,
-  triage_team_data_obj,
-  user_app_home_state_obj,
-  default_selected_repo
-);
+actions_listener.main_level_filter_selection(app);
 
 // /* ------------- ANCHOR DEPRECATED Responding to project name selection ------------------- */
 // actions_listener.repo_level_filter.project_selection(app, user_app_home_state_obj);
@@ -127,7 +88,7 @@ actions_listener.main_level_filter_selection(
 /* ------------- ANCHOR Responding to label assignment on issue ------------- */
 
 /* ------ TODO - add a clear all labels button ----- */
-actions_listener.label_assignment(app, triage_team_data_obj, user_app_home_state_obj);
+actions_listener.label_assignment(app);
 
 // !SECTION
 
@@ -139,27 +100,24 @@ actions_listener.label_assignment(app, triage_team_data_obj, user_app_home_state
 a sub-module like setup_team_settings would make more sense */
 options_listener.untriaged_defaults_selection.org_level_project_input(app);
 
-options_listener.project_col_selection.repo_project_options(
-  app,
-  triage_team_data_obj,
-  user_app_home_state_obj
-);
+// options_listener.project_col_selection.repo_project_options(
+//   app,
+//   triage_team_data_obj,
+//   user_app_home_state_obj
+// );
 
 // Change the defaults for one particular repo
-options_listener.untriaged_defaults_selection.setup_defaults_repo_selection(
-  app,
-  triage_team_data_obj
-);
+// options_listener.untriaged_defaults_selection.setup_defaults_repo_selection(
+//   app,
+//   triage_team_data_obj
+// );
 
-options_listener.untriaged_defaults_selection.github_org_select_input(
-  app,
-  triage_team_data_obj
-);
+options_listener.untriaged_defaults_selection.github_org_select_input(app);
 
-options_listener.untriaged_defaults_selection.setup_default_triage_label_list(
-  app,
-  triage_team_data_obj
-);
+// options_listener.untriaged_defaults_selection.setup_default_triage_label_list(
+//   app,
+//   triage_team_data_obj
+// );
 
 // !SECTION
 
@@ -177,11 +135,11 @@ shortcuts_listener.modify_github_username(app);
 /*                   SECTION Listening for view submissions                   */
 /* -------------------------------------------------------------------------- */
 
-views_listener.setup_triage_team_view(app, triage_team_data_obj);
+views_listener.setup_triage_team_view(app);
 
-views_listener.map_username_modal_view(app, triage_team_data_obj);
+views_listener.map_username_modal_view(app);
 
-views_listener.setup_org_project_modal_view(app, triage_team_data_obj);
+views_listener.setup_org_project_modal_view(app);
 
 // !SECTION Listening for view submissions
 /* -------------------------------------------------------------------------- */
@@ -190,7 +148,7 @@ views_listener.setup_org_project_modal_view(app, triage_team_data_obj);
 
 expressReceiver.router.use(json({type: 'application/json'}));
 
-github_event(expressReceiver.router, triage_team_data_obj, app);
+github_event(expressReceiver.router, app);
 
 // !SECTION
 

@@ -3,6 +3,8 @@ const {SafeAccess} = require('../../helper-functions');
 const {query, graphql} = require('../../graphql');
 const {find_documents} = require('../../db');
 
+/* --------------------------------------------------- DEPRECATED --------------------------------------------------- */
+
 function setup_defaults_repo_selection(app, triage_team_data_obj) {
   app.options('setup_defaults_repo_selection', async ({options, ack}) => {
     try {
@@ -156,6 +158,8 @@ function org_level_project_input(app) {
     }
   });
 }
+
+/* --------------------------------------------------- DEPRECATED --------------------------------------------------- */
 
 function setup_default_triage_label_list(app, triage_team_data_obj) {
   app.options('setup_default_triage_label_list', async ({options, ack}) => {

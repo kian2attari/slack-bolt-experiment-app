@@ -6,7 +6,7 @@ const {new_gitwave_installation} = require('./newInstallationEvent');
 
 const {GitHubWebhookListener} = require('./GitHubWebhookListener');
 
-exports.github_event = (router, triage_team_data_obj, app) => {
+exports.github_event = (router, app) => {
   const github_event = new GitHubWebhookListener(router);
   // The GitHub app was installed on a repo
   github_event.on('installation.created', (req, res) => {

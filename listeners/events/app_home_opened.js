@@ -4,8 +4,6 @@ const {show_untriaged_cards} = require('../commonFunctions');
  * Listens for the app_home_opened event
  *
  * @param {App} app An instance of the Bolt App
- * @param {Object} triage_team_data_obj
- * @param {Object} user_app_home_state_obj
  * @returns {any} Void
  */
 function app_home_opened(app) {
