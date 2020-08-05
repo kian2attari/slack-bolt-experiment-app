@@ -1,12 +1,12 @@
 const {SubBlocks} = require('../../blocks');
-
-module.exports = (app, triage_team_data_obj) => {
+const {TriageTeamData} = require('../../models');
+/* Deprecated! */
+module.exports = app => {
   app.options('main_level_filter_selection', async ({options, ack}) => {
     try {
-      // TODO try using options directly
-      console.log('repo_selection options', options);
-
-      const subscribed_repos = triage_team_data_obj.get_team_repo_subscriptions();
+      const {subscribed_repos} = await TriageTeamData.get_team_repo_subscriptions(
+        options.user.id
+      );
 
       console.log('subscribed_repos', subscribed_repos);
 
@@ -15,9 +15,9 @@ module.exports = (app, triage_team_data_obj) => {
         //   return SubBlocks.option_obj(repo);
         // });
         const repo_options_block_list = [
-          SubBlocks.option_obj('All Untriaged', 'all_untriaged'),
-          ...Array.from(subscribed_repos.keys()).map(repo => {
-            return SubBlocks.option_obj(repo);
+          SubBlocks.option_obj('All', 'all'),
+          ...Object.keys(subscribed_repos).map(repo_path => {
+            return SubBlocks.option_obj(repo_path);
           }),
         ];
 

@@ -6,7 +6,7 @@ const options_listener = require('./options');
 const messages_listener = require('./messages');
 const views_listener = require('./views');
 const {
-  show_all_untriaged_cards,
+  show_untriaged_cards,
   update_internal_triage_status_in_db,
 } = require('./commonFunctions');
 
@@ -17,5 +17,5 @@ exports.shortcuts_listener = shortcuts_listener;
 exports.options_listener = options_listener;
 exports.messages_listener = messages_listener;
 exports.views_listener = views_listener;
-exports.show_all_untriaged_cards = show_all_untriaged_cards;
+exports.show_untriaged_cards = show_untriaged_cards;
 exports.update_internal_triage_status_in_db = update_internal_triage_status_in_db;

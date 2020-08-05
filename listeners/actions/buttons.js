@@ -1,6 +1,6 @@
 const {Modals, AppHome} = require('../../blocks');
 const {
-  show_all_untriaged_cards,
+  show_untriaged_cards,
   update_internal_triage_status_in_db,
 } = require('../commonFunctions');
 const {find_triage_team_by_slack_user} = require('../../db');
@@ -74,7 +74,7 @@ function show_untriaged_filter_button(
     // Here we acknowledge receipt
     await ack();
 
-    await show_all_untriaged_cards({
+    await show_untriaged_cards({
       triage_team_data_obj,
       user_app_home_state_obj,
       body,
@@ -119,10 +119,8 @@ function show_up_for_grabs_filter_button(app) {
 
       const home_view = AppHome.BaseAppHome(
         {
-          currently_selected_repo: {
-            repo_path: 'All Untriaged',
-            repo_id: 'all_untriaged',
-          },
+          name: 'All',
+          value: 'All',
         },
         card_blocks,
         'show_up_for_grabs_filter_button'
@@ -195,10 +193,8 @@ function show_assigned_to_user_filter_button(app) {
 
         const home_view = AppHome.BaseAppHome(
           {
-            currently_selected_repo: {
-              repo_path: 'All Untriaged',
-              repo_id: 'all_untriaged',
-            },
+            name: 'All',
+            value: 'All',
           },
           card_blocks,
           'show_assigned_to_user_filter_button'
@@ -280,10 +276,8 @@ function show_done_by_user_filter_button(app) {
 
       const home_view = AppHome.BaseAppHome(
         {
-          currently_selected_repo: {
-            repo_path: 'All Untriaged',
-            repo_id: 'all_untriaged',
-          },
+          name: 'All',
+          value: 'All',
         },
         card_blocks,
         'show_done_by_user_filter_button'

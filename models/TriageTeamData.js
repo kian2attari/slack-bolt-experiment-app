@@ -50,13 +50,6 @@ class TriageTeamData {
     console.log(`Subscribed to ${repo_path} successfully!`);
   }
 
-  // If a repo path is given, get that repo object. Otherwise, just return all
-  get_team_repo_subscriptions(repo_path = '') {
-    return repo_path.length === 0
-      ? this.team_data.subscribed_repo_map
-      : this.team_data.subscribed_repo_map.get(repo_path);
-  }
-
   get_default_untriaged_project() {
     const untriaged_project_obj = this.team_untriaged_org_project;
     // If a default project hasn't been set, return an empty object
@@ -498,6 +491,15 @@ class TriageTeamData {
     });
 
     return find_review_requests_response;
+  }
+
+  static async get_team_repo_subscriptions(user_id) {
+    const response = await find_triage_team_by_slack_user(user_id, {
+      subscribed_repos: 1,
+      gitwave_github_app_installation_id: 1,
+    });
+
+    return response[0];
   }
 }
 

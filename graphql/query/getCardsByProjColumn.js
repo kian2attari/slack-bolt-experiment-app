@@ -21,6 +21,7 @@ query getCardsByProjColumn($column_id: ID!) {
                 nodes {
                   name
                   id
+                  description
                 }
               }
               assignees(first: 10) {
@@ -30,6 +31,15 @@ query getCardsByProjColumn($column_id: ID!) {
                 }
               }
               closed
+              repository {
+                labels(first: 15) {
+                  nodes {
+                  id
+                  name
+                  description
+                  }
+              }
+              }
             }
           }
         }
@@ -37,4 +47,5 @@ query getCardsByProjColumn($column_id: ID!) {
     }
   }
 }
+
 `;

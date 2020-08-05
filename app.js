@@ -68,12 +68,7 @@ messages_listener.triage_channel(app);
 /* -------------------------- ANCHOR App Home View events -------------------------- */
 // Loads the app home when the app home is opened!
 // ANCHOR App home opened
-events_listener.app_home_opened(
-  app,
-  triage_team_data_obj,
-  user_app_home_state_obj,
-  default_selected_repo
-);
+events_listener.app_home_opened(app);
 
 // ANCHOR reaction added
 events_listener.reaction_added(app);
@@ -118,16 +113,16 @@ actions_listener.main_level_filter_selection(
   default_selected_repo
 );
 
-/* ------------- ANCHOR Responding to project name selection ------------------- */
-actions_listener.repo_level_filter.project_selection(app, user_app_home_state_obj);
+// /* ------------- ANCHOR DEPRECATED Responding to project name selection ------------------- */
+// actions_listener.repo_level_filter.project_selection(app, user_app_home_state_obj);
 
-/* ------------- ANCHOR Responding to column selection ------------------- */
-// TODO add column select menu to BaseAppHome
-actions_listener.repo_level_filter.column_selection(
-  app,
-  triage_team_data_obj,
-  user_app_home_state_obj
-);
+// /* ------------- ANCHOR DEPRECATED Responding to column selection ------------------- */
+// // TODO add column select menu to BaseAppHome
+// actions_listener.repo_level_filter.column_selection(
+//   app,
+//   triage_team_data_obj,
+//   user_app_home_state_obj
+// );
 
 /* ------------- ANCHOR Responding to label assignment on issue ------------- */
 
@@ -138,7 +133,7 @@ actions_listener.label_assignment(app, triage_team_data_obj, user_app_home_state
 
 /* ----------------------- SECTION Listen for options ----------------------- */
 // Responding to a repo_selection options with list of repos
-options_listener.main_level_filter_selection(app, triage_team_data_obj);
+// options_listener.main_level_filter_selection(app, triage_team_data_obj);
 
 /* TODO org_level_project_input doesnt belong with untriaged_defaults_selection. 
 a sub-module like setup_team_settings would make more sense */

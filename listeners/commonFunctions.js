@@ -2,33 +2,37 @@ const {graphql, query} = require('../graphql');
 const {AppHome} = require('../blocks');
 const {Modals} = require('../blocks');
 const {SafeAccess} = require('../helper-functions');
-const {find_documents, update_document} = require('../db');
+const {update_document, find_triage_team_by_slack_user} = require('../db');
 const {reg_exp} = require('../constants');
-
-async function show_all_untriaged_cards(context_data_obj) {
-  const {user_app_home_state_obj, context, client} = context_data_obj;
+/**
+ * Updates the app home page with a list of cards of untriaged issues/PR's depending on the
+ * main level scope that was selected (ie. All Untriaged, only internal issues, only
+ * external issues, or a specific repo).
+ *
+ * @param {any} context_data_obj The context and client from the action (ie. button press)
+ *     or event (ie. app_home_opened) that would call this function
+ * @returns {Void}
+ */
+async function show_untriaged_cards(context_data_obj) {
+  const {context, client, selected_main_level_view} = context_data_obj;
 
   // Grab the user id depending on whether the thing that called the function as an event or an action
   const user_id =
     SafeAccess(() => context_data_obj.event.user) ||
     SafeAccess(() => context_data_obj.body.user.id);
 
-  // EXTRA_TODO potentially move this get installation ID query to its own function
-  const db_user_filter = {};
-
-  db_user_filter[`team_members.${user_id}`] = {$exists: true};
-  const db_query = await find_documents(db_user_filter, {
+  const team_data = await find_triage_team_by_slack_user(user_id, {
     gitwave_github_app_installation_id: 1,
     org_level_project_board: 1,
     internal_triage_items: 1,
-    team_internal_triage_channel_id: 1,
+    // team_internal_triage_channel_id: 1,
   });
 
   const {
     internal_triage_items,
     gitwave_github_app_installation_id: installation_id,
     org_level_project_board: {project_id: repo_project_id},
-  } = db_query[0];
+  } = team_data[0];
 
   const trigger_id = SafeAccess(() => context_data_obj.body.trigger_id);
 
@@ -71,11 +75,7 @@ async function show_all_untriaged_cards(context_data_obj) {
     internal_issue_card_array,
   });
 
-  const home_view = AppHome.BaseAppHome(user_app_home_state_obj, untriaged_blocks);
-
-  console.log(': ----------');
-  console.log('open_map_modal_button context', context);
-  console.log(': ----------');
+  const home_view = AppHome.BaseAppHome(selected_main_level_view, untriaged_blocks);
 
   await client.views.publish({
     token: context.botToken,
@@ -129,4 +129,4 @@ async function update_internal_triage_status_in_db(event_metadata) {
 }
 
 exports.update_internal_triage_status_in_db = update_internal_triage_status_in_db;
-exports.show_all_untriaged_cards = show_all_untriaged_cards;
+exports.show_untriaged_cards = show_untriaged_cards;

@@ -1,25 +1,39 @@
+const {reg_exp} = require('../../../constants');
+
 exports.triaged_cards = card_array => {
   const issues_block = card_array.flatMap(card => {
     const card_data = card.content;
-    // const card_id = card_data.id;
+    const repo_labels = card_data.repository.labels.nodes;
+    const card_id = card_data.id;
     const card_labels = card_data.labels.nodes;
-    const label_initial_options = card_labels.map(label => {
+
+    const label_map_callback = label => {
       console.log('label', label);
       return {
         'text': {
           'type': 'plain_text',
           'text': label.name,
         },
-        // REVIEW Why was the value originally card_id?
-        'value': label.id,
+        'value': JSON.stringify([label.id, card_id]),
       };
-    });
+    };
+
+    const non_triage_labels = label_array =>
+      label_array.filter(label => !reg_exp.find_triage_labels.test(label.description));
+
+    const label_possible_options = non_triage_labels(repo_labels).map(label_map_callback);
+
+    console.log('card_labels', card_labels);
+
+    const label_initial_options = non_triage_labels(card_labels).map(label_map_callback);
+
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
     console.log('card_data', card_data);
 
     console.log('card_labels', card_labels);
 
     console.log('label_initial_options', label_initial_options);
+    console.log('label_possible_options', label_possible_options);
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
 
     return [
@@ -67,12 +81,12 @@ exports.triaged_cards = card_array => {
 
         'accessory': {
           'action_id': 'assign_label',
-          'type': 'multi_external_select',
+          'type': 'multi_static_select',
           'placeholder': {
             'type': 'plain_text',
             'text': 'Select a label',
           },
-          'min_query_length': 0,
+          'options': label_possible_options,
           // TODO Initial Options stateless transition
           ...(label_initial_options.length !== 0 && {
             'initial_options': label_initial_options,
