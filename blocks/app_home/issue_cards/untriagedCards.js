@@ -75,65 +75,63 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
     ];
   });
 
-  const internal_issues_block = internal_issue_card_array.flatMap(internal_issue => {
-    return [
-      {
-        'type': 'section',
-        'text': {
-          'type': 'mrkdwn',
-          'text': `INTERNAL ISSUE: *${internal_issue.urgency}* urgency`,
-        },
-        'accessory': {
-          'type': 'button',
-          'text': {
-            'type': 'plain_text',
-            'text': 'View Issue',
-            'emoji': true,
-          },
-          'url': internal_issue.deep_link_to_message,
-          'action_id': 'link_button',
-        },
+  const internal_issues_block = internal_issue_card_array.flatMap(internal_issue => [
+    {
+      'type': 'section',
+      'text': {
+        'type': 'mrkdwn',
+        'text': `INTERNAL ISSUE: *${internal_issue.urgency}* urgency`,
       },
-      {
-        'type': 'section',
+      'accessory': {
+        'type': 'button',
         'text': {
           'type': 'plain_text',
-          'text': `${internal_issue.text} \n`,
+          'text': 'View Issue',
+          'emoji': true,
         },
+        'url': internal_issue.deep_link_to_message,
+        'action_id': 'link_button',
       },
+    },
+    {
+      'type': 'section',
+      'text': {
+        'type': 'plain_text',
+        'text': `${internal_issue.text} \n`,
+      },
+    },
 
-      {
-        'type': 'section',
-        // "block_id": issue_id,
-        'text': {
+    {
+      'type': 'section',
+      // "block_id": issue_id,
+      'text': {
+        'type': 'mrkdwn',
+        'text': 'Triage this issue',
+      },
+    },
+    ...internal_issue_label_buttons_block(internal_issue.issue_message_ts),
+    {
+      'type': 'context',
+      'elements': [
+        {
           'type': 'mrkdwn',
-          'text': 'Triage this issue',
+          'text': 'Opened by',
         },
-      },
-      ...internal_issue_label_buttons_block(internal_issue.issue_message_ts),
-      {
-        'type': 'context',
-        'elements': [
-          {
-            'type': 'mrkdwn',
-            'text': 'Opened by',
-          },
-          // {
-          //   'type': 'image',
-          //   'image_url': card_data.author.avatarUrl,
-          //   'alt_text': `${card_data.author.login}`,
-          // },
-          {
-            'type': 'mrkdwn',
-            'text': `*<@${internal_issue.user}>*`,
-          },
-        ],
-      },
-      {
-        'type': 'divider',
-      },
-    ];
-  });
+        // {
+        //   'type': 'image',
+        //   'image_url': card_data.author.avatarUrl,
+        //   'alt_text': `${card_data.author.login}`,
+        // },
+        {
+          'type': 'mrkdwn',
+          'text': `*<@${internal_issue.user}>*`,
+        },
+      ],
+    },
+    {
+      'type': 'divider',
+    },
+  ]);
 
   const combined_issues_block = external_issues_block.concat(internal_issues_block);
 

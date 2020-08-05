@@ -90,41 +90,6 @@ module.exports = (
       // ...(typeof more_info_blocks !== 'undefined' ? more_info_blocks : []),
     ],
   };
-
-  // REVIEW the code below was intended to provide the repo-level view on the app home. It's been deprecated because it relied on the old state object.
-  // It needs to be made stateless if you want to implement it.
-  // const project_selection = repo_selection.currently_selected_project || null;
-  // if (project_selection.project_name !== '' && project_selection.project_id !== '') {
-  //   selection_block.elements.push(
-  //     external_select_element(
-  //       'project_selection',
-  //       'Select a project',
-  //       SubBlocks.option_obj(project_selection.project_name, project_selection.project_id)
-  //     )
-  //   );
-  //   const column_selection = project_selection.currently_selected_column || null;
-
-  //   if (column_selection.column_name !== '') {
-  //     selection_block.elements.push(
-  //       external_select_element(
-  //         'column_selection',
-  //         'Select a column',
-  //         SubBlocks.option_obj(column_selection.column_name, column_selection.column_id)
-  //       )
-  //     );
-  //   } else {
-  //     selection_block.elements.push(
-  //       external_select_element('column_selection', 'Select a column')
-  //     );
-  //   }
-  // } else {
-  //   selection_block.elements.push(
-  //     external_select_element('project_selection', 'Select a project')
-  //   );
-  // }
-
-  // console.log('post repo check type of selection block', typeof selection_block);
-  // console.log('post repo check selection_block', selection_block);
 };
 
 // TODO the initial option should be gotten from the previous state of the view

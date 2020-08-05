@@ -49,7 +49,7 @@ events_listener.reaction_added(app);
 actions_listener.buttons.open_map_modal_button(app);
 
 // Opens the modal for setting default repos
-actions_listener.buttons.open_set_repo_defaults_modal_button(app);
+// actions_listener.buttons.open_set_repo_defaults_modal_button(app);
 
 actions_listener.buttons.show_up_for_grabs_filter_button(app);
 
