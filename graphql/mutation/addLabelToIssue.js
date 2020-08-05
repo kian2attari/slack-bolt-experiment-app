@@ -10,6 +10,6 @@ mutation addLabelToIssue($element_node_id: ID!, $label_ids: [ID!]!) {
     }
   }
 }
-`
+`;
 
 // The labelable query on line 7 is a redundancy to check if the label was added

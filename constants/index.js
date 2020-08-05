@@ -1,5 +1,5 @@
 const {reg_exp} = require('./importantRegularExpressions.js');
-const {triage_reactjis} = require('./triageLabelsAndReactjis');
+const {triage_reacjis} = require('./triageLabelsAndReacjis');
 
 exports.reg_exp = reg_exp;
-exports.triage_reactjis = triage_reactjis;
+exports.triage_reacjis = triage_reacjis;

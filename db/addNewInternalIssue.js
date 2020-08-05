@@ -1,18 +1,9 @@
-const {MongoClient} = require('mongodb');
-const assert = require('assert');
+const {Connection} = require('./dbConnection');
 const {reg_exp} = require('../constants');
 
-// Connection URL
-const url = process.env.MONGODB_URI;
-
-// Create a new MongoClient
-const client = new MongoClient(url, {useUnifiedTopology: true});
-
-// Database Name
-const dbName = process.env.MONGODB_NAME;
 /**
  * @param {{
- *   internal_triage_channel_id: String;
+ *   team_internal_triage_channel_id: String;
  *   internal_triage_item: {
  *     text: String;
  *     user: String;
@@ -21,17 +12,17 @@ const dbName = process.env.MONGODB_NAME;
  *   };
  * }} new_issue_obj
  */
-function add_new_internal_issue(new_issue_message_obj, message_user_callback) {
+// eslint-disable-next-line consistent-return
+async function add_new_internal_issue(new_issue_message_obj) {
   // Use connect method to connect to the Server
-  client.connect(err => {
-    assert.equal(null, err);
+  try {
+    const collection = await Connection.connectToMongoCollection();
 
-    const db_obj = client.db(dbName).collection('gitwave_team_data');
-
-    console.log('db_obj', db_obj);
+    console.log('collection', collection);
 
     const team_query = {
-      internal_triage_channel_id: new_issue_message_obj.internal_triage_channel_id,
+      team_internal_triage_channel_id:
+        new_issue_message_obj.team_internal_triage_channel_id,
     };
 
     // TODO if this query returns nothing, then send a message to the user with an error! The team hasn't set a traige channel
@@ -56,15 +47,11 @@ function add_new_internal_issue(new_issue_message_obj, message_user_callback) {
     const push_new_value = {
       $set: new_issue_obj,
     };
+    return collection.updateOne(team_query, push_new_value);
     // Update a single document
-
-    db_obj.updateOne(team_query, push_new_value, (error, response) => {
-      assert.equal(null, error);
-      const was_added = response.result.n === 1;
-      console.log('Was the issue added successfully? :', was_added);
-      message_user_callback(was_added);
-    });
-  });
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 exports.add_new_internal_issue = add_new_internal_issue;

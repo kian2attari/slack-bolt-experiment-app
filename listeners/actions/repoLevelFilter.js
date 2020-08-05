@@ -1,5 +1,11 @@
 const {AppHome} = require('../../blocks');
 const {TriageTeamData} = require('../../models');
+const {find_documents} = require('../../db');
+
+/* --------------------------------------------------- DEPRECATED --------------------------------------------------- */
+
+/* DEPRECATED this whole file. It's for filtering by repo on App Home, but that's not very useful unforunately. It's also stateful in its current implementation
+so it needs to be made stateless if you want to use it */
 
 function project_selection(app, user_app_home_state_obj) {
   app.action('project_selection', async ({ack, body, context, client}) => {
@@ -51,9 +57,9 @@ function project_selection(app, user_app_home_state_obj) {
   });
 }
 
-function column_selection(app, triage_team_data_obj, user_app_home_state_obj) {
+function column_selection(app, user_app_home_state_obj) {
   app.action('column_selection', async ({ack, body, context, client}) => {
-    // TODO account for deleting
+    // TODO account for deleting as well
     await ack();
 
     try {
@@ -69,7 +75,6 @@ function column_selection(app, triage_team_data_obj, user_app_home_state_obj) {
         user_app_home_state_obj.currently_selected_repo.currently_selected_project;
 
       selected_project.currently_selected_column.set_column(column_name, column_id);
-      // TODO Columns must be a map
       // const cards_in_selected_column = triage_team_data_obj.subscribed_repo_map
       //   .get(user_app_home_state_obj.currently_selected_repo.repo_path)
       //   .repo_project_map.get(
@@ -77,8 +82,19 @@ function column_selection(app, triage_team_data_obj, user_app_home_state_obj) {
       //       .currently_selected_project.project_name
       //   ).columns;
 
+      const db_user_filter = {};
+
+      db_user_filter[`team_members.${body.user.id}`] = {$exists: true};
+
+      const db_query = await find_documents(db_user_filter, {
+        gitwave_github_app_installation_id: 1,
+      });
+
+      const installation_id = db_query[0].gitwave_github_app_installation_id;
+
       const cards_in_selected_column = await TriageTeamData.get_cards_by_column(
-        column_id
+        column_id,
+        installation_id
       );
 
       console.log('cards_in_selected_column', cards_in_selected_column);

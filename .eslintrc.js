@@ -1,6 +1,5 @@
 module.exports = {
   env: {
-    es6: true,
     node: true,
   },
   parser: 'babel-eslint',
@@ -8,6 +7,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 11,
   },
+  plugins: ['node'],
   rules: {
     'global-require': 'off',
     'camelcase': 'off',
@@ -32,5 +32,6 @@ module.exports = {
           '`with` is disallowed in strict mode because it makes code impossible to predict and optimize.',
       },
     ],
+    // 'node/exports-style': ['error', 'exports'],
   },
 };

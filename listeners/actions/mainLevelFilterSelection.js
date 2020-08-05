@@ -1,12 +1,7 @@
-const {AppHome} = require('../../blocks');
-const common_functions = require('../commonFunctions');
+// const {AppHome} = require('../../blocks');
+const {show_untriaged_cards} = require('../commonFunctions');
 
-module.exports = (
-  app,
-  triage_team_data_obj,
-  user_app_home_state_obj,
-  default_selected_repo
-) => {
+module.exports = app => {
   app.action('main_level_filter_selection', async ({ack, body, context, client}) => {
     await ack();
     try {
@@ -14,48 +9,38 @@ module.exports = (
 
       const {selected_option} = action_body;
 
-      const selected_repo_path = selected_option.text.text;
+      const selected_main_level_view = {
+        name: selected_option.text.text,
+        value: selected_option.value,
+      };
 
-      const selected_repo_id = selected_option.value;
-
-      console.log('selected_repo_path', selected_repo_path);
-
-      console.log('selected_repo_id', selected_repo_id);
-
-      user_app_home_state_obj.set_selected_repo({
-        repo_path: selected_repo_path,
-        repo_id: selected_repo_id,
-      });
+      console.log('selected_main_level_view', selected_main_level_view);
 
       // If the selection is All untriaged, then just show those cards
-      if (
-        selected_repo_path === default_selected_repo.repo_path &&
-        selected_repo_id === default_selected_repo.repo_id
-      ) {
-        common_functions.show_all_untriaged_cards({
-          triage_team_data_obj,
-          user_app_home_state_obj,
+      if (selected_main_level_view.value === 'All') {
+        show_untriaged_cards({
           body,
           context,
           client,
+          selected_main_level_view,
         });
 
         return;
       }
 
-      const updated_home_view = AppHome.BaseAppHome(user_app_home_state_obj);
-      // QUESTION: should i use views.update or views.publish to update the app home view?
-      /* view.publish is the method that your app uses to push a view to the Home tab */
-      await client.views.update({
-        /* retrieves your xoxb token from context */
-        token: context.botToken,
+      // const updated_home_view = AppHome.BaseAppHome();
+      // // QUESTION: should i use views.update or views.publish to update the app home view?
+      // /* view.publish is the method that your app uses to push a view to the Home tab */
+      // await client.views.update({
+      //   /* retrieves your xoxb token from context */
+      //   token: context.botToken,
 
-        /* View to be updated */
-        view_id: body.view.id,
+      //   /* View to be updated */
+      //   view_id: body.view.id,
 
-        /* the view payload that appears in the app home */
-        view: updated_home_view,
-      });
+      //   /* the view payload that appears in the app home */
+      //   view: updated_home_view,
+      // });
     } catch (error) {
       console.error(error);
     }

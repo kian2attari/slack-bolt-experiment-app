@@ -1,30 +1,27 @@
 module.exports = `
-query getOrgAndUserLevelProjects($repo_id: ID!) {
-    node(id: $repo_id) {
-      ... on Repository {
-        owner {
-          ... on Organization {
-            id
-            name
-            projects(first: 10) {
-              nodes {
-                id
-                name
-              }
-            }
-          }
-          ... on User {
-            id
-            login
-            projects(first: 10) {
-              nodes {
-                id
-                name
-              }
-            }
-          }
+query getOrgAndUserLevelProjects($org_or_user_id: ID!) {
+  node(id: $org_or_user_id) {
+    ... on Organization {
+      id
+      name
+      projects(first: 10) {
+        nodes {
+          id
+          name
+        }
+      }
+      login
+    }
+    ... on User {
+      id
+      login
+      projects(first: 10) {
+        nodes {
+          id
+          name
         }
       }
     }
   }
+}
 `;
