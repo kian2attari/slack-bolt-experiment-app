@@ -1,5 +1,5 @@
 const {check_for_mentions} = require('../../helper-functions');
-const {TriageTeamData} = require('../../models');
+const {mark_element_as_untriaged} = require('../../models');
 
 async function issue_opened_reopened(app, req, res) {
   const request = req.body;
@@ -20,12 +20,7 @@ async function issue_opened_reopened(app, req, res) {
   // TODO if the issue doesn't have a triage label, add the untriaged label
   // QUESTION: Should editing the issue also cause the untriaged label to be added
   try {
-    await TriageTeamData.mark_element_as_untriaged(
-      labels,
-      issue_node_id,
-      repo_id,
-      installation_id
-    );
+    await mark_element_as_untriaged(labels, issue_node_id, repo_id, installation_id);
   } catch (error) {
     console.error(error);
   }

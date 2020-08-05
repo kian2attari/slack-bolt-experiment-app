@@ -1,4 +1,4 @@
-const {TriageTeamData} = require('../../models');
+const {set_user_github_username} = require('../../models');
 
 module.exports = app => {
   app.view('map_username_modal', async ({ack, body, view, context}) => {
@@ -23,7 +23,7 @@ module.exports = app => {
     };
 
     try {
-      await TriageTeamData.set_user_github_username(slack_user_id, github_username);
+      await set_user_github_username(slack_user_id, github_username);
     } catch (error) {
       console.error(error);
       reply_message.text = `Hey <@${slack_user_id}>,  ${github_username} is not a valid GitHub username. Please double check your spelling. `;

@@ -1,5 +1,5 @@
 const {mutation, graphql} = require('../../graphql');
-const {TriageTeamData} = require('../../models');
+const {get_team_org_level_project_board} = require('../../models');
 
 async function issue_labeled(req, res) {
   const request = req.body;
@@ -15,9 +15,9 @@ async function issue_labeled(req, res) {
 
   const label_name = request.label.name;
 
-  const {
-    project_id: org_level_project_board_id,
-  } = await TriageTeamData.get_team_org_level_project_board(installation_id);
+  const {project_id: org_level_project_board_id} = await get_team_org_level_project_board(
+    installation_id
+  );
 
   // TODO if the label is question, put it under the question column
 

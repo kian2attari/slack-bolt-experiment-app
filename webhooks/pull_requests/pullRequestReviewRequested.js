@@ -1,4 +1,4 @@
-const {TriageTeamData} = require('../../models');
+const {get_user_id_by_github_username, add_review_request} = require('../../models');
 const {async_array_map, send_mention_message} = require('../../helper-functions');
 
 async function pull_request_review_requested(app, req, res) {
@@ -24,7 +24,7 @@ async function pull_request_review_requested(app, req, res) {
   const requested_reviewer_callback = async requested_reviewer => {
     const github_username = requested_reviewer.login;
 
-    const mentioned_slack_user = await TriageTeamData.get_user_id_by_github_username(
+    const mentioned_slack_user = await get_user_id_by_github_username(
       github_username,
       installation_id
     );
@@ -47,7 +47,7 @@ async function pull_request_review_requested(app, req, res) {
 
     if (mentioned_slack_user) {
       try {
-        await TriageTeamData.add_review_request(mention_event_data, installation_id);
+        await add_review_request(mention_event_data, installation_id);
 
         await send_mention_message(app, mention_event_data);
       } catch (error) {

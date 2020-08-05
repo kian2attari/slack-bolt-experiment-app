@@ -5,7 +5,7 @@ const {
 } = require('../commonFunctions');
 const {find_triage_team_by_slack_user} = require('../../db');
 const {graphql, query} = require('../../graphql');
-const {TriageTeamData} = require('../../models');
+const {add_labels_to_card, get_github_username_by_user_id} = require('../../models');
 
 /** @param {App} app */
 async function open_map_modal_button(app) {
@@ -17,9 +17,7 @@ async function open_map_modal_button(app) {
 
     const user_slack_id = body.user.id;
 
-    const user_set_github_username = await TriageTeamData.get_github_username_by_user_id(
-      user_slack_id
-    );
+    const user_set_github_username = await get_github_username_by_user_id(user_slack_id);
 
     console.log(
       'open_map_modal_button user_set_github_username',
@@ -305,10 +303,7 @@ function app_home_external_triage_buttons(app) {
     app.action(button, async ({ack, body}) => {
       await ack();
 
-      await TriageTeamData.add_labels_to_card(
-        body.user.id,
-        JSON.parse(body.actions[0].value)
-      );
+      await add_labels_to_card(body.user.id, JSON.parse(body.actions[0].value));
     })
   );
 }

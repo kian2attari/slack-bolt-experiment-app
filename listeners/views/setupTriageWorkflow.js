@@ -1,5 +1,5 @@
 const {Messages, Modals} = require('../../blocks');
-const {TriageTeamData} = require('../../models');
+const {associate_team_with_installation} = require('../../models');
 
 module.exports = app => {
   app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
@@ -21,7 +21,7 @@ module.exports = app => {
     const selected_github_org =
       values.github_org_input_block.github_org_select_input.selected_option;
 
-    const create_new_team_result = await TriageTeamData.associate_team_with_installation(
+    const create_new_team_result = await associate_team_with_installation(
       selected_users_array,
       selected_discussion_channel,
       selected_internal_triage_channel,

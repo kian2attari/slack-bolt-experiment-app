@@ -1,5 +1,5 @@
 const {AppHome} = require('../../blocks');
-const {TriageTeamData} = require('../../models');
+const {get_cards_by_column} = require('../../models');
 const {find_documents} = require('../../db');
 
 /* --------------------------------------------------- DEPRECATED --------------------------------------------------- */
@@ -92,7 +92,7 @@ function column_selection(app, user_app_home_state_obj) {
 
       const installation_id = db_query[0].gitwave_github_app_installation_id;
 
-      const cards_in_selected_column = await TriageTeamData.get_cards_by_column(
+      const cards_in_selected_column = await get_cards_by_column(
         column_id,
         installation_id
       );

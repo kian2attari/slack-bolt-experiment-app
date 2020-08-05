@@ -14,9 +14,9 @@ const {Messages} = require('../blocks');
  * }} mention_event_data
  */
 module.exports = async (app, mention_event_data) => {
-  // TriageTeamData is imported within this function scope because it would otherwise conflict with the require in the webhooks
+  // get_team_channel_id is imported within this function scope because it would otherwise conflict with the require in the webhooks
   // TODO fix this
-  const {TriageTeamData} = require('../models');
+  const {get_team_channel_id} = require('../models');
   const {
     title,
     html_url,
@@ -32,7 +32,7 @@ module.exports = async (app, mention_event_data) => {
     // Since there is no context we just use the original token
     token: process.env.SLACK_BOT_TOKEN,
     channel: is_closed
-      ? await TriageTeamData.get_team_channel_id(installation_id)
+      ? await get_team_channel_id(installation_id)
       : mentioned_slack_user,
     // Conditional on whether the message should go to channel or just to a user as a DM
     blocks: Messages.GithubMentionMessage(mention_event_data),

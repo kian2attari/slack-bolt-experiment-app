@@ -18,8 +18,6 @@ const {
   add_labels_to_card,
 } = TriageTeamData;
 
-exports.TriageTeamData = TriageTeamData;
-
 exports.add_team_members = add_team_members;
 exports.get_cards_by_column = get_cards_by_column;
 exports.associate_team_with_installation = associate_team_with_installation;

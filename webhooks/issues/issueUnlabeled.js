@@ -1,4 +1,4 @@
-const {TriageTeamData} = require('../../models');
+const {get_repo_untriaged_label} = require('../../models');
 
 async function issue_unlabeled(req, res) {
   const request = req.body;
@@ -11,10 +11,7 @@ async function issue_unlabeled(req, res) {
   // const issue_label_array = request.issue.labels;
 
   const label_id = request.label.node_id;
-  const untriaged_label_id = await TriageTeamData.get_repo_untriaged_label(
-    repo_id,
-    installation_id
-  );
+  const untriaged_label_id = await get_repo_untriaged_label(repo_id, installation_id);
 
   // const label_id = request.label.node_id
   // console.log(label_id)

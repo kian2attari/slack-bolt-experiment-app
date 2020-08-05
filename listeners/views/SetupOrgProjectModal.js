@@ -1,4 +1,4 @@
-const {TriageTeamData} = require('../../models');
+const {set_org_level_project} = require('../../models');
 const {find_documents} = require('../../db');
 
 module.exports = app => {
@@ -20,8 +20,9 @@ module.exports = app => {
 
     const selected_org_level_proj =
       view.state.values.org_project_input_block.org_level_project_input.selected_option;
+
     // set default project name
-    TriageTeamData.set_org_level_project(
+    await set_org_level_project(
       {
         project_name: selected_org_level_proj.text.text,
         project_id: selected_org_level_proj.value,

@@ -1,12 +1,10 @@
 const {SubBlocks} = require('../../blocks');
-const {TriageTeamData} = require('../../models');
+const {get_team_repo_subscriptions} = require('../../models');
 /* Deprecated! */
 module.exports = app => {
   app.options('main_level_filter_selection', async ({options, ack}) => {
     try {
-      const {subscribed_repos} = await TriageTeamData.get_team_repo_subscriptions(
-        options.user.id
-      );
+      const {subscribed_repos} = await get_team_repo_subscriptions(options.user.id);
 
       console.log('subscribed_repos', subscribed_repos);
 

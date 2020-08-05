@@ -1,5 +1,5 @@
 const {check_for_mentions} = require('../../helper-functions');
-const {TriageTeamData} = require('../../models');
+const {mark_element_as_untriaged} = require('../../models');
 
 async function pull_request_opened(app, req, res) {
   // EXTRA_TODO strip request to req.body in GitHubWebhookListener.js so we dont have to do this everytime
@@ -20,7 +20,7 @@ async function pull_request_opened(app, req, res) {
   const content_create_date = new Date(created_at);
 
   try {
-    await TriageTeamData.mark_element_as_untriaged(
+    await mark_element_as_untriaged(
       labels,
       issue_node_id,
       repository.node_id,
