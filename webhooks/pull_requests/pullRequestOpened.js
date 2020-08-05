@@ -19,12 +19,16 @@ async function pull_request_opened(app, req, res) {
 
   const content_create_date = new Date(created_at);
 
-  await TriageTeamData.mark_element_as_untriaged(
-    labels,
-    issue_node_id,
-    repository.node_id,
-    installation_id
-  );
+  try {
+    await TriageTeamData.mark_element_as_untriaged(
+      labels,
+      issue_node_id,
+      repository.node_id,
+      installation_id
+    );
+  } catch (error) {
+    console.error(error);
+  }
 
   const mention_event_data = {
     title,

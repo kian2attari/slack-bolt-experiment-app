@@ -19,12 +19,16 @@ async function issue_opened_reopened(app, req, res) {
 
   // TODO if the issue doesn't have a triage label, add the untriaged label
   // QUESTION: Should editing the issue also cause the untriaged label to be added
-  await TriageTeamData.mark_element_as_untriaged(
-    labels,
-    issue_node_id,
-    repo_id,
-    installation_id
-  );
+  try {
+    await TriageTeamData.mark_element_as_untriaged(
+      labels,
+      issue_node_id,
+      repo_id,
+      installation_id
+    );
+  } catch (error) {
+    console.error(error);
+  }
 
   const mention_event_data = {
     title,

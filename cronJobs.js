@@ -1,10 +1,10 @@
 const {CronJob} = require('cron');
 const {send_mention_message} = require('./helper-functions');
+const {get_pending_review_requests} = require('./models');
 
 // TODO remove passing this app parameter, there must be a way of avoiding this.
 function check_review_requests(app) {
   return async () => {
-    const {TriageTeamData} = require('./models');
     /* This is an array of objects, with each object representing a separate team/installation. 
     Each team object then has an array of pending review requests. For each of those review requests,
     we check if they fall within the range where we would want to send a reminder (ex. 1 day or 3 days), 
@@ -18,7 +18,7 @@ function check_review_requests(app) {
     Promises.all(...). I use reduce rather than a map for the inner loop because we are returning conditionally
     (since only a set of the review requests actually need reminders sent), and map tries to apply the callback function
     to every element. To use map, we'd need to filter first, and that's just more work for nothing. */
-    const pending_review_requests_by_team = await TriageTeamData.get_pending_review_requests();
+    const pending_review_requests_by_team = await get_pending_review_requests();
 
     console.log(pending_review_requests_by_team);
     /* REVIEW to make this more scalable, this function can also be modified so that the promises are resolved in batches rather than all at once. 

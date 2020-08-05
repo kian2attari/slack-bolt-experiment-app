@@ -46,9 +46,13 @@ async function pull_request_review_requested(app, req, res) {
     console.log('mentioned slack user 1 ', mentioned_slack_user);
 
     if (mentioned_slack_user) {
-      await TriageTeamData.add_review_request(mention_event_data, installation_id);
+      try {
+        await TriageTeamData.add_review_request(mention_event_data, installation_id);
 
-      await send_mention_message(app, mention_event_data);
+        await send_mention_message(app, mention_event_data);
+      } catch (error) {
+        console.error(error);
+      }
     }
 
     res.send();

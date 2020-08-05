@@ -25,14 +25,14 @@ async function check_for_mentions(app, mention_metadata) {
   }
 
   const mention_callback = async mentioned_username => {
-    // TriageTeamData is imported within this function scope because it would otherwise conflict with the require in the webhooks
-    // TODO fix this
-    const {TriageTeamData} = require('../models');
+    /* FIXME Why does this require only work in this function scope but not if it were at the top of the file? Must be some node module cache conflict 
+    since the functions in TriageTeamData are required from different scopes of the project (ex require('../models) require('../../models') etc). */
+    const {get_user_id_by_github_username} = require('../models');
     const github_username = mentioned_username.substring(1);
 
     console.log(`mentioned gh username: ${github_username}`);
 
-    const mentioned_slack_user = await TriageTeamData.get_user_id_by_github_username(
+    const mentioned_slack_user = await get_user_id_by_github_username(
       github_username,
       installation_id
     );

@@ -1,5 +1,6 @@
 const {AppHome} = require('../../blocks');
 const {show_untriaged_cards} = require('../commonFunctions');
+const {get_team_repo_subscriptions} = require('../../models');
 /**
  * Listens for the app_home_opened event
  *
@@ -7,7 +8,6 @@ const {show_untriaged_cards} = require('../commonFunctions');
  * @returns {any} Void
  */
 function app_home_opened(app) {
-  const {TriageTeamData} = require('../../models'); // TODO Fix this function level import. There should be no need
   app.event('app_home_opened', async ({event, context, client}) => {
     // Find the team (if there is one) that the current use is a member in.
     // EXTRA CREDIT: turn this section of code into a middleware that adds context.triageTeam, then you don't need to
@@ -15,7 +15,7 @@ function app_home_opened(app) {
 
     console.log('event.user', event.user);
 
-    const team_data = await TriageTeamData.get_team_repo_subscriptions(event.user);
+    const team_data = await get_team_repo_subscriptions(event.user);
 
     const main_level_filter_selection = {
       name: 'All',

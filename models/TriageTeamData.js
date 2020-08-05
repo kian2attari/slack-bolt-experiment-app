@@ -1,4 +1,3 @@
-const parseGH = require('parse-github-url');
 const {query, graphql, mutation} = require('../graphql');
 const {
   add_new_team_members,
@@ -10,497 +9,420 @@ const {reg_exp} = require('../constants');
 
 /* This is where all the DB operations are abstracted to. The goal is to avoid directly using the mongodb client methods throughout the 
 code (ex. update, find, set etc) and instead abstract the functionalities here (ex. assign label to issue -- which will do all the mongodb calls under the hood) */
-class TriageTeamData {
-  constructor() {
-    this.team_discussion_channel_id = '';
-    this.team_internal_triage_channel_id = '';
 
-    this.team_data = {
-      subscribed_repo_map: new Map(),
-      team_members: new Map(),
-    };
-    // TODO HIGHEST PRIORITY change all instances of untriaged project to be here
-    this.team_untriaged_org_project = {
-      project_name: '',
-      project_id: '',
-      project_columns: new Map(),
-    };
-  }
-
-  get_team_member_by_github_username(potential_github_username) {
-    for (const [slack_user_id, github_username] of this.team_data.team_members) {
-      if (github_username === potential_github_username) {
-        return {slack_user_id, github_username};
-      }
-    }
-    return {};
-  }
-
-  // TODO change this so that only a repo_path needs to be passed in and it will use new_repo_obj function
-  subscribe_to_repo({repo_path}) {
-    // TODO enforce this. Currently it just console logs to make testing and development less annoying
-    if (this.team_discussion_channel_id.length === 0) {
-      console.log(
-        `Cannot subscribe to ${repo_path}. User must first create a triage team.`
-      );
-    }
-    TriageTeamData.new_repo_obj(repo_path).then(result => {
-      this.team_data.subscribed_repo_map.set(repo_path, result);
-    });
-    console.log(`Subscribed to ${repo_path} successfully!`);
-  }
-
-  get_default_untriaged_project() {
-    const untriaged_project_obj = this.team_untriaged_org_project;
-    // If a default project hasn't been set, return an empty object
-    // TODO remove this conditionality since a default untriaged project should always be assigned if a team exists
-    return untriaged_project_obj.project_name.length !== 0 ||
-      untriaged_project_obj.project_id.length !== 0
-      ? untriaged_project_obj
-      : {};
-  }
-
-  get_untriaged_label(repo_path) {
-    return this.team_data.subscribed_repo_map.get(repo_path).untriaged_settings
-      .untriaged_label;
-  }
-
-  set_untriaged_label(repo_path, label_obj) {
-    return Object.assign(
-      this.team_data.subscribed_repo_map.get(repo_path).untriaged_settings
-        .untriaged_label,
-      label_obj
-    );
-  }
-
-  /**
-   * Creates a repo object
-   *
-   * @memberof TriageTeamData
-   * @param {string} subscribe_repo_path
-   * @returns {{
-   *   repo_owner: string;
-   *   repo_name: string;
-   *   repo_path: string;
-   *   untriaged_settings: {
-   *     label_id: string;
-   *     label_name: string;
-   *     team_untriaged_org_project: {project_name: string; project_id: string};
-   *   };
-   *   repo_label_map: Map<string, object>;
-   *   repo_project_map: Map<string, object>;
-   * }} A repo object
-   */
-  // Creates a new repo object
-  // TODO get rid of this since the subscription/unsubscription process is automated now
-  static async new_repo_obj(subscribe_repo_path) {
-    const {owner, name, repo} = parseGH(subscribe_repo_path);
-    if (!(owner && name && repo)) throw new Error('Invalid GitHub repo URL!');
-    // TODO fix the methods
-    const repo_obj = {
-      repo_owner: owner,
-      repo_name: name,
-      repo_path: repo,
-      // The properties below have to be gotten from an API call
-      // TODO builtin method in this object/class to do the API call
-      repo_id: '',
-      repo_label_map: new Map(),
-
-      untriaged_settings: {
-        // REVIEW should I make the label_name property a global  property rather than having to select it for each repo?
-        untriaged_label: {
-          label_id: '',
-          label_name: '',
-        },
-      },
-      // Projects are mapped from project_name -> {project_id, project_columns_map:}
-      repo_project_map: new Map(),
-    };
-    const repo_obj_data = await this.get_basic_new_repo_data(repo_obj);
-    console.log(': --------------------------------------------');
-    console.log('new_repo_obj -> repo_obj_data', repo_obj_data);
-    console.log(': --------------------------------------------');
-
-    const filled_repo_obj = Object.assign(repo_obj, repo_obj_data);
-    console.log(': ------------------------------------------------');
-    console.log('new_repo_obj -> filled_repo_obj', filled_repo_obj);
-    console.log(': ------------------------------------------------');
-
-    return filled_repo_obj;
-  }
-
-  /**
-   * Gets all the repo data with all the projects
-   *
-   * @memberof TriageTeamData
-   * @param {{owner; name}} repo_details
-   * @static
-   * @returns {any}
-   */
-  // TODO incorporate this with the setup modal since subscriptions are handled automatically now
-  static async get_basic_new_repo_data(repo_obj) {
-    console.log('repo obj', repo_obj);
-    const {repo_owner, repo_name} = repo_obj;
-    // TODO this will need installation ID
-    const repo_data_response = await graphql.call_gh_graphql(query.getNewRepoBasicData, {
-      repo_owner,
-      repo_name,
-    });
-
-    console.log(repo_data_response);
-
-    // There was an error!
-    // TODO Improve this error
-    if (Object.prototype.hasOwnProperty.call(repo_data_response, 'error_type')) {
-      throw new graphql.Graphql_call_error(
-        repo_data_response.error_type,
-        repo_data_response.error_list
-      );
-    }
-
-    const label_nodes_list = repo_data_response.repository.labels.nodes;
-    const project_nodes_list = repo_data_response.repository.projects.nodes;
-    // Turn the labels into a Map for quick reference + iteration
-    const repo_label_map = new Map(
-      label_nodes_list.map(label_obj => [label_obj.name, label_obj])
-    );
-    // REVIEW can this be made more efficient?
-    // Turning the GitHub response object to use Maps not nested objects/arrays
-    const repo_project_map = new Map(
-      project_nodes_list.map(project => {
-        const project_obj = project;
-        project_obj.columns = new Map(
-          project_obj.columns.nodes.map(column => [column.name, column])
-        );
-        return [project_obj.name, project_obj];
-      })
-    );
-
-    const processed_object = {
-      repo_id: repo_data_response.repository.id,
-      repo_label_map,
-      repo_project_map,
-    };
-
-    console.log('processed_object', processed_object);
-
-    return processed_object;
-  }
-
-  static async add_team_members(slack_user_ids, triage_team_channel) {
-    return add_new_team_members(slack_user_ids, triage_team_channel);
-  }
-
-  /**
-   * Fetches the cards of a column given its Node ID
-   *
-   * @memberof TriageTeamData
-   * @param {String} column_id
-   * @static
-   * @returns {[Cards]}
-   */
-  static async get_cards_by_column(column_id, installation_id) {
-    const column_data_response = await graphql.call_gh_graphql(
-      query.getCardsByProjColumn,
-      {
-        column_id,
-        installation_id,
-      }
-    );
-    return column_data_response.node.cards.nodes;
-  }
-
-  static async associate_team_with_installation(
-    slack_user_ids,
-    team_channel_id,
-    team_internal_triage_channel_id,
-    selected_github_org
-  ) {
-    const team_member_obj = slack_user_ids.reduce((accumulator, currentValue) => {
-      accumulator[currentValue] = null;
-      return accumulator;
-    }, {});
-
-    const filter = {'org_account.node_id': selected_github_org.value};
-
-    const new_obj = {
-      team_channel_id,
-      team_internal_triage_channel_id,
-      internal_triage_items: {},
-      team_members: team_member_obj,
-    };
-    return update_document(filter, new_obj);
-  }
-
-  static async set_org_level_project(project_obj, installation_id) {
-    const org_proj_data_response = await graphql.call_gh_graphql(
-      query.getOrgProjectBasicData,
-      {org_proj_id: project_obj.project_id},
-      installation_id
-    );
-
-    const project_columns = org_proj_data_response.node.columns.nodes;
-
-    const project_columns_map = project_columns.reduce(
-      (obj, column) => ({...obj, [column.name]: column}),
-      {}
-    );
-
-    console.log(': -----------------------------------------------------------------');
-    console.log('set_org_level_project -> project_columns_map', project_columns_map);
-    console.log(': -----------------------------------------------------------------');
-
-    const project_obj_with_columns = {...project_obj, ...project_columns_map};
-
-    const filter = {'gitwave_github_app_installation_id': installation_id};
-
-    const new_obj = {
-      org_level_project_board: project_obj_with_columns,
-    };
-
-    return update_document(filter, new_obj);
-  }
-
-  static async set_user_github_username(slack_user_id, github_username) {
-    // RegExp for checking the username
-    const github_username_checker = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
-
-    const valid_github_username = github_username_checker.test(github_username);
-
-    console.log(': --------------------------------------------');
-    console.log('valid_github_username', valid_github_username);
-    console.log(': --------------------------------------------');
-
-    if (!valid_github_username) {
-      console.error('Invalid GH username');
-      throw Error('invalid_github_username');
-    }
-
-    const username_update_obj = {};
-
-    username_update_obj[`team_members.${slack_user_id}`] = github_username;
-
-    const db_user_filter = {};
-
-    db_user_filter[`team_members.${slack_user_id}`] = {$exists: true};
-
-    return update_document(db_user_filter, username_update_obj);
-  }
-
-  static async get_github_username_by_user_id(slack_user_id) {
-    // First we check to see if the user has already mapped a github username
-    const triage_team_members_response = await find_triage_team_by_slack_user(
-      slack_user_id,
-      {team_members: 1}
-    );
-
-    const slack_id_to_gh_username_match =
-      triage_team_members_response[0].team_members[slack_user_id];
-
-    console.log(': ------------------------------------------------------------');
-    console.log(
-      '1 slack_id_to_gh_username_match.team_members',
-      slack_id_to_gh_username_match
-    );
-    console.log(': ------------------------------------------------------------');
-    return slack_id_to_gh_username_match;
-  }
-
-  static async get_user_id_by_github_username(github_username, installation_id) {
-    // First we check to see if the user has already mapped a github username
-    const triage_team_members_response = await find_documents(
-      {
-        gitwave_github_app_installation_id: installation_id,
-      },
-      {team_members: 1}
-    );
-
-    const {team_members} = triage_team_members_response[0];
-
-    const gh_username_to_slack_id_match = Object.keys(team_members).find(
-      key => team_members[key] === github_username
-    );
-
-    console.log(': ------------------------------------------------------------');
-    console.log(
-      '1 get_user_id_by_github_username.team_members',
-      gh_username_to_slack_id_match
-    );
-    console.log(': ------------------------------------------------------------');
-    return gh_username_to_slack_id_match;
-  }
-
-  static async add_labels_to_card(slack_user_id, {issue_id, label_id}) {
-    const db_user_filter = {};
-
-    db_user_filter[`team_members.${slack_user_id}`] = {$exists: true};
-
-    try {
-      const db_query = await find_documents(db_user_filter, {
-        gitwave_github_app_installation_id: 1,
-      });
-
-      const installation_id = db_query[0].gitwave_github_app_installation_id;
-
-      const variables_clearAllLabels = {
-        element_node_id: issue_id,
-      };
-
-      await graphql.call_gh_graphql(
-        mutation.clearAllLabels,
-        variables_clearAllLabels,
-        installation_id
-      );
-
-      const variables_addLabelToIssue = {
-        element_node_id: issue_id,
-        label_ids: [label_id],
-      };
-
-      await graphql.call_gh_graphql(
-        mutation.addLabelToIssue,
-        variables_addLabelToIssue,
-        installation_id
-      );
-
-      /* TODO if the label was assigned successfully, update the app home view so that either the issue card is removed 
-      from the page or the triage button that was clicked turns green */
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  static async get_repo_untriaged_label(repo_node_id, installation_id) {
-    const getIdLabel_vars = {
-      label_name: 'Untriaged',
-      repo_id: repo_node_id,
-    };
-
-    const untriaged_label_response = await graphql.call_gh_graphql(
-      query.getIdLabel,
-      getIdLabel_vars,
-      installation_id
-    );
-    return untriaged_label_response.node.label.id;
-  }
-
-  static async get_team_channel_id(installation_id) {
-    const team_discussion_channel_id = await find_documents(
-      {
-        gitwave_github_app_installation_id: installation_id,
-      },
-      {team_channel_id: 1}
-    );
-
-    return team_discussion_channel_id[0].team_channel_id;
-  }
-
-  static async get_team_org_level_project_board(installation_id) {
-    const org_level_project_board_response = await find_documents(
-      {
-        gitwave_github_app_installation_id: installation_id,
-      },
-      {org_level_project_board: 1}
-    );
-
-    return org_level_project_board_response[0].org_level_project_board;
-  }
-
-  static async mark_element_as_untriaged(
-    labels,
-    element_node_id,
-    repo_node_id,
-    installation_id
-  ) {
-    const triage_label_count = labels.filter(label =>
-      reg_exp.find_triage_labels(label.description)
-    ).length;
-
-    // TODO turn this into its own function
-    // This means that the PR does not currently have any of the triage labels! We need to mark it as untriaged
-    if (triage_label_count === 1) {
-      console.log('The PR has already been triaged properly!');
-      return;
-    }
-
-    // An element cannot have more than one label. If that's the case, we remove all labels and mark it as untriaged.
-    // REVIEW would it be better to avoid clearing and just message the team?
-    if (triage_label_count > 1) {
-      const variables_clearAllLabels = {
-        element_node_id: repo_node_id,
-      };
-
-      // clear the current labels first
-      await graphql.call_gh_graphql(
-        mutation.clearAllLabels,
-        variables_clearAllLabels,
-        installation_id
-      );
-    }
-
-    const untriaged_label_id = await TriageTeamData.get_repo_untriaged_label(
-      repo_node_id,
-      installation_id
-    );
-    const variables_addLabelToIssue = {
-      element_node_id,
-      label_ids: [untriaged_label_id],
-    };
-
-    // eslint-disable-next-line no-unused-vars
-
-    try {
-      await graphql.call_gh_graphql(
-        mutation.addLabelToIssue,
-        variables_addLabelToIssue,
-        installation_id
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  static async add_review_request(review_request, installation_id) {
-    // To figure out the number of days since the review request, subtract the request_timestamp from the current timestamp and divide by 86400000
-    const current_timestamp_in_ms = Date.now();
-    const review_request_obj = {
-      pending_review_requests: {
-        ...review_request,
-        request_timestamp: current_timestamp_in_ms,
-      },
-    };
-
-    try {
-      await update_document(
-        {gitwave_github_app_installation_id: installation_id},
-        review_request_obj,
-        '$push'
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  static async get_pending_review_requests(installation_id = null) {
-    const filter = installation_id
-      ? {gitwave_github_app_installation_id: installation_id}
-      : {};
-    const find_review_requests_response = await find_documents(filter, {
-      gitwave_github_app_installation_id: 1,
-      pending_review_requests: 1,
-    });
-
-    return find_review_requests_response;
-  }
-
-  static async get_team_repo_subscriptions(user_id) {
-    const response = await find_triage_team_by_slack_user(user_id, {
-      subscribed_repos: 1,
-      gitwave_github_app_installation_id: 1,
-    });
-
-    return response[0];
-  }
+// TODO create a shortcut/modal that uses this. Currently, there's no way to add new members to a team besides rewriting the old team entirely
+/**
+ * Add new team members to a team
+ *
+ * @param {[String]} slack_user_ids
+ * @param {String} triage_team_channel
+ * @returns {Promise}
+ */
+async function add_team_members(slack_user_ids, triage_team_channel) {
+  return add_new_team_members(slack_user_ids, triage_team_channel);
 }
 
-exports.TriageTeamData = TriageTeamData;
+/**
+ * Fetches the cards of a column given its Node ID
+ *
+ * @param {String} column_id
+ * @returns {[Cards]}
+ */
+async function get_cards_by_column(column_id, installation_id) {
+  const column_data_response = await graphql.call_gh_graphql(query.getCardsByProjColumn, {
+    column_id,
+    installation_id,
+  });
+  return column_data_response.node.cards.nodes;
+}
+/**
+ * Link a team with an installation instance of GitWave. Installation ID's are always on an
+ * org/user level, even if the app is only installed on a single repo. Each installation ID
+ * can only be associated with one team and vice versa.
+ *
+ * @param {[String]} slack_user_ids
+ * @param {String} team_channel_id
+ * @param {String} team_internal_triage_channel_id
+ * @param {{}} selected_github_org
+ * @returns {Promise}
+ */
+async function associate_team_with_installation(
+  slack_user_ids,
+  team_channel_id,
+  team_internal_triage_channel_id,
+  selected_github_org
+) {
+  const team_member_obj = slack_user_ids.reduce((accumulator, currentValue) => {
+    accumulator[currentValue] = null;
+    return accumulator;
+  }, {});
+
+  const filter = {'org_account.node_id': selected_github_org.value};
+
+  const new_obj = {
+    team_channel_id,
+    team_internal_triage_channel_id,
+    internal_triage_items: {},
+    team_members: team_member_obj,
+  };
+  return update_document(filter, new_obj);
+}
+/**
+ * Set a team's org-level project board. This board is synced up with all the repo-level
+ * boards to provide an umbrella view of triage status across all of a team's repos.
+ *
+ * @param {any} project_obj
+ * @param {String} installation_id
+ * @returns {Promise}
+ */
+async function set_org_level_project(project_obj, installation_id) {
+  const org_proj_data_response = await graphql.call_gh_graphql(
+    query.getOrgProjectBasicData,
+    {org_proj_id: project_obj.project_id},
+    installation_id
+  );
+
+  const project_columns = org_proj_data_response.node.columns.nodes;
+
+  const project_columns_obj = project_columns.reduce(
+    (obj, column) => ({...obj, [column.name]: column}),
+    {}
+  );
+
+  console.log(': -----------------------------------------------------------------');
+  console.log('set_org_level_project -> project_columns_map', project_columns_obj);
+  console.log(': -----------------------------------------------------------------');
+
+  const project_obj_with_columns = {...project_obj, project_columns: project_columns_obj};
+
+  const filter = {'gitwave_github_app_installation_id': installation_id};
+
+  const new_obj = {
+    org_level_project_board: project_obj_with_columns,
+  };
+
+  return update_document(filter, new_obj);
+}
+/**
+ * Set a team member's GitHub username and store the mapping in the DB. A team member must
+ * provide their GitHub usernames in order to receive mention notifications on Slack and so
+ * they can be assigned to issues/PR's right from Slack.
+ *
+ * @param {String} slack_user_id
+ * @param {String} github_username
+ * @returns {Promise}
+ */
+async function set_user_github_username(slack_user_id, github_username) {
+  // RegExp for checking the username
+  const github_username_checker = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
+
+  const valid_github_username = github_username_checker.test(github_username);
+
+  console.log(': --------------------------------------------');
+  console.log('valid_github_username', valid_github_username);
+  console.log(': --------------------------------------------');
+
+  if (!valid_github_username) {
+    console.error('Invalid GH username');
+    throw Error('invalid_github_username');
+  }
+
+  const username_update_obj = {};
+
+  username_update_obj[`team_members.${slack_user_id}`] = github_username;
+
+  const db_user_filter = {};
+
+  db_user_filter[`team_members.${slack_user_id}`] = {$exists: true};
+
+  return update_document(db_user_filter, username_update_obj);
+}
+
+// EXTRA_TODO modify the function so that it filters by installation ID. That way, a user can be part of multiple teams.
+/**
+ * Get a team member's GitHub username by their Slack user ID
+ *
+ * @param {String} slack_user_id
+ * @returns {String} The team member's GitHub Username
+ */
+async function get_github_username_by_user_id(slack_user_id) {
+  // First we check to see if the user has already mapped a github username
+  const triage_team_members_response = await find_triage_team_by_slack_user(
+    slack_user_id,
+    {team_members: 1}
+  );
+
+  const slack_id_to_gh_username_match =
+    triage_team_members_response[0].team_members[slack_user_id];
+
+  console.log(': ------------------------------------------------------------');
+  console.log(
+    '1 slack_id_to_gh_username_match.team_members',
+    slack_id_to_gh_username_match
+  );
+  console.log(': ------------------------------------------------------------');
+  return slack_id_to_gh_username_match;
+}
+
+/**
+ * Gets a team member's Slack user ID given their GitHub username. This function is mostly
+ * useful for determining whether an @mention of a username on GitHub is a username that
+ * belongs to a team member.
+ *
+ * @param {String} github_username
+ * @param {String} installation_id
+ * @returns {String} The team member's user ID
+ */
+async function get_user_id_by_github_username(github_username, installation_id) {
+  // First we check to see if the user has already mapped a github username
+  const triage_team_members_response = await find_documents(
+    {
+      gitwave_github_app_installation_id: installation_id,
+    },
+    {team_members: 1}
+  );
+
+  const {team_members} = triage_team_members_response[0];
+
+  console.log('team_members', team_members);
+
+  const gh_username_to_slack_id_match = Object.keys(team_members).find(
+    key => team_members[key] === github_username
+  );
+
+  console.log(': ------------------------------------------------------------');
+  console.log(
+    '1 get_user_id_by_github_username.team_members',
+    gh_username_to_slack_id_match
+  );
+  console.log(': ------------------------------------------------------------');
+  return gh_username_to_slack_id_match;
+}
+/**
+ * Add labels to a card on GitHub. The label is actually applied to the element on the card
+ * (ex. the issue or PR)
+ *
+ * @param {String} slack_user_id
+ * @param {{issue_id: String; label_id: String}} graphql_variables The variables needed to
+ *     make the GraphQL call
+ * @returns {Promise}
+ */
+async function add_labels_to_card(slack_user_id, graphql_variables) {
+  const {issue_id, label_id} = graphql_variables;
+  const db_user_filter = {};
+
+  db_user_filter[`team_members.${slack_user_id}`] = {$exists: true};
+
+  const db_query = await find_documents(db_user_filter, {
+    gitwave_github_app_installation_id: 1,
+  });
+
+  const installation_id = db_query[0].gitwave_github_app_installation_id;
+
+  const variables_clearAllLabels = {
+    element_node_id: issue_id,
+  };
+
+  await graphql.call_gh_graphql(
+    mutation.clearAllLabels,
+    variables_clearAllLabels,
+    installation_id
+  );
+
+  const variables_addLabelToIssue = {
+    element_node_id: issue_id,
+    label_ids: [label_id],
+  };
+
+  return graphql.call_gh_graphql(
+    mutation.addLabelToIssue,
+    variables_addLabelToIssue,
+    installation_id
+  );
+
+  /* TODO if the label was assigned successfully, update the app home view so that either the issue card is removed 
+      from the page or the triage button that was clicked turns green */
+}
+/**
+ * Get a repo's Untriaged label ID
+ *
+ * @param {String} repo_node_id
+ * @param {String} installation_id
+ * @returns {String} The Untriaged label ID
+ */
+async function get_repo_untriaged_label(repo_node_id, installation_id) {
+  const getIdLabel_vars = {
+    label_name: 'Untriaged',
+    repo_id: repo_node_id,
+  };
+
+  const untriaged_label_response = await graphql.call_gh_graphql(
+    query.getIdLabel,
+    getIdLabel_vars,
+    installation_id
+  );
+  return untriaged_label_response.node.label.id;
+}
+/**
+ * Get the (discussion) channel ID of the triage team that's associated with a particular
+ * Installation ID
+ *
+ * @param {String} installation_id
+ * @returns {String} The team channel ID
+ */
+async function get_team_channel_id(installation_id) {
+  const team_discussion_channel_id = await find_documents(
+    {
+      gitwave_github_app_installation_id: installation_id,
+    },
+    {team_channel_id: 1}
+  );
+
+  return team_discussion_channel_id[0].team_channel_id;
+}
+/**
+ * Get the org-level project board of the team associated with a particular Installation ID
+ *
+ * @param {String} installation_id
+ * @returns {{project_name: String; project_id: String; project_columns: {}}} The Project
+ *     board
+ */
+async function get_team_org_level_project_board(installation_id) {
+  const org_level_project_board_response = await find_documents(
+    {
+      gitwave_github_app_installation_id: installation_id,
+    },
+    {org_level_project_board: 1}
+  );
+
+  return org_level_project_board_response[0].org_level_project_board;
+}
+/**
+ * @param {[{name: String; id: String; description: String}]} labels
+ * @param {String} element_node_id
+ * @param {String} repo_node_id
+ * @param {String} installation_id
+ * @returns {Promise}
+ */
+async function mark_element_as_untriaged(
+  labels,
+  element_node_id,
+  repo_node_id,
+  installation_id
+) {
+  const triage_label_count = labels.filter(label =>
+    reg_exp.find_triage_labels(label.description)
+  ).length;
+
+  // TODO turn this into its own function
+  // This means that the PR does not currently have any of the triage labels! We need to mark it as untriaged
+  if (triage_label_count === 1) {
+    console.log('The PR has already been triaged properly!');
+    throw Error('The PR has already been triaged properly!');
+  }
+
+  // An element cannot have more than one label. If that's the case, we remove all labels and mark it as untriaged.
+  // REVIEW would it be better to avoid clearing and just message the team?
+  if (triage_label_count > 1) {
+    const variables_clearAllLabels = {
+      element_node_id: repo_node_id,
+    };
+
+    // clear the current labels first
+    await graphql.call_gh_graphql(
+      mutation.clearAllLabels,
+      variables_clearAllLabels,
+      installation_id
+    );
+  }
+
+  const untriaged_label_id = await get_repo_untriaged_label(
+    repo_node_id,
+    installation_id
+  );
+  const variables_addLabelToIssue = {
+    element_node_id,
+    label_ids: [untriaged_label_id],
+  };
+
+  // eslint-disable-next-line no-unused-vars
+
+  return graphql.call_gh_graphql(
+    mutation.addLabelToIssue,
+    variables_addLabelToIssue,
+    installation_id
+  );
+}
+/**
+ * Add a new review request to the team's list of pending review requests in the DB
+ *
+ * @param {{}} review_request
+ * @param {String} installation_id
+ * @returns {Promise<UpdateWriteOpResult>}
+ */
+async function add_review_request(review_request, installation_id) {
+  // To figure out the number of days since the review request, subtract the request_timestamp from the current timestamp and divide by 86400000
+  const current_timestamp_in_ms = Date.now();
+  const review_request_obj = {
+    pending_review_requests: {
+      ...review_request,
+      request_timestamp: current_timestamp_in_ms,
+    },
+  };
+
+  return update_document(
+    {gitwave_github_app_installation_id: installation_id},
+    review_request_obj,
+    '$push'
+  );
+}
+/**
+ * Get all pending review requests for all teams. Provide an installation ID to grab the
+ * pending review requests for a particular team.
+ *
+ * @param {String} [installation_id] Default is `null`
+ * @returns {[{}]} The array of pending review requests.
+ */
+async function get_pending_review_requests(installation_id = null) {
+  const filter = installation_id
+    ? {gitwave_github_app_installation_id: installation_id}
+    : {};
+  const find_review_requests_response = await find_documents(filter, {
+    gitwave_github_app_installation_id: 1,
+    pending_review_requests: 1,
+  });
+
+  return find_review_requests_response;
+}
+/**
+ * Get the repos that a particular user's triage team is subscribed to.
+ *
+ * @param {String} user_id
+ * @returns {{subscribed_repos: {}; gitwave_github_app_installation_id: String}}
+ */
+async function get_team_repo_subscriptions(user_id) {
+  const response = await find_triage_team_by_slack_user(user_id, {
+    subscribed_repos: 1,
+    gitwave_github_app_installation_id: 1,
+  });
+
+  return response[0];
+}
+
+exports.TriageTeamData = {
+  add_team_members,
+  get_cards_by_column,
+  associate_team_with_installation,
+  set_user_github_username,
+  set_org_level_project,
+  get_github_username_by_user_id,
+  get_team_repo_subscriptions,
+  get_pending_review_requests,
+  add_review_request,
+  get_repo_untriaged_label,
+  mark_element_as_untriaged,
+  get_team_org_level_project_board,
+  get_team_channel_id,
+  get_user_id_by_github_username,
+  add_labels_to_card,
+};

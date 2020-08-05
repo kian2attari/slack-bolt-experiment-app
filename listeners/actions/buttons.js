@@ -93,7 +93,7 @@ function show_up_for_grabs_filter_button(app) {
         gitwave_github_app_installation_id: 1,
       });
 
-      const to_do_column = response[0].org_level_project_board['To Do'];
+      const to_do_column = response[0].org_level_project_board.project_columns['To Do'];
 
       const installation_id = response[0].gitwave_github_app_installation_id;
 
@@ -161,7 +161,8 @@ function show_assigned_to_user_filter_button(app) {
           ': -----------------------------------------------------------------------------------------'
         );
 
-        const in_progress_column = response[0].org_level_project_board['In Progress'];
+        const in_progress_column =
+          response[0].org_level_project_board.project_columns['In Progress'];
 
         const installation_id = response[0].gitwave_github_app_installation_id;
 
@@ -240,7 +241,7 @@ function show_done_by_user_filter_button(app) {
         ': -----------------------------------------------------------------------------------------'
       );
 
-      const done_column = response[0].org_level_project_board.Done;
+      const done_column = response[0].org_level_project_board.project_columns.Done;
 
       const installation_id = response[0].gitwave_github_app_installation_id;
 
