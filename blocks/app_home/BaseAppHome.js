@@ -128,33 +128,6 @@ module.exports = (
 };
 
 // TODO the initial option should be gotten from the previous state of the view
-/**
- * @param {string} action_id
- * @param {string} place_holder_text
- * @param {object} [initial_option] Default is `{}`
- * @returns {{
- *   'action_id': string;
- *   'type': string;
- *   'min_query_length': number;
- *   'placeholder': object;
- *   'initial_option': object;
- * }} Select_block_object
- */
-function external_select_element(action_id, place_holder_text, initial_option = {}) {
-  return {
-    'action_id': action_id,
-    'type': 'external_select',
-    'min_query_length': 0,
-    'placeholder': {
-      'type': 'plain_text',
-      'text': place_holder_text,
-      'emoji': true,
-    },
-    ...(Object.keys(initial_option).length !== 0 && {
-      'initial_option': initial_option,
-    }),
-  };
-}
 
 function static_select_element(
   action_id,
