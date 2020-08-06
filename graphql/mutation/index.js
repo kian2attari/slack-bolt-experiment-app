@@ -1,4 +1,5 @@
 const {removeLabels} = require('./removeLabels');
+const {moveProjectCard} = require('./moveProjectCardToColumn');
 
 module.exports = {
   addLabelToIssue: require('./addLabelToIssue'),
@@ -7,4 +8,5 @@ module.exports = {
   assignIssueToProject: require('./assignIssueToProject'),
   linkRepoToOrgLevelProject: require('./linkRepoToOrgLevelProject'),
   removeLabels,
+  moveProjectCard,
 };
