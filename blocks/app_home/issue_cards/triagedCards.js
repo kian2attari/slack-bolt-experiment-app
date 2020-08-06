@@ -3,7 +3,8 @@ const {reg_exp} = require('../../../constants');
 exports.triaged_cards = (
   external_card_array,
   internal_issue_array,
-  show_only_done = false
+  show_only_claimed_internal_issues,
+  show_only_done
 ) => {
   const external_issues_block = external_card_array.flatMap(card => {
     const card_data = card.content;
@@ -157,6 +158,20 @@ exports.triaged_cards = (
             {
               'type': 'actions',
               'elements': [
+                ...(show_only_claimed_internal_issues
+                  ? []
+                  : [
+                      {
+                        'type': 'button',
+                        'text': {
+                          'type': 'plain_text',
+                          'text': ':eyes: Claim this issue',
+                          'emoji': true,
+                        },
+                        'action_id': `assign_eyes_label`,
+                        'value': JSON.stringify({issue_message_ts, name: 'eyes'}),
+                      },
+                    ]),
                 {
                   'type': 'button',
                   'text': {
@@ -194,7 +209,7 @@ exports.triaged_cards = (
     ];
   });
 
-  const combined_issues_block = external_issues_block.concat(internal_issues_block);
+  const combined_issues_block = internal_issues_block.concat(external_issues_block);
 
   return combined_issues_block;
 };

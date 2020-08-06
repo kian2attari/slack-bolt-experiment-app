@@ -170,7 +170,7 @@ function external_issue_label_buttons_block(issue_id, triage_label_array) {
   return labels_block;
 }
 
-function internal_issue_label_buttons_block(message_ts) {
+function internal_issue_label_buttons_block(issue_message_ts) {
   return [
     {
       'type': 'actions',
@@ -183,7 +183,7 @@ function internal_issue_label_buttons_block(message_ts) {
             'emoji': true,
           },
           'action_id': `assign_eyes_label`,
-          'value': JSON.stringify({message_ts, name: 'eyes'}),
+          'value': JSON.stringify({issue_message_ts, name: 'eyes'}),
         },
         {
           'type': 'button',
@@ -193,7 +193,7 @@ function internal_issue_label_buttons_block(message_ts) {
             'emoji': true,
           },
           'action_id': `assign_checkmark_label`,
-          'value': JSON.stringify({message_ts, name: 'white_check_mark'}),
+          'value': JSON.stringify({issue_message_ts, name: 'white_check_mark'}),
         },
       ],
     },

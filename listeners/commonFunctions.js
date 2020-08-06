@@ -99,7 +99,8 @@ async function show_triaged_cards(
   internal_issues_filter_callback_generator,
   external_card_filter_callback_generator,
   project_board_column,
-  show_only_done
+  show_only_claimed_internal_issues = false,
+  show_only_done = false
 ) {
   const {body, client, context} = context_data_obj;
 
@@ -155,6 +156,7 @@ We only need the project board data so a projection is passed in as the second p
   const card_blocks = AppHome.AppHomeIssueCards.triaged_cards(
     filtered_external_cards,
     filtered_internal_issues,
+    show_only_claimed_internal_issues,
     show_only_done
   );
 

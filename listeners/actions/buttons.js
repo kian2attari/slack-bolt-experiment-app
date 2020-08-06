@@ -83,7 +83,8 @@ function show_up_for_grabs_filter_button(app) {
   app.action('show_up_for_grabs_filter_button', async ({ack, body, context, client}) => {
     await ack();
     // Only get internal issues that havent been claimed!
-    const internal_issue_filter_callback_generator = false;
+    const internal_issue_filter_callback_generator = () => internal_issue =>
+      typeof internal_issue.issue_triage_data === 'undefined';
 
     // Only issues/PR's that are triaged!
     const external_card_filter_callback_generator = () => card =>
@@ -97,8 +98,7 @@ function show_up_for_grabs_filter_button(app) {
         'show_up_for_grabs_filter_button',
         internal_issue_filter_callback_generator,
         external_card_filter_callback_generator,
-        'To Do',
-        false
+        'To Do'
       );
     } catch (error) {
       console.error(error);
@@ -132,7 +132,7 @@ function show_assigned_to_user_filter_button(app) {
           internal_issue_filter_callback_generator,
           external_card_filter_callback_generator,
           'In Progress',
-          false
+          true
         );
       } catch (error) {
         console.error(error);
@@ -164,6 +164,7 @@ function show_done_by_user_filter_button(app) {
         internal_issue_filter_callback_generator,
         external_card_filter_callback_generator,
         'Done',
+        true,
         true
       );
     } catch (error) {
@@ -215,7 +216,7 @@ function app_home_internal_triage_buttons(app) {
 
       const {team_internal_triage_channel_id} = response[0];
 
-      const {name, message_ts: timestamp} = JSON.parse(actions[0].value);
+      const {name, issue_message_ts: timestamp} = JSON.parse(actions[0].value);
       try {
         await Promise.all([
           client.reactions.add({
