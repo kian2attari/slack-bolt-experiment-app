@@ -48,9 +48,6 @@ events_listener.reaction_added(app);
 // Opens the username map modal
 actions_listener.buttons.open_map_modal_button(app);
 
-// Opens the modal for setting default repos
-// actions_listener.buttons.open_set_repo_defaults_modal_button(app);
-
 actions_listener.buttons.show_up_for_grabs_filter_button(app);
 
 actions_listener.buttons.show_assigned_to_user_filter_button(app);
@@ -63,27 +60,10 @@ actions_listener.buttons.app_home_internal_triage_buttons(app);
 
 actions_listener.buttons.show_untriaged_filter_button(app);
 
-// actions_listener.setup_defaults.setup_defaults_repo_selection(app);
-
-// app.action('setup_default_triage_label_list', async ({ack}) => ack());
-
-// app.action('setup_default_modal_column_selection', ({ack}) => ack());
-
 actions_listener.buttons.link_button(app);
 
 /* ------------- ANCHOR Responding to the repo name selection ------------ */
 actions_listener.main_level_filter_selection(app);
-
-// /* ------------- ANCHOR DEPRECATED Responding to project name selection ------------------- */
-// actions_listener.repo_level_filter.project_selection(app, user_app_home_state_obj);
-
-// /* ------------- ANCHOR DEPRECATED Responding to column selection ------------------- */
-// // TODO add column select menu to BaseAppHome
-// actions_listener.repo_level_filter.column_selection(
-//   app,
-//   triage_team_data_obj,
-//   user_app_home_state_obj
-// );
 
 /* ------------- ANCHOR Responding to label assignment on issue ------------- */
 
@@ -94,30 +74,12 @@ actions_listener.label_assignment(app);
 
 /* ----------------------- SECTION Listen for options ----------------------- */
 // Responding to a repo_selection options with list of repos
-// options_listener.main_level_filter_selection(app, triage_team_data_obj);
 
 options_listener.org_level_project_input(app);
-
-// options_listener.project_col_selection.repo_project_options(
-//   app,
-//   triage_team_data_obj,
-//   user_app_home_state_obj
-// );
-
-// Change the defaults for one particular repo
-// options_listener.untriaged_defaults_selection.setup_defaults_repo_selection(
-//   app,
-//   triage_team_data_obj
-// );
 
 options_listener.assignable_team_members(app);
 
 options_listener.github_org_select_input(app);
-
-// options_listener.untriaged_defaults_selection.setup_default_triage_label_list(
-//   app,
-//   triage_team_data_obj
-// );
 
 // !SECTION
 
