@@ -96,9 +96,7 @@ actions_listener.label_assignment(app);
 // Responding to a repo_selection options with list of repos
 // options_listener.main_level_filter_selection(app, triage_team_data_obj);
 
-/* TODO org_level_project_input doesnt belong with untriaged_defaults_selection. 
-a sub-module like setup_team_settings would make more sense */
-options_listener.untriaged_defaults_selection.org_level_project_input(app);
+options_listener.org_level_project_input(app);
 
 // options_listener.project_col_selection.repo_project_options(
 //   app,
@@ -112,7 +110,9 @@ options_listener.untriaged_defaults_selection.org_level_project_input(app);
 //   triage_team_data_obj
 // );
 
-options_listener.untriaged_defaults_selection.github_org_select_input(app);
+options_listener.assignable_team_members(app);
+
+options_listener.github_org_select_input(app);
 
 // options_listener.untriaged_defaults_selection.setup_default_triage_label_list(
 //   app,

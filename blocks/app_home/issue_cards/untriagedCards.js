@@ -80,7 +80,7 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
       'type': 'section',
       'text': {
         'type': 'mrkdwn',
-        'text': `INTERNAL ISSUE: *${internal_issue.urgency}* urgency`,
+        'text': `*Internal Issue*: ${internal_issue.urgency.toUpperCase()} urgency`,
       },
       'accessory': {
         'type': 'button',
@@ -133,7 +133,7 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
     },
   ]);
 
-  const combined_issues_block = external_issues_block.concat(internal_issues_block);
+  const combined_issues_block = internal_issues_block.concat(external_issues_block);
 
   return combined_issues_block;
 };

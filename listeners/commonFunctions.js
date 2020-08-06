@@ -90,6 +90,7 @@ async function show_untriaged_cards(context_data_obj) {
  * @param {Function} external_card_filter_callback_generator Takes a github_username and
  *     returns a callback function
  * @param {String} project_board_column
+ * @param {Boolean} show_only_done
  * @returns {Promise}
  */
 async function show_triaged_cards(
@@ -97,7 +98,8 @@ async function show_triaged_cards(
   selected_button,
   internal_issues_filter_callback_generator,
   external_card_filter_callback_generator,
-  project_board_column
+  project_board_column,
+  show_only_done
 ) {
   const {body, client, context} = context_data_obj;
 
@@ -153,7 +155,7 @@ We only need the project board data so a projection is passed in as the second p
   const card_blocks = AppHome.AppHomeIssueCards.triaged_cards(
     filtered_external_cards,
     filtered_internal_issues,
-    true
+    show_only_done
   );
 
   const home_view = AppHome.BaseAppHome(

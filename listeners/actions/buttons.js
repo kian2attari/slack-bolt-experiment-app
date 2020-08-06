@@ -97,7 +97,8 @@ function show_up_for_grabs_filter_button(app) {
         'show_up_for_grabs_filter_button',
         internal_issue_filter_callback_generator,
         external_card_filter_callback_generator,
-        'To Do'
+        'To Do',
+        false
       );
     } catch (error) {
       console.error(error);
@@ -130,7 +131,8 @@ function show_assigned_to_user_filter_button(app) {
           'show_assigned_to_user_filter_button',
           internal_issue_filter_callback_generator,
           external_card_filter_callback_generator,
-          'In Progress'
+          'In Progress',
+          false
         );
       } catch (error) {
         console.error(error);
@@ -161,7 +163,8 @@ function show_done_by_user_filter_button(app) {
         'show_done_by_user_filter_button',
         internal_issue_filter_callback_generator,
         external_card_filter_callback_generator,
-        'Done'
+        'Done',
+        true
       );
     } catch (error) {
       console.error(error);

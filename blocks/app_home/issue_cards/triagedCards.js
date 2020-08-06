@@ -89,12 +89,14 @@ exports.triaged_cards = (
                 'text': 'Assign the issue',
               },
               'accessory': {
-                'type': 'users_select',
+                'type': 'external_select',
                 'placeholder': {
                   'type': 'plain_text',
                   'text': 'Select a user',
                   'emoji': true,
                 },
+                'action_id': 'assignable_team_members',
+                'min_query_length': 0,
               },
             },
           ]),
