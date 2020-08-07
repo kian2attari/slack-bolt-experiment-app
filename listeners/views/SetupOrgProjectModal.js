@@ -30,12 +30,6 @@ module.exports = app => {
       installation_id
     );
 
-    // // set untriaged label obj
-    // triage_team_data_obj.set_untriaged_label(repo_path, {
-    //   label_id: default_untriaged_issues_label.value,
-    //   label_name: default_untriaged_issues_label.text.text,
-    // });
-
     // Success! Message the user
     try {
       await app.client.chat.postMessage({

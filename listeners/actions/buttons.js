@@ -42,27 +42,6 @@ async function open_map_modal_button(app) {
     }
   });
 }
-// OLD and should be removed
-// function open_set_repo_defaults_modal_button(app) {
-//   app.action(
-//     'open_set_repo_defaults_modal_button',
-//     async ({ack, body, context, client}) => {
-//       // Here we acknowledge receipt
-//       await ack();
-
-//       // TODO: Check the value of the button, if it specifies a repo then set the repo_path
-//       const selected_repo = {repo_path: undefined};
-
-//       const {trigger_id} = body;
-
-//       await client.views.open({
-//         token: context.botToken,
-//         trigger_id,
-//         view: Modals.SetupRepoNewIssueDefaultsModal(selected_repo),
-//       });
-//     }
-//   );
-// }
 
 function show_untriaged_filter_button(app) {
   // The app home 'Untriaged' filter button
@@ -78,7 +57,7 @@ function show_untriaged_filter_button(app) {
   });
 }
 // All the cards in the To Do column that have been triaged but not assigned
-// TODO this should also show all untriaged internal issues since they are also technically up for grabs
+
 function show_up_for_grabs_filter_button(app) {
   app.action('show_up_for_grabs_filter_button', async ({ack, body, context, client}) => {
     await ack();

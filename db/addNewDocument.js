@@ -1,6 +1,6 @@
 const {Connection} = require('./dbConnection');
 
-// Takes in an installation event directly from the github webook
+// Takes in an installation event directly from the github webhook
 async function add_new_document(new_document_obj) {
   const collection = await Connection.connectToMongoCollection();
 
