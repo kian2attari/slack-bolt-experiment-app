@@ -72,13 +72,6 @@ exports.EditTriageDutyAvailabilityModal = triage_duty_assignments_obj => ({
             },
           ]
         : []),
-      // ...(index === 0
-      //   ? [
-      //       {
-      //         'type': 'divider',
-      //       },
-      //     ]
-      //   : []),
     ]),
   ],
 });
