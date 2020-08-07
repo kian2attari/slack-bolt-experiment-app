@@ -53,7 +53,7 @@ async function associate_team_with_installation(
   selected_github_org
 ) {
   const team_member_obj = slack_user_ids.reduce((accumulator, currentValue) => {
-    accumulator[currentValue] = null;
+    accumulator[currentValue] = {github_username: null, user_settings: {}};
     return accumulator;
   }, {});
 
@@ -129,7 +129,7 @@ async function set_user_github_username(slack_user_id, github_username) {
 
   const username_update_obj = {};
 
-  username_update_obj[`team_members.${slack_user_id}`] = github_username;
+  username_update_obj[`team_members.${slack_user_id}.github_username`] = github_username;
 
   const db_user_filter = {};
 
@@ -153,7 +153,7 @@ async function get_github_username_by_user_id(slack_user_id) {
   );
 
   const slack_id_to_gh_username_match =
-    triage_team_members_response[0].team_members[slack_user_id];
+    triage_team_members_response[0].team_members[slack_user_id].github_username;
 
   console.log(': ------------------------------------------------------------');
   console.log(
@@ -187,7 +187,7 @@ async function get_user_id_by_github_username(github_username, installation_id) 
   console.log('team_members', team_members);
 
   const gh_username_to_slack_id_match = Object.keys(team_members).find(
-    key => team_members[key] === github_username
+    key => team_members[key].github_username === github_username
   );
 
   console.log(': ------------------------------------------------------------');

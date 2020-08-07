@@ -121,7 +121,7 @@ We only need the project board data so a projection is passed in as the second p
 
   const installation_id = response[0].gitwave_github_app_installation_id;
 
-  const user_github_username = response[0].team_members[user_id];
+  const user_github_username = response[0].team_members[user_id].github_username;
 
   const get_cards_by_proj_column_vars = {
     column_id: selected_column.id,

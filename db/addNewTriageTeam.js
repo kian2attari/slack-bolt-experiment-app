@@ -22,7 +22,7 @@ async function add_new_triage_team_to_db(
 
   // TODO turn this into a helper function since add team member does the same thing
   const team_member_obj = user_id_array.reduce((accumulator, currentValue) => {
-    accumulator[currentValue] = null;
+    accumulator[currentValue] = {github_username: null, user_settings: {}};
     return accumulator;
   }, {});
 
