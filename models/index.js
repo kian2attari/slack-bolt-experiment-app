@@ -16,6 +16,7 @@ const {
   get_team_channel_id,
   get_user_id_by_github_username,
   add_labels_to_card,
+  get_team_triage_assignments,
 } = TriageTeamData;
 
 exports.add_team_members = add_team_members;
@@ -33,3 +34,4 @@ exports.get_team_org_level_project_board = get_team_org_level_project_board;
 exports.get_team_channel_id = get_team_channel_id;
 exports.get_user_id_by_github_username = get_user_id_by_github_username;
 exports.add_labels_to_card = add_labels_to_card;
+exports.get_team_triage_assignments = get_team_triage_assignments;

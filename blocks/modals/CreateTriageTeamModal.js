@@ -1,4 +1,4 @@
-module.exports = {
+exports.CreateTriageTeamModal = {
   'callback_id': 'setup_triage_workflow_view',
   'title': {
     'type': 'plain_text',

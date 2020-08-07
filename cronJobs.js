@@ -1,6 +1,6 @@
 const {CronJob} = require('cron');
 const {send_mention_message} = require('./helper-functions');
-const {get_pending_review_requests} = require('./models');
+const {get_pending_review_requests, get_team_triage_assignments} = require('./models');
 
 // TODO remove passing this app parameter, there must be a way of avoiding this.
 function check_review_requests(app) {
@@ -20,7 +20,7 @@ function check_review_requests(app) {
     to every element. To use map, we'd need to filter first, and that's just more work for nothing. */
     const pending_review_requests_by_team = await get_pending_review_requests();
 
-    console.log(pending_review_requests_by_team);
+    console.log('pending_review_requests_by_team', pending_review_requests_by_team);
     /* REVIEW to make this more scalable, this function can also be modified so that the promises are resolved in batches rather than all at once. 
     For example, the Promises.all(...) can be placed in the outer reduce so that each team's batch of promises is done through each loop. In that case,
     it would make more sense to use the async_array_map helper function rather than reduce for the outside since we wouldn't be returning anything */
@@ -35,7 +35,8 @@ function check_review_requests(app) {
             // const minutes_since = Math.round((Date.now() - request_timestamp) / 60000);
             console.log('days since', days_since);
             // console.log('minutes since', minutes_since);
-            if (days_since === 1 || days_since === 3) {
+            if (days_since >= 1 && days_since <= 4) {
+              // TODO Check user preferences for when they want their first and second reminder to be. If it's within range, only then send the reminder.
               console.log('sending a reminder to:', review_request.mentioned_slack_user);
               return request_promises.concat(send_mention_message(app, review_request));
             }
@@ -52,15 +53,42 @@ function check_review_requests(app) {
   };
 }
 
+function rotate_triage_duty_assignment(app) {
+  return async () => {
+    const team_data = await get_team_triage_assignments();
+
+    console.log(': -------------------------------------------------------------');
+    console.log('function rotate_triage_duty_assignment -> team_data', team_data);
+    console.log(': -------------------------------------------------------------');
+
+    const {triage_duty_assignments, team_channel_id} = team_data;
+
+    // TODO get all the triage teams and their members
+    // TODO See which member is next on the block, and if they haven't marked themselves unavailable for that week, set the channel topic to them
+  };
+}
+
 // Everyday, check the pending PR review requests of every team, and message the user the review was requested of after 1 day, and after 3 days
 // REVIEW change the cron_pattern to '0 10,15 * * *' so that the job is run everyday at 10am and 3pm or just '0 10 * * *' for 10 am etc
-const review_request_cron_job = app =>
-  new CronJob(
+// REVIEW Should I use const review_request_cron_job = app => or function syntax?
+function review_request_cron_job(app) {
+  return new CronJob(
     '0 10,17 * * *',
     check_review_requests(app),
     null,
     true,
     'America/Los_Angeles'
   );
+}
+
+function triage_duty_rotation(app) {
+  return new CronJob(
+    '0 9 * * 1', // At 9am every Monday
+    rotate_triage_duty_assignment(app),
+    null,
+    true,
+    'America/Los_Angeles'
+  );
+}
 
 exports.review_request_cron_job = review_request_cron_job;

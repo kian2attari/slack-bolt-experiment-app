@@ -408,6 +408,23 @@ async function get_team_repo_subscriptions(user_id) {
 
   return response[0];
 }
+/**
+ * Returns the team members, triage duty assignments, and team channel ID's of every team.
+ *
+ * @returns {{
+ *   team_members: [String];
+ *   triage_duty_assignments: {};
+ *   team_channel_id: String;
+ * }}
+ */
+async function get_team_triage_assignments(slack_user_id) {
+  const team_data = await find_triage_team_by_slack_user(slack_user_id, {
+    triage_duty_assignments: 1,
+    team_channel_id: 1,
+  });
+
+  return team_data[0];
+}
 
 exports.TriageTeamData = {
   add_team_members,
@@ -425,4 +442,5 @@ exports.TriageTeamData = {
   get_team_channel_id,
   get_user_id_by_github_username,
   add_labels_to_card,
+  get_team_triage_assignments,
 };

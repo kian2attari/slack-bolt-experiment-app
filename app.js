@@ -91,6 +91,8 @@ shortcuts_listener.setup_triage_workflow(app);
 
 shortcuts_listener.modify_github_username(app);
 
+shortcuts_listener.edit_triage_duty_availability(app);
+
 // !SECTION Listening for shortcuts
 
 /* -------------------------------------------------------------------------- */

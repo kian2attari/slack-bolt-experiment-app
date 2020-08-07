@@ -1,4 +1,4 @@
-module.exports = (github_username = '') => ({
+exports.UsernameMapModal = (github_username = '') => ({
   'type': 'modal',
   'callback_id': 'map_username_modal',
   'title': {

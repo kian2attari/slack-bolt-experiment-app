@@ -1,8 +1,11 @@
 const {setup_org_project_modal} = require('./SetupOrgProjectModal');
+const {EditTriageDutyAvailabilityModal} = require('./EditTriageDutyAvailabilityModal');
+const {CreateTriageTeamModal} = require('./CreateTriageTeamModal');
+const {UsernameMapModal} = require('./UsernameMapModal');
 
 module.exports = {
-  AppHomeMoreInfoIssueModal: require('./AppHomeMoreInfoIssueModal'),
   setup_org_project_modal,
-  CreateTriageTeamModal: require('./CreateTriageTeamModal'),
-  UsernameMapModal: require('./UsernameMapModal'),
+  EditTriageDutyAvailabilityModal,
+  CreateTriageTeamModal,
+  UsernameMapModal,
 };
