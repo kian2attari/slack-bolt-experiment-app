@@ -1,4 +1,4 @@
-const {Connection} = require('./dbConnection');
+const {connectToMongoCollection} = require('./dbConnection');
 const {reg_exp} = require('../constants');
 
 /**
@@ -16,7 +16,7 @@ const {reg_exp} = require('../constants');
 async function add_new_internal_issue(new_issue_message_obj) {
   // Use connect method to connect to the Server
   try {
-    const collection = await Connection.connectToMongoCollection();
+    const collection = await connectToMongoCollection();
 
     console.log('collection', collection);
 

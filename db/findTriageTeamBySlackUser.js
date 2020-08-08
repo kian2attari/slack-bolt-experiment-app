@@ -1,7 +1,7 @@
-const {Connection} = require('./dbConnection');
+const {connectToMongoCollection} = require('./dbConnection');
 
 async function find_triage_team_by_slack_user(slack_user_id, projection = {}) {
-  const collection = await Connection.connectToMongoCollection();
+  const collection = await connectToMongoCollection();
 
   const db_user_filter = {};
 

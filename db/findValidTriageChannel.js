@@ -1,7 +1,7 @@
-const {Connection} = require('./dbConnection');
+const {connectToMongoCollection} = require('./dbConnection');
 
 async function find_valid_triage_channel(triage_channel_id) {
-  const collection = await Connection.connectToMongoCollection();
+  const collection = await connectToMongoCollection();
 
   const db_triage_channel_filter = {};
 

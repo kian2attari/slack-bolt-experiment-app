@@ -1,24 +1,24 @@
 const {MongoClient} = require('mongodb');
 
-class Connection {
-  static async connectToMongoCollection() {
-    if (this.collection) return this.collection;
-    try {
-      this.db_client = await MongoClient.connect(this.url, this.options);
-      console.log('DB Client ready! Successfully connected successfully to MongoDB!');
-    } catch (error) {
-      console.error(error);
-    }
-    this.collection = this.db_client.db().collection('gitwave_team_data');
-    return this.collection;
-  }
-}
-
-Connection.db_client = null;
-Connection.collection = null;
-Connection.url = process.env.MONGODB_URI;
-Connection.options = {
+let db_client = null;
+let collection = null;
+const url = process.env.MONGODB_URI;
+const options = {
   useUnifiedTopology: true,
 };
 
-exports.Connection = Connection;
+async function connectToMongoCollection() {
+  if (collection) return collection;
+  try {
+    db_client = await MongoClient.connect(url, options);
+    console.log('DB Client ready! Successfully connected successfully to MongoDB!');
+  } catch (error) {
+    console.error(error);
+  }
+  collection = db_client.db().collection('gitwave_team_data');
+  return collection;
+}
+
+// TODO just export the function, not this Object
+
+exports.connectToMongoCollection = connectToMongoCollection;

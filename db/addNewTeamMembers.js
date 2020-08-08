@@ -1,8 +1,8 @@
-const {Connection} = require('./dbConnection');
+const {connectToMongoCollection} = require('./dbConnection');
 const {reduce_array_to_obj} = require('../helper-functions');
 
 async function add_new_team_members(slack_user_ids, team_channel_id) {
-  const collection = await Connection.connectToMongoCollection();
+  const collection = await connectToMongoCollection();
 
   // TODO update this to work like how addNewTriageTeam works. This model is old.
 

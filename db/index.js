@@ -1,4 +1,4 @@
-const {Connection} = require('./dbConnection');
+const {connectToMongoCollection} = require('./dbConnection');
 const {add_new_internal_issue} = require('./addNewInternalIssue');
 const {add_new_triage_team_to_db} = require('./addNewTriageTeam');
 const {find_triage_team_by_slack_user} = require('./findTriageTeamBySlackUser');
@@ -8,7 +8,7 @@ const {find_documents} = require('./findDocuments');
 const {find_valid_triage_channel} = require('./findValidTriageChannel');
 const {update_document} = require('./updateDocument');
 
-exports.Connection = Connection;
+exports.connectToMongoCollection = connectToMongoCollection;
 exports.add_new_internal_issue = add_new_internal_issue;
 exports.add_new_triage_team_to_db = add_new_triage_team_to_db;
 exports.find_triage_team_by_slack_user = find_triage_team_by_slack_user;
