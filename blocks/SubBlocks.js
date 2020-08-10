@@ -16,4 +16,4 @@ function option_obj(option_text, option_val = option_text) {
   };
 }
 
-module.exports = {option_obj};
+exports.option_obj = option_obj;

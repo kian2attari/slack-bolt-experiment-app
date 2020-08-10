@@ -22,12 +22,6 @@ const call_gh_graphql = async (query, variables, installation_id) => {
 
     const data = await graphqlWithAuth(query, variables);
 
-    const response = JSON.stringify(data, undefined, 2);
-
-    console.log(': -------------------------------------');
-    console.log('call_gh_graphql -> response', response);
-    console.log(': -------------------------------------');
-
     return data;
   } catch (error) {
     console.error(error);
