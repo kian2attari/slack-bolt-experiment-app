@@ -9,15 +9,12 @@ module.exports = app => {
 
       const {selected_option} = action_body;
 
-      const selected_main_level_view = {
-        name: selected_option.text.text,
-        value: selected_option.value,
-      };
+      const selected_main_level_view = selected_option.text.text;
 
       console.log('selected_main_level_view', selected_main_level_view);
 
       // If the selection is All untriaged, then just show those cards
-      if (selected_main_level_view.value === 'All') {
+      if (selected_main_level_view === 'All') {
         show_untriaged_cards({
           body,
           context,

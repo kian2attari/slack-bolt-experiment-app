@@ -209,6 +209,7 @@ exports.triaged_cards = (
     ];
   });
 
+  console.log('external_issues_block', external_issues_block);
   const combined_issues_block = internal_issues_block.concat(external_issues_block);
 
   return combined_issues_block;

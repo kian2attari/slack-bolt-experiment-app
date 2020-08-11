@@ -17,11 +17,6 @@ function app_home_opened(app) {
 
     const team_data = await get_team_repo_subscriptions(event.user);
 
-    const main_level_filter_selection = {
-      name: 'All',
-      value: 'All',
-    };
-
     try {
       if (typeof team_data === 'undefined') {
         console.log(`${event.user} currently is not associated with a triage team`);
@@ -43,7 +38,7 @@ function app_home_opened(app) {
       if (Object.keys(team_data.subscribed_repos).size === 0) {
         // TODO change the issue section of the App Home to display a CTA to subscribe to a repo
         console.log('The team is not currently subscribed to any repos');
-        const home_view = AppHome.BaseAppHome(main_level_filter_selection);
+        const home_view = AppHome.BaseAppHome('All');
         await client.views.publish({
           /* retrieves your xoxb token from context */
           token: context.botToken,
@@ -67,7 +62,7 @@ function app_home_opened(app) {
         context,
         client,
         event,
-        selected_main_level_view: main_level_filter_selection,
+        selected_main_level_view: 'All',
       });
     } catch (error) {
       console.error(error);

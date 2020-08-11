@@ -160,14 +160,7 @@ We only need the project board data so a projection is passed in as the second p
     show_only_done
   );
 
-  const home_view = AppHome.BaseAppHome(
-    {
-      name: 'All',
-      value: 'All',
-    },
-    card_blocks,
-    selected_button
-  );
+  const home_view = AppHome.BaseAppHome('All', card_blocks, selected_button);
 
   return client.views.publish({
     token: context.botToken,

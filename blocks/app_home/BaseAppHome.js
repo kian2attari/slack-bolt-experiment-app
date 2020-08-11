@@ -1,7 +1,7 @@
 const SubBlocks = require('../SubBlocks');
 // TODO remove the default value for selected_button. It's only temporarily needed for the transition to statelessness
 module.exports = (
-  main_level_filter_selection = 'All', // This can be a specific GitHub repo path and ID, or it can be a special selector like "all", or only "internal" and "external"
+  main_level_filter_selection = 'All', // This can be "all", or only "internal" and "external"
   issue_blocks = undefined,
   selected_button = 'show_untriaged_filter_button'
 ) => {
