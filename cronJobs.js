@@ -92,9 +92,9 @@ function rotate_triage_duty_assignment(app) {
     const new_last_assigned_member =
       team_member_alphabetic_array[index_of_new_last_assigned_member];
 
-    const new_triage_assignment_date = date_formatter(
-      next_week(new Date(last_assignment_date))
-    );
+    const new_triage_assignment_date_obj = next_week(new Date(last_assignment_date));
+
+    const new_triage_assignment_date = date_formatter(new_triage_assignment_date_obj);
 
     console.log('new_last_assigned_member', new_last_assigned_member);
 
@@ -103,12 +103,16 @@ function rotate_triage_duty_assignment(app) {
 
     team_member_alphabetic_array.splice(index_of_new_last_assigned_member, 1);
 
-    // TODO set channel topic to triage_duty_assignments[0].assigned_team_member
+    await app.client.conversations.setTopic({
+      token: process.env.SLACK_BOT_TOKEN,
+      channel: team_channel_id,
+      topic: `<@${triage_duty_assignments[0].assigned_team_member}> is on triage duty for the week of ${new_triage_assignment_date}!`,
+    });
 
     console.log('team_member_alphabetic_array post splice', team_member_alphabetic_array);
 
     triage_duty_assignments.push({
-      'date': new_triage_assignment_date,
+      'date': new_triage_assignment_date_obj.getTime(),
       'assigned_team_member': new_last_assigned_member,
       'substitutes': team_member_alphabetic_array,
     });
@@ -120,7 +124,7 @@ function rotate_triage_duty_assignment(app) {
         token: process.env.SLACK_BOT_TOKEN,
         channel: new_last_assigned_member,
         // Just in case there is an issue loading the blocks.
-        // TODO add blocks that also display a button that opens up the Edit Triage availability Modal
+        // EXTRA_TODO add blocks that also display a button that opens up the Edit Triage availability Modal
         text: `Hey <@${new_last_assigned_member}>, you are up for triage duty assignment on *${new_triage_assignment_date}*. \n If you are not available then, make sure to indicate that using the \`Triage Duty Availability\` Shortcut!`,
       });
     } catch (error) {
@@ -148,7 +152,9 @@ function triage_duty_rotation(app) {
     rotate_triage_duty_assignment(app),
     null,
     true,
-    'America/Los_Angeles'
+    'America/Los_Angeles',
+    undefined,
+    true
   );
 }
 

@@ -6,7 +6,7 @@
  * @returns {Date} The week after the given/current date
  */
 function next_week(date = new Date()) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 7);
+  return new Date(date.getTime() + 604800000); // milliseconds in a week
 }
 /**
  * Returns the Date input in the format: "Friday, August 14 (8/14)"
