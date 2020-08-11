@@ -1,7 +1,7 @@
 const SubBlocks = require('../SubBlocks');
 // TODO remove the default value for selected_button. It's only temporarily needed for the transition to statelessness
 module.exports = (
-  main_level_filter_selection, // This can be a specific GitHub repo path and ID, or it can be a special selector like "all", or only "internal" and "external"
+  main_level_filter_selection = 'All', // This can be a specific GitHub repo path and ID, or it can be a special selector like "all", or only "internal" and "external"
   issue_blocks = undefined,
   selected_button = 'show_untriaged_filter_button'
 ) => {
@@ -69,26 +69,53 @@ module.exports = (
           {name: 'Internal', value: 'Internal'},
           {name: 'External', value: 'External'},
         ],
-        {name: 'All', value: 'All'} // Note: all untriaged -> "All" for both parameters
+        {name: main_level_filter_selection, value: main_level_filter_selection} // Note: all untriaged -> "All" for both parameters
       ),
     ],
   };
 
   return {
     'type': 'home',
-    'blocks': [
-      selection_block,
-      filter_buttons_block,
-      {
-        'type': 'divider',
-      },
-      // TODO if project has no issues, render nothing
-      // If issue blocks have been provided, render them here
-      ...(typeof issue_blocks !== 'undefined' ? issue_blocks : []),
+    'blocks':
+      main_level_filter_selection !== 'NoTeam'
+        ? [
+            selection_block,
+            filter_buttons_block,
+            {
+              'type': 'divider',
+            },
+            // TODO if project has no issues, render nothing
+            // If issue blocks have been provided, render them here
+            ...(typeof issue_blocks !== 'undefined' ? issue_blocks : []),
 
-      // If the more info block has been provided, render it here
-      // ...(typeof more_info_blocks !== 'undefined' ? more_info_blocks : []),
-    ],
+            // If the more info block has been provided, render it here
+            // ...(typeof more_info_blocks !== 'undefined' ? more_info_blocks : []),
+          ]
+        : [
+            {
+              'type': 'section',
+              'text': {
+                'type': 'mrkdwn',
+                'text':
+                  "Welcome to GitWave, your all-in-one triaging assistant! Looks like you're not part of a traige team yet. Click the button below to get started!",
+              },
+            },
+            {
+              'type': 'actions',
+              'elements': [
+                {
+                  'type': 'button',
+                  'action_id': 'setup_triage_workflow_button',
+                  'text': {
+                    'type': 'plain_text',
+                    'text': 'Setup a new triage team',
+                    'emoji': true,
+                  },
+                  'value': 'new_user',
+                },
+              ],
+            },
+          ],
   };
 };
 

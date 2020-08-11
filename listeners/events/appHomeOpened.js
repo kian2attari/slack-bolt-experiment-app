@@ -23,10 +23,10 @@ function app_home_opened(app) {
     };
 
     try {
-      // TODO change the issue section of the App Home to display a CTA to make a team
       if (typeof team_data === 'undefined') {
         console.log(`${event.user} currently is not associated with a triage team`);
-        const home_view = AppHome.BaseAppHome(main_level_filter_selection);
+        // TODO: CTA To make a team!
+        const home_view = AppHome.BaseAppHome('NoTeam');
         await client.views.publish({
           /* retrieves your xoxb token from context */
           token: context.botToken,

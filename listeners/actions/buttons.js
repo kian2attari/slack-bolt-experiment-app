@@ -233,6 +233,22 @@ function link_button(app) {
   });
 }
 
+// A user that isn't currently associated with a team pressed the create new team button!
+function setup_triage_workflow_button(app) {
+  app.action('setup_triage_workflow_button', async ({ack, body, context, client}) => {
+    ack();
+
+    const {trigger_id} = body;
+
+    await client.views.open({
+      // The token you used to initialize your app is stored in the `context` object
+      token: context.botToken,
+      trigger_id,
+      view: Modals.CreateTriageTeamModal,
+    });
+  });
+}
+
 module.exports = {
   open_map_modal_button,
   show_untriaged_filter_button,
@@ -242,4 +258,5 @@ module.exports = {
   show_done_by_user_filter_button,
   app_home_external_triage_buttons,
   app_home_internal_triage_buttons,
+  setup_triage_workflow_button,
 };

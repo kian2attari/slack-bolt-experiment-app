@@ -60,6 +60,8 @@ actions_listener.buttons.app_home_internal_triage_buttons(app);
 
 actions_listener.buttons.show_untriaged_filter_button(app);
 
+actions_listener.buttons.setup_triage_workflow_button(app);
+
 actions_listener.buttons.link_button(app);
 
 /* ------------- ANCHOR Responding to the repo name selection ------------ */
