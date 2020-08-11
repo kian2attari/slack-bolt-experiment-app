@@ -1,5 +1,5 @@
 const {Modals} = require('../../blocks');
-const {get_team_triage_assignments} = require('../../models');
+const {get_team_triage_duty_assignments} = require('../../models');
 
 exports.edit_triage_duty_availability = app => {
   app.shortcut(
@@ -9,7 +9,7 @@ exports.edit_triage_duty_availability = app => {
         // Acknowledge shortcut request
         await ack();
 
-        const {triage_duty_assignments} = await get_team_triage_assignments(
+        const {triage_duty_assignments} = await get_team_triage_duty_assignments(
           shortcut.user.id
         );
 

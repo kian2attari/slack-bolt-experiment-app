@@ -417,13 +417,27 @@ async function get_team_repo_subscriptions(user_id) {
  *   team_channel_id: String;
  * }}
  */
-async function get_team_triage_assignments(slack_user_id) {
-  const team_data = await find_triage_team_by_slack_user(slack_user_id, {
-    triage_duty_assignments: 1,
-    team_channel_id: 1,
-  });
+async function get_team_triage_duty_assignments() {
+  const team_data = await find_documents(
+    {},
+    {
+      triage_duty_assignments: 1,
+      team_channel_id: 1,
+      team_members: 1,
+    }
+  );
 
-  return team_data[0];
+  return team_data;
+}
+
+async function set_triage_duty_assignments(
+  team_channel_id,
+  set_triage_duty_assignments_obj
+) {
+  return update_document(
+    {team_channel_id},
+    {triage_duty_assignments: set_triage_duty_assignments_obj}
+  );
 }
 
 exports.TriageTeamData = {
@@ -442,5 +456,6 @@ exports.TriageTeamData = {
   get_team_channel_id,
   get_user_id_by_github_username,
   add_labels_to_card,
-  get_team_triage_assignments,
+  get_team_triage_duty_assignments,
+  set_triage_duty_assignments,
 };

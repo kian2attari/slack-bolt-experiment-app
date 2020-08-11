@@ -10,7 +10,7 @@ const {
   shortcuts_listener,
 } = require('./listeners');
 const {connectToMongoCollection} = require('./db');
-const {review_request_cron_job} = require('./cronJobs');
+const {review_request_cron_job, triage_duty_rotation} = require('./cronJobs');
 
 // Create a Bolt Receiver
 const expressReceiver = new ExpressReceiver({
@@ -129,6 +129,7 @@ github_event(expressReceiver.router, app);
   try {
     await connectToMongoCollection();
     review_request_cron_job(app);
+    triage_duty_rotation(app);
   } catch (error) {
     console.error('Test connection to database failed.', error);
     throw error;

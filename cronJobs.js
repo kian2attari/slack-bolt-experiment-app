@@ -1,6 +1,10 @@
 const {CronJob} = require('cron');
-const {send_mention_message} = require('./helper-functions');
-const {get_pending_review_requests, get_team_triage_assignments} = require('./models');
+const {send_mention_message, next_week, date_formatter} = require('./helper-functions');
+const {
+  get_pending_review_requests,
+  get_team_triage_duty_assignments,
+  set_triage_duty_assignments,
+} = require('./models');
 
 // TODO remove passing this app parameter, there must be a way of avoiding this.
 function check_review_requests(app) {
@@ -55,16 +59,73 @@ function check_review_requests(app) {
 
 function rotate_triage_duty_assignment(app) {
   return async () => {
-    const team_data = await get_team_triage_assignments();
+    const team_data = await get_team_triage_duty_assignments();
 
     console.log(': -------------------------------------------------------------');
     console.log('function rotate_triage_duty_assignment -> team_data', team_data);
     console.log(': -------------------------------------------------------------');
 
-    const {triage_duty_assignments, team_channel_id} = team_data;
+    const {triage_duty_assignments, team_channel_id, team_members} = team_data[0];
 
-    // TODO get all the triage teams and their members
-    // TODO See which member is next on the block, and if they haven't marked themselves unavailable for that week, set the channel topic to them
+    const team_member_alphabetic_array = Object.keys(team_members).sort();
+
+    console.log('team_member_alphabetic_array', team_member_alphabetic_array);
+
+    console.log('triage_duty_assignments', triage_duty_assignments);
+
+    const {
+      assigned_team_member: last_assigned_member,
+      date: last_assignment_date,
+    } = triage_duty_assignments[3];
+
+    console.log('last_assigned_member', last_assigned_member);
+
+    const last_assigned_member_index = team_member_alphabetic_array.indexOf(
+      last_assigned_member
+    );
+
+    const index_of_new_last_assigned_member =
+      last_assigned_member_index === team_member_alphabetic_array.length - 1
+        ? 0 // We've hit the end of the rotation so we start at the beginning
+        : last_assigned_member_index + 1;
+
+    const new_last_assigned_member =
+      team_member_alphabetic_array[index_of_new_last_assigned_member];
+
+    const new_triage_assignment_date = date_formatter(
+      next_week(new Date(last_assignment_date))
+    );
+
+    console.log('new_last_assigned_member', new_last_assigned_member);
+
+    // Remove the current week
+    triage_duty_assignments.shift();
+
+    team_member_alphabetic_array.splice(index_of_new_last_assigned_member, 1);
+
+    // TODO set channel topic to triage_duty_assignments[0].assigned_team_member
+
+    console.log('team_member_alphabetic_array post splice', team_member_alphabetic_array);
+
+    triage_duty_assignments.push({
+      'date': new_triage_assignment_date,
+      'assigned_team_member': new_last_assigned_member,
+      'substitutes': team_member_alphabetic_array,
+    });
+
+    try {
+      await set_triage_duty_assignments(team_channel_id, triage_duty_assignments);
+      await app.client.chat.postMessage({
+        // Since there is no context we just use the original token
+        token: process.env.SLACK_BOT_TOKEN,
+        channel: new_last_assigned_member,
+        // Just in case there is an issue loading the blocks.
+        // TODO add blocks that also display a button that opens up the Edit Triage availability Modal
+        text: `Hey <@${new_last_assigned_member}>, you are up for triage duty assignment on *${new_triage_assignment_date}*. \n If you are not available then, make sure to indicate that using the \`Triage Duty Availability\` Shortcut!`,
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
 }
 
@@ -92,3 +153,4 @@ function triage_duty_rotation(app) {
 }
 
 exports.review_request_cron_job = review_request_cron_job;
+exports.triage_duty_rotation = triage_duty_rotation;
