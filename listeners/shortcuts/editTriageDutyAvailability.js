@@ -9,9 +9,9 @@ exports.edit_triage_duty_availability = app => {
         // Acknowledge shortcut request
         await ack();
 
-        const {triage_duty_assignments} = await get_team_triage_duty_assignments(
-          shortcut.user.id
-        );
+        const team_data = await get_team_triage_duty_assignments(shortcut.user.id);
+
+        const {triage_duty_assignments} = team_data[0];
 
         console.log('triage_duty_assignments', triage_duty_assignments);
 

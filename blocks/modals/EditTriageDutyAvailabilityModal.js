@@ -1,5 +1,6 @@
 exports.EditTriageDutyAvailabilityModal = triage_duty_assignments_obj => {
   const {SubBlocks} = require('../index');
+  const {date_formatter} = require('../../helper-functions');
 
   return {
     'type': 'modal',
@@ -53,7 +54,9 @@ exports.EditTriageDutyAvailabilityModal = triage_duty_assignments_obj => {
             'type': 'input',
             'label': {
               'type': 'plain_text',
-              'text': `:spiral_calendar_pad: ${assignment.date}`,
+              'text': `:spiral_calendar_pad: ${date_formatter(
+                new Date(assignment.date)
+              )}`,
               'emoji': true,
             },
             'element': {

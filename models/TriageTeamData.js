@@ -409,23 +409,35 @@ async function get_team_repo_subscriptions(user_id) {
   return response[0];
 }
 /**
- * Returns the team members, triage duty assignments, and team channel ID's of every team.
+ * Returns the team members, triage duty assignments, and team channel ID's of every team or
+ * just that of a specified user.
  *
+ * @param {String} slack_user_id
  * @returns {{
  *   team_members: [String];
  *   triage_duty_assignments: {};
  *   team_channel_id: String;
  * }}
  */
-async function get_team_triage_duty_assignments() {
-  const team_data = await find_documents(
-    {},
-    {
-      triage_duty_assignments: 1,
-      team_channel_id: 1,
-      team_members: 1,
-    }
-  );
+async function get_team_triage_duty_assignments(slack_user_id = null) {
+  const db_query =
+    slack_user_id === null
+      ? find_documents(
+          {},
+          {
+            triage_duty_assignments: 1,
+            team_channel_id: 1,
+            team_members: 1,
+          }
+        )
+      : find_triage_team_by_slack_user(slack_user_id, {
+          triage_duty_assignments: 1,
+          team_channel_id: 1,
+          team_members: 1,
+        });
+  const team_data = await db_query;
+
+  console.log('team data', team_data);
 
   return team_data;
 }
