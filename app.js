@@ -105,6 +105,8 @@ views_listener.map_username_modal_view(app);
 
 views_listener.setup_org_project_modal_view(app);
 
+views_listener.edit_triage_duty_availability_modal(app);
+
 // !SECTION Listening for view submissions
 /* -------------------------------------------------------------------------- */
 /*                     SECTION Where webhooks are received                    */

@@ -3,6 +3,7 @@ exports.EditTriageDutyAvailabilityModal = triage_duty_assignments_obj => {
 
   return {
     'type': 'modal',
+    'callback_id': 'edit_triage_duty_availability_modal',
     'title': {
       'type': 'plain_text',
       'text': 'Triage duty availability',
