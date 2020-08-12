@@ -57,6 +57,41 @@ async function associate_team_with_installation(
     return accumulator;
   }, {});
 
+  const sorted_slack_user_ids = slack_user_ids.sort();
+
+  const team_size = sorted_slack_user_ids.length;
+
+  const current_date = new Date();
+
+  // Since the triage duty assignment cycle starts on monday, here we figure out the date of the Monday for this week. 0 = Sunday, so 1 = Monday
+  const days_from_monday = 1 - current_date.getDay();
+
+  const current_week_monday_date = new Date(
+    current_date.getFullYear(),
+    current_date.getMonth(),
+    current_date.getDate() + days_from_monday
+  );
+
+  console.log('current_week_monday_date', current_week_monday_date);
+
+  console.log('sorted_slack_user_ids', sorted_slack_user_ids);
+
+  // Here we make triage assignments for the current week and next 3 weeks
+  const triage_duty_assignments = [];
+
+  // Every iteration is another week with i = 0 being the current week.
+  for (let i = 0; i < 4; i += 1) {
+    const assigned_team_member = sorted_slack_user_ids[i % team_size]; // So we don't go out of range on our team member array
+
+    triage_duty_assignments[i] = {
+      date: current_week_monday_date.getTime() + i * 604800000, // 604800000 is the number of milliseconds in a week
+      assigned_team_member,
+      substitutes: sorted_slack_user_ids.filter(
+        slack_user_id => slack_user_id !== assigned_team_member
+      ),
+    };
+  }
+
   const filter = {'org_account.node_id': selected_github_org.value};
 
   const new_obj = {
@@ -64,6 +99,8 @@ async function associate_team_with_installation(
     team_internal_triage_channel_id,
     internal_triage_items: {},
     team_members: team_member_obj,
+    pending_review_requests: [],
+    triage_duty_assignments,
   };
   return update_document(filter, new_obj);
 }
