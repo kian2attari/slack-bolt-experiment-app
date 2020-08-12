@@ -1,47 +1,47 @@
-const {check_for_mentions, send_mention_message} = require('../../helper-functions');
+const {checkForMentions, sendMentionMessage} = require('../../helper-functions');
 
-async function issue_comment_created(app, req, res) {
+async function issueCommentCreated(app, req, res) {
   // TODO refactor these constant declarations
   const request = req.body;
 
-  const installation_id = request.installation.id;
-  const {html_url, title, state} = request.issue;
+  const installationId = request.installation.id;
+  const {html_url: htmlUrl, title, state} = request.issue;
   const {body} = request.comment;
-  const comment_creator = request.comment.user.login;
-  const creator_avatar_url = request.comment.user.avatar_url;
-  const content_create_date = new Date(request.comment.created_at);
+  const commentCreator = request.comment.user.login;
+  const creatorAvatarUrl = request.comment.user.avatar_url;
+  const contentCreateDate = new Date(request.comment.created_at);
 
   if (state === 'closed') {
-    const mention_event_data = {
+    const mentionEventData = {
       title: `Comment on closed issue: ${title}`,
       body,
-      html_url,
-      content_creator: comment_creator,
-      avatar_url: creator_avatar_url,
-      content_create_date,
-      mentioned_slack_user: '!channel',
-      is_closed: true,
-      installation_id,
+      htmlUrl,
+      contentCreator: commentCreator,
+      avatarUrl: creatorAvatarUrl,
+      contentCreateDate,
+      mentionedSlackUser: '!channel',
+      isClosed: true,
+      installationId,
     };
     // TODO make a new function that sends a message to the team and adds the untriaged label to said issue
-    await send_mention_message(app, mention_event_data);
+    await sendMentionMessage(app, mentionEventData);
 
     res.send();
   }
 
-  const mention_event_data = {
+  const mentionEventData = {
     title: `New comment on issue: ${title}`,
     body,
-    html_url,
-    content_creator: comment_creator,
-    creator_avatar_url,
-    content_create_date,
-    installation_id,
+    htmlUrl,
+    contentCreator: commentCreator,
+    creatorAvatarUrl,
+    contentCreateDate,
+    installationId,
   };
 
-  await check_for_mentions(app, mention_event_data);
+  await checkForMentions(app, mentionEventData);
 
   res.send();
 }
 
-exports.issue_comment_created = issue_comment_created;
+exports.issueCommentCreated = issueCommentCreated;

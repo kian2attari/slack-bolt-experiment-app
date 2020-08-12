@@ -1,20 +1,20 @@
 const {connectToMongoCollection} = require('./dbConnection');
 
-async function find_triage_team_by_slack_user(slack_user_id, projection = {}) {
+async function findTriageTeamBySlackUser(slackUserId, projection = {}) {
   const collection = await connectToMongoCollection();
 
-  const db_user_filter = {};
+  const dbUserFilter = {};
 
-  db_user_filter[`team_members.${slack_user_id}`] = {$exists: true};
+  dbUserFilter[`teamMembers.${slackUserId}`] = {$exists: true};
 
   const options = {projection};
 
   // Pass option parameters if they were provided
-  const user_team_array = collection.find(db_user_filter, options).toArray();
+  const userTeamArray = collection.find(dbUserFilter, options).toArray();
 
   // await client.close();
 
-  return user_team_array;
+  return userTeamArray;
 }
 
-exports.find_triage_team_by_slack_user = find_triage_team_by_slack_user;
+exports.findTriageTeamBySlackUser = findTriageTeamBySlackUser;

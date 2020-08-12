@@ -1,14 +1,14 @@
 const {connectToMongoCollection} = require('./dbConnection');
 
-async function update_document(filter, update_obj, update_operator = '$set') {
+async function updateDocument(filter, updateObj, updateOperator = '$set') {
   const collection = await connectToMongoCollection();
 
-  const add_new_operation = {};
+  const addNewOperation = {};
 
-  add_new_operation[update_operator] = update_obj;
+  addNewOperation[updateOperator] = updateObj;
 
   // Update a single document
-  return collection.updateOne(filter, add_new_operation);
+  return collection.updateOne(filter, addNewOperation);
 }
 
-exports.update_document = update_document;
+exports.updateDocument = updateDocument;

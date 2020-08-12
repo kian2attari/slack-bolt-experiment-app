@@ -1,11 +1,11 @@
 module.exports = `
-query getIdLabel($repo_id: ID!, $label_name: String!) {
+query getIdLabel($repoId: ID!, $labelName: String!) {
   __typename
-  node(id: $repo_id) {
+  node(id: $repoId) {
     ... on Repository {
       id
       name
-      label(name: $label_name) {
+      label(name: $labelName) {
         id
         name
       }

@@ -1,25 +1,25 @@
-const {triage_reacjis} = require('../../constants');
-const {update_internal_triage_status_in_db} = require('../commonFunctions');
+const {triageReacjis} = require('../../constants');
+const {updateInternalTriageStatusInDb} = require('../commonFunctions');
 
 // Listener middleware that filters out reactions that we dont care about
-async function triage_reactions_middleware({event, next}) {
-  if (triage_reacjis.includes(event.reaction)) {
+async function triageReactionsMiddleware({event, next}) {
+  if (triageReacjis.includes(event.reaction)) {
     console.log('reaction', event.reaction);
     await next();
   }
 }
 
-function reaction_added(app) {
-  app.event('reaction_added', triage_reactions_middleware, async ({event}) => {
+function reactionAdded(app) {
+  app.event('reaction_added', triageReactionsMiddleware, async ({event}) => {
     console.log('reaction added event', event);
-    const {user, reaction, event_ts, item} = event;
+    const {user, reaction, eventTs, item} = event;
     try {
-      await update_internal_triage_status_in_db({
+      await updateInternalTriageStatusInDb({
         user,
         reaction,
-        event_ts,
+        eventTs,
         channel: item.channel,
-        issue_message_ts: item.ts,
+        issueMessageTs: item.ts,
       });
     } catch (error) {
       console.error(error);
@@ -27,4 +27,4 @@ function reaction_added(app) {
   });
 }
 
-exports.reaction_added = reaction_added;
+exports.reactionAdded = reactionAdded;

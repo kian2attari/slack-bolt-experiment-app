@@ -130,9 +130,9 @@ function staticSelectElement(actionId, placeHolderText, options, initialOption =
       'text': placeHolderText,
       'emoji': true,
     },
-    'options': options.map(option => SubBlocks.option_obj(option.name, option.value)),
+    'options': options.map(option => SubBlocks.optionObj(option.name, option.value)),
     ...(Object.keys(initialOption).length !== 0 && {
-      'initialOption': SubBlocks.option_obj(initialOption.name, initialOption.value),
+      'initial_option': SubBlocks.optionObj(initialOption.name, initialOption.value),
     }),
   };
 }

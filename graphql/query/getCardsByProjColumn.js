@@ -1,7 +1,7 @@
 // TODO get PR cards as well
 module.exports = `
-query getCardsByProjColumn($column_id: ID!) {
-  node(id: $column_id) {
+query getCardsByProjColumn($columnId: ID!) {
+  node(id: $columnId) {
     ... on ProjectColumn {
       id
       name

@@ -1,16 +1,16 @@
-const {find_triage_team_by_slack_user} = require('../../db');
+const {findTriageTeamBySlackUser} = require('../../db');
 const {
-  SubBlocks: {option_obj},
+  SubBlocks: {optionObj},
 } = require('../../blocks');
 
-function assignable_team_members(app) {
+function assignableTeamMembers(app) {
   app.options('assignable_team_members', async ({options, ack}) => {
-    const user_id = options.user.id;
+    const userId = options.user.id;
 
     try {
-      const {team_members} = (
-        await find_triage_team_by_slack_user(user_id, {
-          team_members: 1,
+      const {teamMembers} = (
+        await findTriageTeamBySlackUser(userId, {
+          teamMembers: 1,
         })
       )[0];
       /* Note: I use the <@user_id> mention convention here so that the client will automatically 
@@ -20,21 +20,21 @@ function assignable_team_members(app) {
       would be calling the users.identity method on Slack API for every user and getting their names that way. 
       Ideally if you go this route, modify the DB model so that the user's display name is stored there. */
 
-      const assignable_user_array = Object.keys(team_members).reduce(
-        (assignable_users, slack_user_id) => {
-          if (team_members[slack_user_id].github_username !== null)
-            assignable_users.push(`<@${slack_user_id}>`);
-          return assignable_users;
+      const assignableUserArray = Object.keys(teamMembers).reduce(
+        (assignableUsers, slackUserId) => {
+          if (teamMembers[slackUserId].githubUsername !== null)
+            assignableUsers.push(`<@${slackUserId}>`);
+          return assignableUsers;
         },
         []
       );
 
-      const assignable_user_options = assignable_user_array.map(slack_user_id =>
-        option_obj(slack_user_id)
+      const assignableUserOptions = assignableUserArray.map(slackUserId =>
+        optionObj(slackUserId)
       );
 
       await ack({
-        options: assignable_user_options,
+        options: assignableUserOptions,
       });
     } catch (error) {
       console.error(error);
@@ -45,4 +45,4 @@ function assignable_team_members(app) {
   });
 }
 
-exports.assignable_team_members = assignable_team_members;
+exports.assignableTeamMembers = assignableTeamMembers;

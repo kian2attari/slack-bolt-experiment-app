@@ -1,7 +1,7 @@
 exports.getOrgProjectBasicData = `
-query getOrgProjectBasicData($org_proj_id: ID!) {
+query getOrgProjectBasicData($orgProjId: ID!) {
     __typename
-    node(id: $org_proj_id) {
+    node(id: $orgProjId) {
       ... on Project {
         id
         name

@@ -1,6 +1,6 @@
 module.exports = `
-query getOrgAndUserLevelProjects($org_or_user_id: ID!) {
-  node(id: $org_or_user_id) {
+query getOrgAndUserLevelProjects($orgOrUserId: ID!) {
+  node(id: $orgOrUserId) {
     ... on Organization {
       id
       name

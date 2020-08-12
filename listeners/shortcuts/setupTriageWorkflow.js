@@ -10,7 +10,7 @@ module.exports = app => {
       await client.views.open({
         // The token you used to initialize your app is stored in the `context` object
         token: context.botToken,
-        trigger_id: shortcut.trigger_id,
+        'trigger_id': shortcut.trigger_id,
         view: Modals.CreateTriageTeamModal,
       });
     } catch (error) {

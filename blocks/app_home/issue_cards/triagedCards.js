@@ -170,8 +170,8 @@ exports.triagedCards = (
                         },
                         'action_id': `assign_eyes_label`,
                         'value': JSON.stringify({
-                          issue_message_ts: issueMessageTs,
-                          name: 'eyes',
+                          'issue_message_ts': issueMessageTs,
+                          'name': 'eyes',
                         }),
                       },
                     ]),
@@ -184,8 +184,8 @@ exports.triagedCards = (
                   },
                   'action_id': `assign_checkmark_label`,
                   'value': JSON.stringify({
-                    issue_message_ts: issueMessageTs,
-                    name: 'white_check_mark',
+                    'issue_message_ts': issueMessageTs,
+                    'name': 'white_check_mark',
                   }),
                 },
               ],

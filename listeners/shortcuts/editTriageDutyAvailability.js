@@ -1,7 +1,7 @@
 const {Modals} = require('../../blocks');
-const {get_team_triage_duty_assignments} = require('../../models');
+const {getTeamTriageDutyAssignments} = require('../../models');
 
-exports.edit_triage_duty_availability = app => {
+exports.editTriageDutyAvailability = app => {
   app.shortcut(
     'edit_triage_duty_availability',
     async ({shortcut, ack, context, client}) => {
@@ -9,18 +9,18 @@ exports.edit_triage_duty_availability = app => {
         // Acknowledge shortcut request
         await ack();
 
-        const team_data = await get_team_triage_duty_assignments(shortcut.user.id);
+        const teamData = await getTeamTriageDutyAssignments(shortcut.user.id);
 
-        const {triage_duty_assignments} = team_data[0];
+        const {triageDutyAssignments} = teamData[0];
 
-        console.log('triage_duty_assignments', triage_duty_assignments);
+        console.log('triage_duty_assignments', triageDutyAssignments);
 
         // Call the views.open method using one of the built-in WebClients
         const result = await client.views.open({
           // The token you used to initialize your app is stored in the `context` object
           token: context.botToken,
-          trigger_id: shortcut.trigger_id,
-          view: Modals.EditTriageDutyAvailabilityModal(triage_duty_assignments),
+          'trigger_id': shortcut.trigger_id,
+          view: Modals.EditTriageDutyAvailabilityModal(triageDutyAssignments),
         });
 
         console.log(result);

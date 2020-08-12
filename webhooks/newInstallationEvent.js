@@ -1,18 +1,20 @@
-const {add_new_document} = require('../db');
+const {addNewDocument} = require('../db');
 
-exports.new_gitwave_installation = async (req, res) => {
+exports.newGitwaveInstallation = async (req, res) => {
   console.log('new installation -> req', req.body);
 
   const {
     installation: {
-      account: {login, node_id, type},
+      /* eslint-disable-next-line custom-gitwave-rules/camelCaseWithFixer */
+      account: {login, node_id: nodeId, type},
       id,
-      repository_selection,
+      /* eslint-disable-next-line custom-gitwave-rules/camelCaseWithFixer */
+      repository_selection: repositorySelection,
     },
-    repositories: repositories_array,
+    repositories: repositoriesArray,
   } = req.body;
 
-  const new_installation_obj = {};
+  const newInstallationObj = {};
 
   /* The ID of the app installation. This ID is important because it's needed to generate the JWT
   that authenticates the app to access the GitHub API. The GitHub documentation isn't clear, but after a lot of 
@@ -23,24 +25,32 @@ exports.new_gitwave_installation = async (req, res) => {
   is later changed to an org-level installation and vice versa. The only case the installation ID would change for a repo
   would be if you uninstalled the app entireley from the repo and then reinstalled it. */
   // A new document is created for every Installation ID
-  new_installation_obj.gitwave_github_app_installation_id = id;
-  /* Details about the current scope of the installation. If repository_selection is 'all', then we know the app was installed 
-    on an org-level. If repository_selection is 'selected', then we know the app was installed on a repo-level */
-  new_installation_obj.gitwave_github_app_installation_scope = repository_selection;
+  newInstallationObj.gitwaveGithubAppInstallationId = id;
+  /* Details about the current scope of the installation. If repositorySelection is 'all', then we know the app was installed 
+    on an org-level. If repositorySelection is 'selected', then we know the app was installed on a repo-level */
+  newInstallationObj.gitwaveGithubAppInstallationScope = repositorySelection;
 
   // Information about the account that the GitWave GitHub app was installed on
-  new_installation_obj.org_account = {login, node_id, type};
+  newInstallationObj.orgAccount = {login, nodeId, type};
 
   // The repos the app was installed on/currently has access to
   // The team should be subscribed to these repos
   // TODO if the installation is org level, the team should be subscribed to every future repo as well
   // Converts the array of repo objs to an object that maps the repo full name -> repo obj
-  new_installation_obj.subscribed_repos = repositories_array.reduce(
-    (obj, item) => ({...obj, [item.full_name]: item}),
+  newInstallationObj.subscribedRepos = repositoriesArray.reduce(
+    (obj, item) => ({
+      ...obj,
+      [item.full_name]: {
+        nodeId: item.node_id,
+        fullName: item.full_name,
+        name: item.name,
+        private: item.private,
+      },
+    }),
     {}
   );
 
-  await add_new_document(new_installation_obj);
+  await addNewDocument(newInstallationObj);
 
   res.send();
 };

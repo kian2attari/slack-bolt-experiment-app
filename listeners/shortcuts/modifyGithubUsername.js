@@ -6,13 +6,13 @@ module.exports = app => {
       // Acknowledge shortcut request
       await ack();
 
-      const user_id = shortcut.user.id;
+      const slackUserId = shortcut.user.id;
       // Call the views.open method using one of the built-in WebClients
       client.chat.postMessage({
         token: context.botToken,
-        channel: user_id,
-        text: `Hey <@${user_id}>! Click here to change your GitHub username`,
-        blocks: Messages.UsernameMapMessage(user_id),
+        channel: slackUserId,
+        text: `Hey <@${slackUserId}>! Click here to change your GitHub username`,
+        blocks: Messages.UsernameMapMessage(slackUserId),
       });
     } catch (error) {
       console.error(error);

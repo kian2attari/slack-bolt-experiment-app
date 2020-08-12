@@ -1,6 +1,6 @@
 const {MongoClient} = require('mongodb');
 
-let db_client = null;
+let dbClient = null;
 let collection = null;
 const url = process.env.MONGODB_URI;
 const options = {
@@ -10,12 +10,12 @@ const options = {
 async function connectToMongoCollection() {
   if (collection) return collection;
   try {
-    db_client = await MongoClient.connect(url, options);
+    dbClient = await MongoClient.connect(url, options);
     console.log('DB Client ready! Successfully connected successfully to MongoDB!');
   } catch (error) {
     console.error(error);
   }
-  collection = db_client.db().collection('gitwave_team_data');
+  collection = dbClient.db().collection('gitwave_team_data');
   return collection;
 }
 

@@ -1,17 +1,17 @@
 const {connectToMongoCollection} = require('./dbConnection');
 
-async function find_valid_triage_channel(triage_channel_id) {
+async function findValidTriageChannel(triageChannelId) {
   const collection = await connectToMongoCollection();
 
-  const db_triage_channel_filter = {};
+  const dbTriageChannelFilter = {};
 
-  db_triage_channel_filter.team_internal_triage_channel_id = {$eq: triage_channel_id};
+  dbTriageChannelFilter.teamInternalTriageChannelId = {$eq: triageChannelId};
 
-  const user_team_array = collection
-    .find(db_triage_channel_filter, {projection: {team_internal_triage_channel_id: 1}})
+  const userTeamArray = collection
+    .find(dbTriageChannelFilter, {projection: {teamInternalTriageChannelId: 1}})
     .toArray();
 
-  return user_team_array;
+  return userTeamArray;
 }
 
-exports.find_valid_triage_channel = find_valid_triage_channel;
+exports.findValidTriageChannel = findValidTriageChannel;

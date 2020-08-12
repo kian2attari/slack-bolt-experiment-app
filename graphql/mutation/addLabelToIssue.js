@@ -1,6 +1,6 @@
 module.exports = `
-mutation addLabelToIssue($element_node_id: ID!, $label_ids: [ID!]!) {
-  addLabelsToLabelable(input: {labelableId: $element_node_id, labelIds: $label_ids}) {
+mutation addLabelToIssue($elementNodeId: ID!, $labelIds: [ID!]!) {
+  addLabelsToLabelable(input: {labelableId: $elementNodeId, labelIds: $labelIds}) {
     labelable {
       labels(last: 5, orderBy: {direction: DESC, field: NAME}) {
         nodes {

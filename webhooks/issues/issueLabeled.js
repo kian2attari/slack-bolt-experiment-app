@@ -1,65 +1,65 @@
 const {query, mutation, graphql} = require('../../graphql');
-const {get_team_org_level_project_board} = require('../../models');
+const {getTeamOrgLevelProjectBoard} = require('../../models');
 const {regExp} = require('../../constants');
 
-async function issue_labeled(req, res) {
+async function issueLabeled(req, res) {
   const request = req.body;
-  const installation_id = request.installation.id;
+  const installationId = request.installation.id;
 
   // eslint-disable-next-line no-unused-vars
   // const {node_id: repo_id} = request.repository;
 
-  const issue_node_id = request.issue.node_id;
+  const issueNodeId = request.issue.node_id;
 
   /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
   // const issue_label_array = request.issue.labels;
 
-  const {name: label_name, description: label_description} = request.label;
+  const {name: labelName, description: labelDescription} = request.label;
 
   const {
-    project_id: org_level_project_board_id,
-    project_columns,
-  } = await get_team_org_level_project_board(installation_id);
+    project_id: orgLevelProjectBoardId,
+    projectColumns,
+  } = await getTeamOrgLevelProjectBoard(installationId);
 
   // If the label is a triage label
-  if (regExp.find_triage_labels.test(label_description)) {
+  if (regExp.findTriageLabels.test(labelDescription)) {
     /* TODO if the applied label was a triage label, there should not be any other triage label currently applied to it. If there is:
       Message the team to let the know it happened */
   }
 
-  if (label_name === 'Question') {
-    const variables_getAllUntriaged = {
-      project_ids: [org_level_project_board_id],
+  if (labelName === 'Question') {
+    const variablesGetAllUntriaged = {
+      projectIds: [orgLevelProjectBoardId],
     };
 
-    const project_cards_response = await graphql.call_gh_graphql(
+    const projectCardsResponse = await graphql.callGhGraphql(
       query.getAllUntriaged,
-      variables_getAllUntriaged,
-      installation_id
+      variablesGetAllUntriaged,
+      installationId
     );
 
-    const issue_card = project_cards_response.nodes[0].pendingCards.nodes.find(
-      card => card.content.id === issue_node_id
+    const issueCard = projectCardsResponse.nodes[0].pendingCards.nodes.find(
+      card => card.content.id === issueNodeId
     );
 
-    const variables_moveProjectCard = {
-      card_id: issue_card.id,
-      column_id: project_columns.Question.id,
+    const variablesMoveProjectCard = {
+      cardId: issueCard.id,
+      columnId: projectColumns.Question.id,
     };
-    await graphql.call_gh_graphql(
+    await graphql.callGhGraphql(
       mutation.moveProjectCard,
-      variables_moveProjectCard,
-      installation_id
+      variablesMoveProjectCard,
+      installationId
     );
-  } else if (label_name === 'Untriaged') {
-    const variables_assignIssueToProject = {
-      issue_id: issue_node_id,
-      project_ids: [org_level_project_board_id],
+  } else if (labelName === 'Untriaged') {
+    const variablesAssignIssueToProject = {
+      issueId: issueNodeId,
+      projectIds: [orgLevelProjectBoardId],
     };
-    await graphql.call_gh_graphql(
+    await graphql.callGhGraphql(
       mutation.assignIssueToProject,
-      variables_assignIssueToProject,
-      installation_id
+      variablesAssignIssueToProject,
+      installationId
     );
   }
 
@@ -69,4 +69,4 @@ async function issue_labeled(req, res) {
   res.send();
 }
 
-exports.issue_labeled = issue_labeled;
+exports.issueLabeled = issueLabeled;

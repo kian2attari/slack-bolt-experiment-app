@@ -1,31 +1,31 @@
 const {connectToMongoCollection} = require('./dbConnection');
-const {reduce_array_to_obj} = require('../helper-functions');
+const {reduceArrayToObj} = require('../helper-functions');
 
-async function add_new_team_members(slack_user_ids, team_channel_id) {
+async function addNewTeamMembers(slackUserIds, teamChannelId) {
   const collection = await connectToMongoCollection();
 
   // TODO update this to work like how addNewTriageTeam works. This model is old.
 
-  const new_team_members_obj = reduce_array_to_obj(slack_user_ids);
+  const newTeamMembersObj = reduceArrayToObj(slackUserIds);
 
-  const add_new_issue_operation = {
-    $set: new_team_members_obj,
+  const addNewIssueOperation = {
+    $set: newTeamMembersObj,
   };
 
-  const insert_result = await collection.insertOne(
-    {team_discussion_channel_id: team_channel_id},
-    add_new_issue_operation
+  const insertResult = await collection.insertOne(
+    {teamDiscussionChannelId: teamChannelId},
+    addNewIssueOperation
   );
 
   console.log(
     ': --------------------------------------------------------------------------'
   );
-  console.log('add_new_team_members -> insert_result', insert_result);
+  console.log('add_new_team_members -> insert_result', insertResult);
   console.log(
     ': --------------------------------------------------------------------------'
   );
 
-  return insert_result;
+  return insertResult;
 }
 
-exports.add_new_team_members = add_new_team_members;
+exports.addNewTeamMembers = addNewTeamMembers;

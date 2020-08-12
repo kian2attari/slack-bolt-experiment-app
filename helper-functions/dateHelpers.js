@@ -5,7 +5,7 @@
  * @param {Date} [date] Default is `new Date()`
  * @returns {Date} The week after the given/current date
  */
-function next_week(date = new Date()) {
+function nextWeek(date = new Date()) {
   return new Date(date.getTime() + 604800000); // milliseconds in a week
 }
 /**
@@ -15,13 +15,13 @@ function next_week(date = new Date()) {
  * @returns {String} The formatting Date string
  */
 function dateFormatter(date) {
-  const options_long = {weekday: 'long', month: 'long', day: 'numeric'};
-  const options_short = {day: 'numeric', month: 'numeric'};
-  return `${date.toLocaleDateString('en-US', options_long)} (${date.toLocaleDateString(
+  const optionsLong = {weekday: 'long', month: 'long', day: 'numeric'};
+  const optionsShort = {day: 'numeric', month: 'numeric'};
+  return `${date.toLocaleDateString('en-US', optionsLong)} (${date.toLocaleDateString(
     'en-US',
-    options_short
+    optionsShort
   )})`;
 }
 
-exports.next_week = next_week;
+exports.nextWeek = nextWeek;
 exports.dateFormatter = dateFormatter;

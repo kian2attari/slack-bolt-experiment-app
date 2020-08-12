@@ -1,7 +1,7 @@
 const {SubBlocks} = require('../../blocks');
 const {SafeAccess} = require('../../helper-functions');
 const {query, graphql} = require('../../graphql');
-const {find_documents} = require('../../db');
+const {findDocuments} = require('../../db');
 
 /**
  * Gets a list of all the orgs/accounts that gitwave is installed on. This includes
@@ -9,41 +9,41 @@ const {find_documents} = require('../../db');
  *
  * @param {any} app
  */
-function github_org_select_input(app) {
+function githubOrgSelectInput(app) {
   // eslint-disable-next-line no-unused-vars
   app.options('github_org_select_input', async ({options, ack}) => {
     try {
       // The query paramater is empty since we want to return all installations
-      const orgs_response_array = await find_documents({}, {org_account: 1});
+      const orgsResponseArray = await findDocuments({}, {orgAccount: 1});
 
       console.log(
         ': ---------------------------------------------------------------------------'
       );
       console.log(
         'function github_org_select_input -> orgs_response_array',
-        orgs_response_array
+        orgsResponseArray
       );
       console.log(
         ': ---------------------------------------------------------------------------'
       );
 
-      if (orgs_response_array.size !== 0) {
+      if (orgsResponseArray.size !== 0) {
         // Creates the options blocks out of the orgs
-        const org_options_block_list = orgs_response_array.map(org => {
-          return SubBlocks.option_obj(org.org_account.login, org.org_account.node_id);
+        const orgOptionsBlockList = orgsResponseArray.map(org => {
+          return SubBlocks.optionObj(org.orgAccount.login, org.orgAccount.nodeId);
         });
 
-        console.log('org_options_block_list', org_options_block_list);
+        console.log('orgOptionsBlockList', orgOptionsBlockList);
 
         await ack({
-          options: org_options_block_list,
+          options: orgOptionsBlockList,
         });
       } else {
-        const no_orgs_option = SubBlocks.option_obj('No orgs found', 'no_orgs');
+        const noOrgsOption = SubBlocks.optionObj('No orgs found', 'no_orgs');
         // REVIEW should I return the empty option or nothing at all?
 
         await ack({
-          options: no_orgs_option,
+          options: noOrgsOption,
         });
       }
     } catch (error) {
@@ -52,60 +52,56 @@ function github_org_select_input(app) {
   });
 }
 
-function org_level_project_input(app) {
+function orgLevelProjectInput(app) {
   app.options('org_level_project_input', async ({options, ack}) => {
     try {
-      const db_user_filter = {};
+      const dbUserFilter = {};
 
-      db_user_filter[`team_members.${options.user.id}`] = {$exists: true};
+      dbUserFilter[`teamMembers.${options.user.id}`] = {$exists: true};
 
-      const db_query = await find_documents(db_user_filter, {
-        gitwave_github_app_installation_id: 1,
+      const dbQuery = await findDocuments(dbUserFilter, {
+        gitwaveGithubAppInstallationId: 1,
       });
 
       console.log(': -----------------------------------------------------');
-      console.log('function org_level_project_input -> db_query', db_query);
+      console.log('function org_level_project_input -> db_query', dbQuery);
       console.log(': -----------------------------------------------------');
 
-      const installation_id = db_query[0].gitwave_github_app_installation_id;
+      const installationId = dbQuery[0].gitwaveGithubAppInstallationId;
 
-      const org_or_user_id = JSON.parse(options.view.private_metadata)
-        .selected_org_node_id;
+      const orgOrUserId = JSON.parse(options.view.private_metadata).selectedOrgNodeId;
 
       console.log(': -----------------------------------------------------------------');
-      console.log('function org_level_project_input -> org_or_user_id', org_or_user_id);
+      console.log('function org_level_project_input -> org_or_user_id', orgOrUserId);
       console.log(': -----------------------------------------------------------------');
 
-      const org_level_projects_response = await graphql.call_gh_graphql(
+      const orgLevelProjectsResponse = await graphql.callGhGraphql(
         query.getOrgAndUserLevelProjects,
-        {org_or_user_id},
-        installation_id
+        {orgOrUserId},
+        installationId
       );
-      const org_level_projects = SafeAccess(
-        () => org_level_projects_response.node.projects.nodes
+      const orgLevelProjects = SafeAccess(
+        () => orgLevelProjectsResponse.node.projects.nodes
       );
 
-      if (org_level_projects.size !== 0) {
-        const project_options_block_list = Array.from(org_level_projects.values()).map(
+      if (orgLevelProjects.size !== 0) {
+        const projectOptionsBlockList = Array.from(orgLevelProjects.values()).map(
           project => {
-            return SubBlocks.option_obj(project.name, project.id);
+            return SubBlocks.optionObj(project.name, project.id);
           }
         );
 
-        console.log('project_options_block_list', project_options_block_list);
+        console.log('project_options_block_list', projectOptionsBlockList);
 
         await ack({
-          options: project_options_block_list,
+          options: projectOptionsBlockList,
         });
       } else {
-        const no_projects_option = SubBlocks.option_obj(
-          'No projects found',
-          'no_projects'
-        );
+        const noProjectsOption = SubBlocks.optionObj('No projects found', 'no_projects');
         // REVIEW should I return the empty option or nothing at all?
 
         await ack({
-          options: no_projects_option,
+          options: noProjectsOption,
         });
 
         // await ack();
@@ -116,5 +112,5 @@ function org_level_project_input(app) {
   });
 }
 
-exports.github_org_select_input = github_org_select_input;
-exports.org_level_project_input = org_level_project_input;
+exports.githubOrgSelectInput = githubOrgSelectInput;
+exports.orgLevelProjectInput = orgLevelProjectInput;

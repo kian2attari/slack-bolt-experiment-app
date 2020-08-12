@@ -1,12 +1,12 @@
 const {connectToMongoCollection} = require('./dbConnection');
 
 // Takes in an installation event directly from the github webhook
-async function addNewDocument(new_document_obj) {
+async function addNewDocument(newDocumentObj) {
   const collection = await connectToMongoCollection();
 
-  const insert_result = await collection.insertOne(new_document_obj);
+  const insertResult = await collection.insertOne(newDocumentObj);
 
-  return insert_result;
+  return insertResult;
 }
 
-exports.add_new_document = add_new_document;
+exports.addNewDocument = addNewDocument;

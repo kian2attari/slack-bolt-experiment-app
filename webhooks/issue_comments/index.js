@@ -1,3 +1,3 @@
-const {issue_comment_created} = require('./issueCommentCreated');
+const {issueCommentCreated} = require('./issueCommentCreated');
 
-exports.issue_comment_created = issue_comment_created;
+exports.issueCommentCreated = issueCommentCreated;

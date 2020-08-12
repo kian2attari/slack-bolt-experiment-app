@@ -50,8 +50,8 @@ module.exports = ({
       type: 'section',
       accessory: {
         type: 'image',
-        image_url: avatarUrl,
-        alt_text: `${creator}'s GitHub avatar`,
+        'image_url': avatarUrl,
+        'alt_text': `${creator}'s GitHub avatar`,
       },
       text: {
         type: 'plain_text',
@@ -70,7 +70,7 @@ module.exports = ({
             emoji: true,
           },
           url: htmlUrl,
-          action_id: 'link_button',
+          'action_id': 'link_button',
         },
       ],
     },

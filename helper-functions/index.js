@@ -1,14 +1,14 @@
-const {reduce_array_to_obj} = require('./reduceArrayToObject');
+const {reduceArrayToObj} = require('./reduceArrayToObject');
 const SafeAccess = require('./safeAccessUndefinedProperty');
-const {check_for_mentions} = require('./checkForMentions');
-const send_mention_message = require('./sendMentionMessage');
-const {async_array_map} = require('./asyncArrayMap');
-const {next_week, dateFormatter} = require('./dateHelpers');
+const {checkForMentions} = require('./checkForMentions');
+const sendMentionMessage = require('./sendMentionMessage');
+const {asyncArrayMap} = require('./asyncArrayMap');
+const {nextWeek, dateFormatter} = require('./dateHelpers');
 
-exports.reduce_array_to_obj = reduce_array_to_obj;
+exports.reduceArrayToObj = reduceArrayToObj;
 exports.SafeAccess = SafeAccess;
-exports.check_for_mentions = check_for_mentions;
-exports.send_mention_message = send_mention_message;
-exports.async_array_map = async_array_map;
-exports.next_week = next_week;
+exports.checkForMentions = checkForMentions;
+exports.sendMentionMessage = sendMentionMessage;
+exports.asyncArrayMap = asyncArrayMap;
+exports.nextWeek = nextWeek;
 exports.dateFormatter = dateFormatter;

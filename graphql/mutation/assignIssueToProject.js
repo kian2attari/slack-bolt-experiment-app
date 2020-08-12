@@ -1,7 +1,7 @@
 module.exports = `
-mutation assignIssueToProject($issue_id: ID!, $project_ids: [ID!]) {
+mutation assignIssueToProject($issueId: ID!, $projectIds: [ID!]) {
   __typename
-  updateIssue(input: {id: $issue_id, projectIds: $project_ids}) {
+  updateIssue(input: {id: $issueId, projectIds: $projectIds}) {
     clientMutationId
   }
 }

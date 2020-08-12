@@ -1,1 +1,1 @@
-exports.commands_listener = {};
+exports.commandsListener = {};

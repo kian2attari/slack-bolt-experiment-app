@@ -1,11 +1,11 @@
-exports.edit_triage_duty_availability_modal = app => {
+exports.editTriageDutyAvailabilityModal = app => {
   app.view('edit_triage_duty_availability_modal', async ({ack, body, view, context}) => {
     // Acknowledge the view_submission event
     await ack();
 
     const user = body.user.id;
 
-    const availability_selections = Object.values(view.state.values).reduce(
+    const availabilitySelections = Object.values(view.state.values).reduce(
       (accum, selection) =>
         accum.concat([
           JSON.parse(selection.triage_duty_availability_radio.selected_option.value),
@@ -13,10 +13,10 @@ exports.edit_triage_duty_availability_modal = app => {
       []
     );
 
-    console.log('availability_selections', availability_selections);
+    console.log('availability_selections', availabilitySelections);
 
     /* TODO loop through the availibility selections. For every case where availability=true, set them as a candidate for that week. 
-    If availability = false and the user_id of the assigned person is the same as the user who sent the modal, pick a candidate to replace them */
+    If availability = false and the slack_user_id of the assigned person is the same as the user who sent the modal, pick a candidate to replace them */
 
     // Success! Message the user
     try {

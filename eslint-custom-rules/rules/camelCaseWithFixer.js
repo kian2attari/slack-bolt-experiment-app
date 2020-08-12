@@ -15,7 +15,7 @@ can't be converted to camelcase (ex. when destructuring a Webhook payload where 
 // Rule Definition
 //------------------------------------------------------------------------------
 
-module.exports = {
+exports.camelCaseWithFixer = {
   meta: {
     type: 'suggestion',
 
@@ -63,10 +63,9 @@ module.exports = {
     ],
 
     messages: {
-      notCamelCase: "Identifier '{{name}}' is not in camel case.",
+      notCamelCase: "The identifier '{{name}}' is not in camel case.",
     },
   },
-
   create(context) {
     const options = context.options[0] || {};
     let properties = options.properties || '';
@@ -225,9 +224,15 @@ module.exports = {
           node,
           messageId: 'notCamelCase',
           data: {name: node.name},
+          fix(fixer) {
+            const camelCased = node.name.replace(/([-_][a-z])/g, group =>
+              group.toUpperCase().replace('_', '')
+            );
+            return fixer.replaceText(node, camelCased);
+          },
           suggest: [
             {
-              desc: 'Remove the `\\`. This maintains the current functionality.',
+              desc: 'Change the case to camelCase',
               fix(fixer) {
                 const camelCased = node.name.replace(/([-_][a-z])/g, group =>
                   group.toUpperCase().replace('_', '')

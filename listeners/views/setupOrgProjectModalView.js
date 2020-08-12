@@ -1,5 +1,5 @@
-const {set_org_level_project} = require('../../models');
-const {find_documents} = require('../../db');
+const {setOrgLevelProject} = require('../../models');
+const {findDocuments} = require('../../db');
 
 module.exports = app => {
   app.view('setup_org_project_modal', async ({ack, body, view, context}) => {
@@ -8,26 +8,26 @@ module.exports = app => {
 
     const user = body.user.id;
 
-    const db_user_filter = {};
+    const dbUserFilter = {};
 
-    db_user_filter[`team_members.${user}`] = {$exists: true};
+    dbUserFilter[`teamMembers.${user}`] = {$exists: true};
 
-    const db_query = await find_documents(db_user_filter, {
-      gitwave_github_app_installation_id: 1,
+    const dbQuery = await findDocuments(dbUserFilter, {
+      gitwaveGithubAppInstallationId: 1,
     });
 
-    const installation_id = db_query[0].gitwave_github_app_installation_id;
+    const installationId = dbQuery[0].gitwaveGithubAppInstallationId;
 
-    const selected_org_level_proj =
+    const selectedOrgLevelProj =
       view.state.values.org_project_input_block.org_level_project_input.selected_option;
 
     // set default project name
-    await set_org_level_project(
+    await setOrgLevelProject(
       {
-        project_name: selected_org_level_proj.text.text,
-        project_id: selected_org_level_proj.value,
+        projectName: selectedOrgLevelProj.text.text,
+        projectId: selectedOrgLevelProj.value,
       },
-      installation_id
+      installationId
     );
 
     // Success! Message the user

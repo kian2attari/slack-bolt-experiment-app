@@ -1,13 +1,13 @@
 const {CronJob} = require('cron');
-const {send_mention_message, next_week, dateFormatter} = require('./helper-functions');
+const {sendMentionMessage, nextWeek, dateFormatter} = require('./helper-functions');
 const {
-  get_pending_review_requests,
-  get_team_triage_duty_assignments,
-  set_triage_duty_assignments,
+  getPendingReviewRequests,
+  getTeamTriageDutyAssignments,
+  setTriageDutyAssignments,
 } = require('./models');
 
 // TODO remove passing this app parameter, there must be a way of avoiding this.
-function check_review_requests(app) {
+function checkReviewRequests(app) {
   return async () => {
     /* This is an array of objects, with each object representing a separate team/installation. 
     Each team object then has an array of pending review requests. For each of those review requests,
@@ -22,98 +22,92 @@ function check_review_requests(app) {
     Promises.all(...). I use reduce rather than a map for the inner loop because we are returning conditionally
     (since only a set of the review requests actually need reminders sent), and map tries to apply the callback function
     to every element. To use map, we'd need to filter first, and that's just more work for nothing. */
-    const pending_review_requests_by_team = await get_pending_review_requests();
+    const pendingReviewRequestsByTeam = await getPendingReviewRequests();
 
-    console.log('pending_review_requests_by_team', pending_review_requests_by_team);
+    console.log('pendingReviewRequestsByTeam', pendingReviewRequestsByTeam);
     /* REVIEW to make this more scalable, this function can also be modified so that the promises are resolved in batches rather than all at once. 
     For example, the Promises.all(...) can be placed in the outer reduce so that each team's batch of promises is done through each loop. In that case,
     it would make more sense to use the async_array_map helper function rather than reduce for the outside since we wouldn't be returning anything */
-    const promise_array = pending_review_requests_by_team.reduce(
-      (review_requests, team) => {
-        console.log('team', team.pending_review_requests);
-        const review_request_promises = team.pending_review_requests.reduce(
-          (request_promises, review_request) => {
-            console.log('review request timestamp', review_request.request_timestamp);
-            const {request_timestamp} = review_request;
-            const days_since = Math.round((Date.now() - request_timestamp) / 86400000); // we divide by the number of ms in a day to see how many days have passed
-            // const minutes_since = Math.round((Date.now() - request_timestamp) / 60000);
-            console.log('days since', days_since);
-            // console.log('minutes since', minutes_since);
-            if (days_since >= 1 && days_since <= 4) {
-              // TODO Check user preferences for when they want their first and second reminder to be. If it's within range, only then send the reminder.
-              console.log('sending a reminder to:', review_request.mentioned_slack_user);
-              return request_promises.concat(send_mention_message(app, review_request));
-            }
-            return request_promises;
-          },
-          []
-        );
-        return review_requests.concat(review_request_promises);
-      },
-      []
-    );
+    const promiseArray = pendingReviewRequestsByTeam.reduce((reviewRequests, team) => {
+      console.log('team', team.pendingReviewRequests);
+      const reviewRequestPromises = team.pendingReviewRequests.reduce(
+        (requestPromises, reviewRequest) => {
+          console.log('review request timestamp', reviewRequest.requestTimestamp);
+          const {requestTimestamp} = reviewRequest;
+          const daysSince = Math.round((Date.now() - requestTimestamp) / 86400000); // we divide by the number of ms in a day to see how many days have passed
+          // const minutes_since = Math.round((Date.now() - request_timestamp) / 60000);
+          console.log('days since', daysSince);
+          // console.log('minutes since', minutes_since);
+          if (daysSince >= 1 && daysSince <= 4) {
+            // TODO Check user preferences for when they want their first and second reminder to be. If it's within range, only then send the reminder.
+            console.log('sending a reminder to:', reviewRequest.mentionedSlackUser);
+            return requestPromises.concat(sendMentionMessage(app, reviewRequest));
+          }
+          return requestPromises;
+        },
+        []
+      );
+      return reviewRequests.concat(reviewRequestPromises);
+    }, []);
 
-    await Promise.all(promise_array);
+    await Promise.all(promiseArray);
   };
 }
 
-function rotate_triage_duty_assignment(app) {
+function rotateTriageDutyAssignment(app) {
   return async () => {
-    const team_data = await get_team_triage_duty_assignments();
+    const teamData = await getTeamTriageDutyAssignments();
 
-    const {triage_duty_assignments, team_channel_id, team_members} = team_data[0];
+    const {triageDutyAssignments, teamChannelId, teamMembers} = teamData[0];
 
-    const team_member_alphabetic_array = Object.keys(team_members).sort();
+    const teamMemberAlphabeticArray = Object.keys(teamMembers).sort();
 
     // Get the current latest assignment in the array
     const {
-      assignedTeamMember: last_assigned_member,
-      date: last_assignment_date,
-    } = triage_duty_assignments[triage_duty_assignments.length - 1];
+      assignedTeamMember: lastAssignedMember,
+      date: lastAssignmentDate,
+    } = triageDutyAssignments[triageDutyAssignments.length - 1];
 
-    const last_assigned_member_index = team_member_alphabetic_array.indexOf(
-      last_assigned_member
-    );
+    const lastAssignedMemberIndex = teamMemberAlphabeticArray.indexOf(lastAssignedMember);
 
-    const index_of_new_last_assigned_member =
-      last_assigned_member_index === team_member_alphabetic_array.length - 1
+    const indexOfNewLastAssignedMember =
+      lastAssignedMemberIndex === teamMemberAlphabeticArray.length - 1
         ? 0 // We've hit the end of the rotation so we start at the beginning
-        : last_assigned_member_index + 1;
+        : lastAssignedMemberIndex + 1;
 
-    const new_last_assigned_member =
-      team_member_alphabetic_array[index_of_new_last_assigned_member];
+    const newLastAssignedMember = teamMemberAlphabeticArray[indexOfNewLastAssignedMember];
 
-    const new_triage_assignment_date_obj = next_week(new Date(last_assignment_date));
+    const newTriageAssignmentDateObj = nextWeek(new Date(lastAssignmentDate));
 
-    const new_triage_assignment_date = dateFormatter(new_triage_assignment_date_obj);
+    const newTriageAssignmentDate = dateFormatter(newTriageAssignmentDateObj);
 
     // Remove the current week for the assignments since its already passed
-    triage_duty_assignments.shift();
+    triageDutyAssignments.shift();
 
     // Remove the user that we just assigned to the furthest week from the list of possible substitutes for that week
-    team_member_alphabetic_array.splice(index_of_new_last_assigned_member, 1);
+    teamMemberAlphabeticArray.splice(indexOfNewLastAssignedMember, 1);
 
-    triage_duty_assignments.push({
-      'date': new_triage_assignment_date_obj.getTime(),
-      'assignedTeamMember': new_last_assigned_member,
-      'substitutes': team_member_alphabetic_array,
+    triageDutyAssignments.push({
+      'date': newTriageAssignmentDateObj.getTime(),
+      'assignedTeamMember': newLastAssignedMember,
+      'substitutes': teamMemberAlphabeticArray,
     });
 
     try {
-      await set_triage_duty_assignments(team_channel_id, triage_duty_assignments);
+      await setTriageDutyAssignments(teamChannelId, triageDutyAssignments);
       await Promise.all([
         app.client.conversations.setTopic({
           token: process.env.SLACK_BOT_TOKEN,
-          channel: team_channel_id,
-          topic: `<@${triage_duty_assignments[0].assignedTeamMember}> is on triage duty for the week of ${new_triage_assignment_date}!`,
+          channel: teamChannelId,
+          topic: `<@${triageDutyAssignments[0].assignedTeamMember}> is on triage duty for the week of ${newTriageAssignmentDate}!`,
         }),
         app.client.chat.postMessage({
           // Since there is no context we just use the original token
           token: process.env.SLACK_BOT_TOKEN,
-          channel: new_last_assigned_member,
+          channel: newLastAssignedMember,
           // Just in case there is an issue loading the blocks.
           // EXTRA_TODO add blocks that also display a button that opens up the Edit Triage availability Modal
-          text: `Hey <@${new_last_assigned_member}>, you are up for triage duty assignment on *${new_triage_assignment_date}*. \n If you are not available then, make sure to indicate that using the \`Triage Duty Availability\` Shortcut!`,
+          text: `Hey <@${newLastAssignedMember}>, you are up for triage duty assignment on *${newTriageAssignmentDate}*. \n If you are not available then, make sure to indicate that using the \`Triage Duty Availability\` Shortcut!`,
         }),
       ]);
     } catch (error) {
@@ -125,25 +119,25 @@ function rotate_triage_duty_assignment(app) {
 // Everyday, check the pending PR review requests of every team, and message the user the review was requested of after 1 day, and after 3 days
 // TODO have this cron job run every week day and only send reminders to users who wanted them on that day in particular
 // REVIEW change the cron_pattern to '0 10,15 * * *' so that the job is run everyday at 10am and 3pm or just '0 10 * * *' for 10 am etc
-function review_request_cron_job(app) {
+function reviewRequestCronJob(app) {
   return new CronJob(
     '0 10,17 * * *',
-    check_review_requests(app),
+    checkReviewRequests(app),
     null,
     true,
     'America/Los_Angeles'
   );
 }
 
-function triage_duty_rotation(app) {
+function triageDutyRotation(app) {
   return new CronJob(
     '0 9 * * 1', // At 9am every Monday
-    rotate_triage_duty_assignment(app),
+    rotateTriageDutyAssignment(app),
     null,
     true,
     'America/Los_Angeles'
   );
 }
 
-exports.review_request_cron_job = review_request_cron_job;
-exports.triage_duty_rotation = triage_duty_rotation;
+exports.reviewRequestCronJob = reviewRequestCronJob;
+exports.triageDutyRotation = triageDutyRotation;

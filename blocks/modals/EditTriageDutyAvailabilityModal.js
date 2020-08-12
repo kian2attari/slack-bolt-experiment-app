@@ -36,7 +36,7 @@ exports.EditTriageDutyAvailabilityModal = triageDutyAssignmentsObj => {
           JSON.stringify({
             avail: true,
             index,
-            user_id: assignment.assignedTeamMember,
+            userId: assignment.assignedTeamMember,
           })
         );
 
@@ -45,7 +45,7 @@ exports.EditTriageDutyAvailabilityModal = triageDutyAssignmentsObj => {
           JSON.stringify({
             avail: false,
             index,
-            user_id: assignment.assignedTeamMember,
+            userId: assignment.assignedTeamMember,
           })
         );
 

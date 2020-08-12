@@ -3,55 +3,54 @@ const {regExp} = require('../constants');
 
 /**
  * @param {{
- *   team_internal_triage_channel_id: String;
- *   internal_triage_item: {
+ *   teamInternalTriageChannelId: String;
+ *   internalTriageItem: {
  *     text: String;
  *     user: String;
  *     urgency: String;
- *     issue_message_ts: String;
+ *     issueMessageTs: String;
  *   };
- * }} new_issue_obj
+ * }} newIssueObj
  */
 // eslint-disable-next-line consistent-return
-async function add_new_internal_issue(new_issue_message_obj) {
+async function addNewInternalIssue(newIssueMessageObj) {
   // Use connect method to connect to the Server
   try {
     const collection = await connectToMongoCollection();
 
     console.log('collection', collection);
 
-    const team_query = {
-      team_internal_triage_channel_id:
-        new_issue_message_obj.team_internal_triage_channel_id,
+    const teamQuery = {
+      teamInternalTriageChannelId: newIssueMessageObj.teamInternalTriageChannelId,
     };
 
     // TODO if this query returns nothing, then send a message to the user with an error! The team hasn't set a traige channel
 
-    console.log('team query', team_query);
+    console.log('team query', teamQuery);
 
-    const {internal_triage_item} = new_issue_message_obj;
+    const {internalTriageItem} = newIssueMessageObj;
     // the dots in the ts will confuse mongo, they need to be replaced with dashes.
-    const fixed_format_ts = internal_triage_item.issue_message_ts.replace(
-      regExp.find_all_dots,
+    const fixedFormatTs = internalTriageItem.issueMessageTs.replace(
+      regExp.findAllDots,
       '_'
     );
 
-    const new_issue_obj = {};
+    const newIssueObj = {};
 
-    const new_issue_obj_property = `internal_triage_items.${fixed_format_ts}`;
+    const newIssueObjProperty = `internalTriageItems.${fixedFormatTs}`;
 
-    new_issue_obj[new_issue_obj_property] = internal_triage_item;
+    newIssueObj[newIssueObjProperty] = internalTriageItem;
 
-    console.log('add new internal issue', new_issue_obj);
+    console.log('add new internal issue', newIssueObj);
 
-    const push_new_value = {
-      $set: new_issue_obj,
+    const pushNewValue = {
+      $set: newIssueObj,
     };
-    return collection.updateOne(team_query, push_new_value);
+    return collection.updateOne(teamQuery, pushNewValue);
     // Update a single document
   } catch (error) {
     console.error(error);
   }
 }
 
-exports.add_new_internal_issue = add_new_internal_issue;
+exports.addNewInternalIssue = addNewInternalIssue;

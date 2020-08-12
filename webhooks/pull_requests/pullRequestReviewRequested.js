@@ -1,55 +1,55 @@
-const {get_user_id_by_github_username, add_review_request} = require('../../models');
-const {async_array_map, send_mention_message} = require('../../helper-functions');
+const {getUserIdByGithubUsername, addReviewRequest} = require('../../models');
+const {asyncArrayMap, sendMentionMessage} = require('../../helper-functions');
 
-async function pull_request_review_requested(app, req, res) {
+async function pullRequestReviewRequested(app, req, res) {
   const request = req.body;
   const {
     // repository: {full_name: repo_path},
-    sender: {login: requestor_login},
-    pull_request,
-    installation: {id: installation_id},
+    sender: {login: requestorLogin},
+    pullRequest,
+    installation: {id: installationId},
   } = request;
 
   const {
-    requested_reviewers,
+    requested_reviewers: requestedReviewers,
     title,
     body,
-    html_url,
-    user: pull_request_creator,
-    created_at,
-  } = pull_request;
+    htmlUrl,
+    user: pullRequestCreator,
+    createdAt,
+  } = pullRequest;
 
-  const content_create_date = new Date(created_at);
+  const contentCreateDate = new Date(createdAt);
 
-  const requested_reviewer_callback = async requested_reviewer => {
-    const github_username = requested_reviewer.login;
+  const requestedReviewerCallback = async requestedReviewer => {
+    const githubUsername = requestedReviewer.login;
 
-    const mentioned_slack_user = await get_user_id_by_github_username(
-      github_username,
-      installation_id
+    const mentionedSlackUser = await getUserIdByGithubUsername(
+      githubUsername,
+      installationId
     );
 
     // Message the team members whose review was requested
-    const mention_event_data = {
+    const mentionEventData = {
       title,
       body,
-      requestor_login,
-      html_url,
-      content_creator: pull_request_creator.login,
-      avatar_url: pull_request_creator.avatar_url,
-      content_create_date,
-      mentioned_slack_user: `@${mentioned_slack_user}`,
-      review_requested: true,
-      installation_id,
+      requestorLogin,
+      htmlUrl,
+      contentCreator: pullRequestCreator.login,
+      avatarUrl: pullRequestCreator.avatar_url,
+      contentCreateDate,
+      mentionedSlackUser: `@${mentionedSlackUser}`,
+      reviewRequested: true,
+      installationId,
     };
 
-    console.log('mentioned slack user 1 ', mentioned_slack_user);
+    console.log('mentioned slack user 1 ', mentionedSlackUser);
 
-    if (mentioned_slack_user) {
+    if (mentionedSlackUser) {
       try {
-        await add_review_request(mention_event_data, installation_id);
+        await addReviewRequest(mentionEventData, installationId);
 
-        await send_mention_message(app, mention_event_data);
+        await sendMentionMessage(app, mentionEventData);
       } catch (error) {
         console.error(error);
       }
@@ -58,7 +58,7 @@ async function pull_request_review_requested(app, req, res) {
     res.send();
   };
 
-  await async_array_map(requested_reviewers, requested_reviewer_callback);
+  await asyncArrayMap(requestedReviewers, requestedReviewerCallback);
 }
 
-exports.pull_request_review_requested = pull_request_review_requested;
+exports.pullRequestReviewRequested = pullRequestReviewRequested;

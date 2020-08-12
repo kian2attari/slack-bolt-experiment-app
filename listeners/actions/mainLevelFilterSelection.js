@@ -1,25 +1,25 @@
 // const {AppHome} = require('../../blocks');
-const {show_untriaged_cards} = require('../commonFunctions');
+const {showUntriagedCards} = require('../commonFunctions');
 
 module.exports = app => {
   app.action('main_level_filter_selection', async ({ack, body, context, client}) => {
     await ack();
     try {
-      const action_body = body.actions[0];
+      const actionBody = body.actions[0];
 
-      const {selected_option} = action_body;
+      const {selectedOption} = actionBody;
 
-      const selected_main_level_view = selected_option.text.text;
+      const selectedMainLevelView = selectedOption.text.text;
 
-      console.log('selected_main_level_view', selected_main_level_view);
+      console.log('selected_main_level_view', selectedMainLevelView);
 
       // If the selection is All untriaged, then just show those cards
-      if (selected_main_level_view === 'All') {
-        show_untriaged_cards({
+      if (selectedMainLevelView === 'All') {
+        showUntriagedCards({
           body,
           context,
           client,
-          selected_main_level_view,
+          selectedMainLevelView,
         });
 
         return;

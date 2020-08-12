@@ -1,7 +1,7 @@
 module.exports = `
-mutation clearAllLabels($element_node_id: ID!) {
+mutation clearAllLabels($elementNodeId: ID!) {
     __typename
-    clearLabelsFromLabelable(input: {labelableId: $element_node_id}) {
+    clearLabelsFromLabelable(input: {labelableId: $elementNodeId}) {
       clientMutationId
     }
   }

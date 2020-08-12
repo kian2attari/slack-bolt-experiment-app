@@ -1,44 +1,44 @@
-const {check_for_mentions} = require('../../helper-functions');
-const {mark_element_as_untriaged} = require('../../models');
+const {checkForMentions} = require('../../helper-functions');
+const {markElementAsUntriaged} = require('../../models');
 
-async function issue_opened_reopened(app, req, res) {
+async function issueOpenedReopened(app, req, res) {
   const request = req.body;
-  const installation_id = request.installation.id;
+  const installationId = request.installation.id;
 
-  const {node_id: repo_id} = request.repository;
+  const {node_id: repoId} = request.repository;
   const {
     title,
     body,
-    html_url,
+    html_url: htmlUrl,
     labels,
-    created_at,
-    node_id: issue_node_id,
+    created_at: createdAt,
+    node_id: issueNodeId,
     user,
   } = request.issue;
-  const content_create_date = new Date(created_at);
+  const contentCreateDate = new Date(createdAt);
 
   // TODO if the issue doesn't have a triage label, add the untriaged label
   // QUESTION: Should editing the issue also cause the untriaged label to be added
   try {
-    await mark_element_as_untriaged(labels, issue_node_id, repo_id, installation_id);
+    await markElementAsUntriaged(labels, issueNodeId, repoId, installationId);
   } catch (error) {
     console.error(error);
   }
 
-  const mention_event_data = {
+  const mentionEventData = {
     title,
     body,
-    html_url,
-    content_creator: user.login,
-    creator_avatar_url: user.avatar_url,
-    content_create_date,
-    installation_id,
+    htmlUrl,
+    contentCreator: user.login,
+    creatorAvatarUrl: user.avatar_url,
+    contentCreateDate,
+    installationId,
   };
 
-  await check_for_mentions(app, mention_event_data);
+  await checkForMentions(app, mentionEventData);
 
   // Success
   res.send();
 }
 
-exports.issue_opened_reopened = issue_opened_reopened;
+exports.issueOpenedReopened = issueOpenedReopened;

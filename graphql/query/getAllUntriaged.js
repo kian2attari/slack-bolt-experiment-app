@@ -1,8 +1,8 @@
 /* Gets all the untriaged cards associated with the project input. It also returns all the triage labels of the repo that 
 the issues come from. Triage labels are identified by having MAIN-TRIAGE: at the beginning of their label descriptions */
 module.exports = `
-query getAllUntriaged($project_ids: [ID!]!) {
-  nodes(ids: $project_ids) {
+query getAllUntriaged($projectIds: [ID!]!) {
+  nodes(ids: $projectIds) {
     ... on Project {
       id
       name

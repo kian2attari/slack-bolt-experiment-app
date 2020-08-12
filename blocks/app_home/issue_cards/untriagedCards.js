@@ -161,7 +161,7 @@ function externalIssueLabelButtonsBlock(issueId, triageLabelArray) {
                   'emoji': true,
                 },
                 'action_id': `assign_${label.name.toLowerCase()}_label`,
-                'value': JSON.stringify({issueId, label_id: label.id}),
+                'value': JSON.stringify({issueId, labelId: label.id}),
               };
             }),
           },

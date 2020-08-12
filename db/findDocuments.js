@@ -1,11 +1,11 @@
 const {connectToMongoCollection} = require('./dbConnection');
 
-async function find_documents(filter, projection) {
+async function findDocuments(filter, projection) {
   const collection = await connectToMongoCollection();
 
-  const user_team_array = await collection.find(filter, {projection}).toArray();
+  const userTeamArray = await collection.find(filter, {projection}).toArray();
 
-  return user_team_array;
+  return userTeamArray;
 }
 
-exports.find_documents = find_documents;
+exports.findDocuments = findDocuments;

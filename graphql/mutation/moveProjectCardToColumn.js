@@ -1,6 +1,6 @@
 exports.moveProjectCard = `
-mutation moveProjectCard($card_id: ID!, $column_id: ID!) {
-    moveProjectCard(input: {cardId: $card_id, columnId: $column_id}) {
+mutation moveProjectCard($cardId: ID!, $columnId: ID!) {
+    moveProjectCard(input: {cardId: $cardId, columnId: $columnId}) {
       cardEdge {
         node {
           id

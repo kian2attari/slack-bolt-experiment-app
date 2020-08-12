@@ -1,3 +1,3 @@
 module.exports = {
-  triage_channel: require('./triageMessage'),
+  triageChannel: require('./triageMessage'),
 };

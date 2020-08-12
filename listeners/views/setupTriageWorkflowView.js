@@ -1,5 +1,5 @@
 const {Messages, Modals} = require('../../blocks');
-const {associate_team_with_installation} = require('../../models');
+const {associateTeamWithInstallation} = require('../../models');
 
 module.exports = app => {
   app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
@@ -10,35 +10,35 @@ module.exports = app => {
 
     const user = body.user.id;
 
-    const selected_users_array = values.users_select_input.triage_users.selected_users;
+    const selectedUsersArray = values.users_select_input.triage_users.selected_users;
 
-    const selected_discussion_channel =
+    const selectedDiscussionChannel =
       values.discussion_channel_select_input.discussion_channel.selected_channel;
 
-    const selected_internal_triage_channel =
+    const selectedInternalTriageChannel =
       values.triage_channel_select_input.triage_channel.selected_channel;
 
-    const selected_github_org =
+    const selectedGithubOrg =
       values.github_org_input_block.github_org_select_input.selected_option;
 
-    const create_new_team_result = await associate_team_with_installation(
-      selected_users_array,
-      selected_discussion_channel,
-      selected_internal_triage_channel,
-      selected_github_org
+    const createNewTeamResult = await associateTeamWithInstallation(
+      selectedUsersArray,
+      selectedDiscussionChannel,
+      selectedInternalTriageChannel,
+      selectedGithubOrg
     );
 
-    if (create_new_team_result.result.n !== 1) {
+    if (createNewTeamResult.result.n !== 1) {
       // TODO if the error is that the team already exists, explain this to the user
-      const error_msg =
+      const errorMsg =
         "There was an error creating the team and adding it to the DB. Make sure it doesn't already exist";
 
-      console.error(error_msg);
+      console.error(errorMsg);
 
       await app.client.chat.postMessage({
         token: context.botToken,
         channel: user,
-        text: error_msg,
+        text: errorMsg,
       });
       return;
     }
@@ -55,25 +55,25 @@ module.exports = app => {
       await app.client.views.open({
         token: context.botToken,
         // Pass a valid trigger_id within 3 seconds of receiving it
-        trigger_id: body.trigger_id,
+        'trigger_id': body.trigger_id,
         // Show the org-level project board selection modal. The parameter is the organization's node ID
-        view: Modals.setup_org_project_modal(selected_github_org.value),
+        view: Modals.setupOrgProjectModal(selectedGithubOrg.value),
       });
       // Message the team members that were added to ask for their github usernames
-      for (const slack_user_id of selected_users_array) {
+      for (const slackUserId of selectedUsersArray) {
         app.client.chat.postMessage({
           token: context.botToken,
-          channel: slack_user_id,
+          channel: slackUserId,
           text:
-            `Hey <@${slack_user_id}>! ` +
+            `Hey <@${slackUserId}>! ` +
             "You've been added to the triage team. Tell me your GitHub username.",
-          blocks: Messages.UsernameMapMessage(slack_user_id),
+          blocks: Messages.UsernameMapMessage(slackUserId),
         });
       }
     } catch (err) {
       console.error(err);
     }
 
-    console.log('create_new_team_result', create_new_team_result);
+    console.log('create_new_team_result', createNewTeamResult);
   });
 };

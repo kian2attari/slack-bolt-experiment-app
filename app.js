@@ -1,16 +1,16 @@
 const {App, LogLevel, ExpressReceiver} = require('@slack/bolt');
 const {json} = require('express');
-const {github_event} = require('./webhooks/webhookEvents');
+const {githubEvent} = require('./webhooks/webhookEvents');
 const {
-  actions_listener,
-  events_listener,
-  options_listener,
-  messages_listener,
-  views_listener,
-  shortcuts_listener,
+  actionsListener,
+  eventsListener,
+  optionsListener,
+  messagesListener,
+  viewsListener,
+  shortcutsListener,
 } = require('./listeners');
 const {connectToMongoCollection} = require('./db');
-const {review_request_cron_job, triage_duty_rotation} = require('./cronJobs');
+const {reviewRequestCronJob, triageDutyRotation} = require('./cronJobs');
 
 // Create a Bolt Receiver
 const expressReceiver = new ExpressReceiver({
@@ -29,7 +29,7 @@ const app = new App({
 // TODO Organize these listeners into their own modules by function
 
 /* ----------------------- SECTION Listening for messages ---------------------- */
-messages_listener.triage_channel(app);
+messagesListener.triageChannel(app);
 
 // !SECTION
 
@@ -38,50 +38,50 @@ messages_listener.triage_channel(app);
 /* -------------------------- ANCHOR App Home View events -------------------------- */
 // Loads the app home when the app home is opened!
 // ANCHOR App home opened
-events_listener.app_home_opened(app);
+eventsListener.appHomeOpened(app);
 
 // ANCHOR reaction added
-events_listener.reaction_added(app);
+eventsListener.reactionAdded(app);
 // !SECTION
 
 /* ------------- SECTION Listening for actions ------------ */
 // Opens the username map modal
-actions_listener.buttons.open_map_modal_button(app);
+actionsListener.buttons.openMapModalButton(app);
 
-actions_listener.buttons.show_up_for_grabs_filter_button(app);
+actionsListener.buttons.showUpForGrabsFilterButton(app);
 
-actions_listener.buttons.show_assigned_to_user_filter_button(app);
+actionsListener.buttons.showAssignedToUserFilterButton(app);
 
-actions_listener.buttons.show_done_by_user_filter_button(app);
+actionsListener.buttons.showDoneByUserFilterButton(app);
 
-actions_listener.buttons.app_home_external_triage_buttons(app);
+actionsListener.buttons.appHomeExternalTriageButtons(app);
 
-actions_listener.buttons.app_home_internal_triage_buttons(app);
+actionsListener.buttons.appHomeInternalTriageButtons(app);
 
-actions_listener.buttons.show_untriaged_filter_button(app);
+actionsListener.buttons.showUntriagedFilterButton(app);
 
-actions_listener.buttons.setup_triage_workflow_button(app);
+actionsListener.buttons.setupTriageWorkflowButton(app);
 
-actions_listener.buttons.link_button(app);
+actionsListener.buttons.linkButton(app);
 
 /* ------------- ANCHOR Responding to the repo name selection ------------ */
-actions_listener.main_level_filter_selection(app);
+actionsListener.mainLevelFilterSelection(app);
 
 /* ------------- ANCHOR Responding to label assignment on issue ------------- */
 
 /* ------ TODO - add a clear all labels button ----- */
-actions_listener.label_assignment(app);
+actionsListener.labelAssignment(app);
 
 // !SECTION
 
 /* ----------------------- SECTION Listen for options ----------------------- */
 // Responding to a repo_selection options with list of repos
 
-options_listener.org_level_project_input(app);
+optionsListener.orgLevelProjectInput(app);
 
-options_listener.assignable_team_members(app);
+optionsListener.assignableTeamMembers(app);
 
-options_listener.github_org_select_input(app);
+optionsListener.githubOrgSelectInput(app);
 
 // !SECTION
 
@@ -89,11 +89,11 @@ options_listener.github_org_select_input(app);
 /*                       SECTION Listening for shortcuts                       */
 /* -------------------------------------------------------------------------- */
 
-shortcuts_listener.setup_triage_workflow(app);
+shortcutsListener.setupTriageWorkflow(app);
 
-shortcuts_listener.modify_github_username(app);
+shortcutsListener.modifyGithubUsername(app);
 
-shortcuts_listener.edit_triage_duty_availability(app);
+shortcutsListener.editTriageDutyAvailability(app);
 
 // !SECTION Listening for shortcuts
 
@@ -101,13 +101,13 @@ shortcuts_listener.edit_triage_duty_availability(app);
 /*                   SECTION Listening for view submissions                   */
 /* -------------------------------------------------------------------------- */
 
-views_listener.setup_triage_team_view(app);
+viewsListener.setupTriageTeamView(app);
 
-views_listener.map_username_modal_view(app);
+viewsListener.mapUsernameModalView(app);
 
-views_listener.setup_org_project_modal_view(app);
+viewsListener.setupOrgProjectModalView(app);
 
-views_listener.edit_triage_duty_availability_modal(app);
+viewsListener.editTriageDutyAvailabilityModal(app);
 
 // !SECTION Listening for view submissions
 /* -------------------------------------------------------------------------- */
@@ -116,7 +116,7 @@ views_listener.edit_triage_duty_availability_modal(app);
 
 expressReceiver.router.use(json({type: 'application/json'}));
 
-github_event(expressReceiver.router, app);
+githubEvent(expressReceiver.router, app);
 
 // !SECTION
 
@@ -128,8 +128,8 @@ github_event(expressReceiver.router, app);
   // Test DB connection
   try {
     await connectToMongoCollection();
-    review_request_cron_job(app);
-    triage_duty_rotation(app);
+    reviewRequestCronJob(app);
+    triageDutyRotation(app);
   } catch (error) {
     console.error('Test connection to database failed.', error);
     throw error;

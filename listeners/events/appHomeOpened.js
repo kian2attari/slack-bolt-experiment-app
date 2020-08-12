@@ -1,13 +1,13 @@
 const {AppHome} = require('../../blocks');
-const {show_untriaged_cards} = require('../commonFunctions');
-const {get_team_repo_subscriptions} = require('../../models');
+const {showUntriagedCards} = require('../commonFunctions');
+const {getTeamRepoSubscriptions} = require('../../models');
 /**
  * Listens for the app_home_opened event
  *
  * @param {App} app An instance of the Bolt App
  * @returns {any} Void
  */
-function app_home_opened(app) {
+function appHomeOpened(app) {
   app.event('app_home_opened', async ({event, context, client}) => {
     // Find the team (if there is one) that the current use is a member in.
     // EXTRA CREDIT: turn this section of code into a middleware that adds context.triageTeam, then you don't need to
@@ -15,39 +15,39 @@ function app_home_opened(app) {
 
     console.log('event.user', event.user);
 
-    const team_data = await get_team_repo_subscriptions(event.user);
+    const teamData = await getTeamRepoSubscriptions(event.user);
 
     try {
-      if (typeof team_data === 'undefined') {
+      if (typeof teamData === 'undefined') {
         console.log(`${event.user} currently is not associated with a triage team`);
         // TODO: CTA To make a team!
-        const home_view = AppHome.BaseAppHome('NoTeam');
+        const homeView = AppHome.BaseAppHome('NoTeam');
         await client.views.publish({
           /* retrieves your xoxb token from context */
           token: context.botToken,
 
           /* the user that opened your app's app home */
-          user_id: event.user,
+          'user_id': event.user,
 
           /* the view payload that appears in the app home */
-          view: home_view,
+          view: homeView,
         });
         return;
       }
       // Make sure the team is subscribed to at least one repo
-      if (Object.keys(team_data.subscribed_repos).size === 0) {
+      if (Object.keys(teamData.subscribedRepos).size === 0) {
         // TODO change the issue section of the App Home to display a CTA to subscribe to a repo
         console.log('The team is not currently subscribed to any repos');
-        const home_view = AppHome.BaseAppHome('All');
+        const homeView = AppHome.BaseAppHome('All');
         await client.views.publish({
           /* retrieves your xoxb token from context */
           token: context.botToken,
 
           /* the user that opened your app's app home */
-          user_id: event.user,
+          'user_id': event.user,
 
           /* the view payload that appears in the app home */
-          view: home_view,
+          view: homeView,
         });
         return;
       }
@@ -58,11 +58,11 @@ function app_home_opened(app) {
 
       // const selected_main_level_view = {name: 'All', value: 'all'};
 
-      await show_untriaged_cards({
+      await showUntriagedCards({
         context,
         client,
         event,
-        selected_main_level_view: 'All',
+        selectedMainLevelView: 'All',
       });
     } catch (error) {
       console.error(error);
@@ -70,4 +70,4 @@ function app_home_opened(app) {
   });
 }
 
-exports.app_home_opened = app_home_opened;
+exports.appHomeOpened = appHomeOpened;
