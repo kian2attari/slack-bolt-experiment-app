@@ -1,5 +1,5 @@
 {
-  "name": "eslint-rule-camelcase-with-fixer",
+  "name": "eslint-plugin-custom-gitwave-rules",
   "version": "1.0.0",
   "main": "index.js"
 }

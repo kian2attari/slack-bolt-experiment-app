@@ -1,6 +1,6 @@
 const {query, mutation, graphql} = require('../../graphql');
 const {get_team_org_level_project_board} = require('../../models');
-const {reg_exp} = require('../../constants');
+const {regExp} = require('../../constants');
 
 async function issue_labeled(req, res) {
   const request = req.body;
@@ -22,7 +22,7 @@ async function issue_labeled(req, res) {
   } = await get_team_org_level_project_board(installation_id);
 
   // If the label is a triage label
-  if (reg_exp.find_triage_labels.test(label_description)) {
+  if (regExp.find_triage_labels.test(label_description)) {
     /* TODO if the applied label was a triage label, there should not be any other triage label currently applied to it. If there is:
       Message the team to let the know it happened */
   }

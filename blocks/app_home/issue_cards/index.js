@@ -1,4 +1,4 @@
-const {triaged_cards} = require('./triagedCards');
-const {untriaged_cards} = require('./untriagedCards');
+const {triagedCards} = require('./triagedCards');
+const {untriagedCards} = require('./untriagedCards');
 
-exports.issue_cards = {triaged_cards, untriaged_cards};
+exports.issueCards = {triagedCards, untriagedCards};

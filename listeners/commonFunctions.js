@@ -3,7 +3,7 @@ const {AppHome} = require('../blocks');
 const {Modals} = require('../blocks');
 const {SafeAccess} = require('../helper-functions');
 const {update_document, find_triage_team_by_slack_user} = require('../db');
-const {reg_exp} = require('../constants');
+const {regExp} = require('../constants');
 /**
  * Updates the app home page with a list of cards of untriaged issues/PR's depending on the
  * main level scope that was selected (ie. All Untriaged, only internal issues, only
@@ -201,7 +201,7 @@ async function update_internal_triage_status_in_db(event_metadata) {
     team_internal_triage_channel_id: channel,
   };
 
-  const fixed_format_ts = issue_message_ts.replace(reg_exp.find_all_dots, '_');
+  const fixed_format_ts = issue_message_ts.replace(regExp.find_all_dots, '_');
 
   const update_issue_obj = {};
 

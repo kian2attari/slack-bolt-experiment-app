@@ -1,4 +1,4 @@
-const {reg_exp} = require('../../constants');
+const {regExp} = require('../../constants');
 const {add_new_internal_issue, find_valid_triage_channel} = require('../../db');
 
 // Middleware to make sure that the message was posted in a triage channel
@@ -12,7 +12,7 @@ async function validTriageChannelListener({message, next}) {
 
 module.exports = app => {
   app.message(
-    reg_exp.triage_circles_regexp,
+    regExp.triage_circles_regexp,
     validTriageChannelListener,
     async ({context, message, client}) => {
       // RegExp matches are inside of context.matches
@@ -20,12 +20,9 @@ module.exports = app => {
 
       const nature_of_message = {text: '', urgency: ''};
 
-      console.log(
-        'regex match',
-        triage_priority.match(reg_exp.individual_circles_regexp)
-      );
+      console.log('regex match', triage_priority.match(regExp.individual_circles_regexp));
 
-      switch (triage_priority.match(reg_exp.individual_circles_regexp)[0]) {
+      switch (triage_priority.match(regExp.individual_circles_regexp)[0]) {
         case 'red':
           nature_of_message.text = 'urgent issue';
           nature_of_message.urgency = 'high';

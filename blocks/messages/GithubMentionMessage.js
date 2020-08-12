@@ -1,24 +1,25 @@
 module.exports = ({
   title,
   body,
-  html_url,
+  htmlUrl,
   creator,
-  avatar_url,
-  content_create_date,
-  mentioned_slack_user,
-  review_requested,
-  requestor_login,
+  avatarUrl,
+  contentCreateDate,
+  mentionedSlackUser,
+  reviewRequested,
+  requestorLogin,
 }) => {
-  const is_issue = /issues\/\d*$/.test(html_url);
+  // TODO put this in constants under important RegEx
+  const isIssue = /issues\/\d*$/.test(htmlUrl);
 
-  const issue_or_pr = is_issue ? 'issue' : 'PR';
+  const issueOrPr = isIssue ? 'issue' : 'PR';
 
-  console.log('url', html_url);
+  console.log('url', htmlUrl);
 
   // If the message is being sent as an alert for a PR review request, this text is placed before the title
-  const review_requested_text =
-    review_requested && !is_issue
-      ? `*:pushpin: ${requestor_login} requested your review* ->`
+  const reviewRequestedText =
+    reviewRequested && !isIssue
+      ? `*:pushpin: ${requestorLogin} requested your review* ->`
       : '';
   /* The @ symbol for mentions is not concatenated here because the convention for mentioning is different 
   between mentioning users/groups/channels. To mention the channel, say when a closed issue is commented
@@ -28,7 +29,7 @@ module.exports = ({
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `*<${mentioned_slack_user}>*`,
+        text: `*<${mentionedSlackUser}>*`,
       },
     },
 
@@ -39,7 +40,7 @@ module.exports = ({
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `${review_requested_text} ${issue_or_pr}: *${title}*`,
+        text: `${reviewRequestedText} ${issueOrPr}: *${title}*`,
       },
     },
     {
@@ -49,7 +50,7 @@ module.exports = ({
       type: 'section',
       accessory: {
         type: 'image',
-        image_url: avatar_url,
+        image_url: avatarUrl,
         alt_text: `${creator}'s GitHub avatar`,
       },
       text: {
@@ -65,10 +66,10 @@ module.exports = ({
           type: 'button',
           text: {
             type: 'plain_text',
-            text: `Visit ${issue_or_pr} page`,
+            text: `Visit ${issueOrPr} page`,
             emoji: true,
           },
-          url: html_url,
+          url: htmlUrl,
           action_id: 'link_button',
         },
       ],
@@ -78,7 +79,7 @@ module.exports = ({
       elements: [
         {
           type: 'plain_text',
-          text: `Date: ${content_create_date}`,
+          text: `Date: ${contentCreateDate}`,
           emoji: true,
         },
       ],

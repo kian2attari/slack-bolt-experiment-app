@@ -1,5 +1,5 @@
 const {CronJob} = require('cron');
-const {send_mention_message, next_week, date_formatter} = require('./helper-functions');
+const {send_mention_message, next_week, dateFormatter} = require('./helper-functions');
 const {
   get_pending_review_requests,
   get_team_triage_duty_assignments,
@@ -67,7 +67,7 @@ function rotate_triage_duty_assignment(app) {
 
     // Get the current latest assignment in the array
     const {
-      assigned_team_member: last_assigned_member,
+      assignedTeamMember: last_assigned_member,
       date: last_assignment_date,
     } = triage_duty_assignments[triage_duty_assignments.length - 1];
 
@@ -85,7 +85,7 @@ function rotate_triage_duty_assignment(app) {
 
     const new_triage_assignment_date_obj = next_week(new Date(last_assignment_date));
 
-    const new_triage_assignment_date = date_formatter(new_triage_assignment_date_obj);
+    const new_triage_assignment_date = dateFormatter(new_triage_assignment_date_obj);
 
     // Remove the current week for the assignments since its already passed
     triage_duty_assignments.shift();
@@ -95,7 +95,7 @@ function rotate_triage_duty_assignment(app) {
 
     triage_duty_assignments.push({
       'date': new_triage_assignment_date_obj.getTime(),
-      'assigned_team_member': new_last_assigned_member,
+      'assignedTeamMember': new_last_assigned_member,
       'substitutes': team_member_alphabetic_array,
     });
 
@@ -105,7 +105,7 @@ function rotate_triage_duty_assignment(app) {
         app.client.conversations.setTopic({
           token: process.env.SLACK_BOT_TOKEN,
           channel: team_channel_id,
-          topic: `<@${triage_duty_assignments[0].assigned_team_member}> is on triage duty for the week of ${new_triage_assignment_date}!`,
+          topic: `<@${triage_duty_assignments[0].assignedTeamMember}> is on triage duty for the week of ${new_triage_assignment_date}!`,
         }),
         app.client.chat.postMessage({
           // Since there is no context we just use the original token

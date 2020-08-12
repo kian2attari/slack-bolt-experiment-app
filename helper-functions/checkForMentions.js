@@ -1,5 +1,5 @@
 const send_mention_message = require('./sendMentionMessage');
-const {reg_exp} = require('../constants');
+const {regExp} = require('../constants');
 const {async_array_map} = require('./asyncArrayMap');
 
 // Function that checks for github username mentions in a body of text
@@ -16,7 +16,7 @@ async function check_for_mentions(app, mention_metadata) {
     installation_id,
   } = mention_metadata;
 
-  const contains_mention = body.match(reg_exp.find_mentions);
+  const contains_mention = body.match(regExp.find_mentions);
 
   // Checks to see if the body mentions a username
   if (!contains_mention) {

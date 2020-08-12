@@ -1,11 +1,11 @@
 const SubBlocks = require('../SubBlocks');
-// TODO remove the default value for selected_button. It's only temporarily needed for the transition to statelessness
+// TODO remove the default value for selectedButton. It's only temporarily needed for the transition to statelessness
 module.exports = (
-  main_level_filter_selection = 'All', // This can be "all", or only "internal" and "external"
-  issue_blocks = undefined,
-  selected_button = 'show_untriaged_filter_button'
+  mainLevelFilterSelection = 'All', // This can be "all", or only "internal" and "external"
+  issueBlocks = undefined,
+  selectedButton = 'show_untriaged_filter_button'
 ) => {
-  const filter_buttons_block = {
+  const filterButtonsBlock = {
     'type': 'actions',
     'elements': [
       {
@@ -51,25 +51,25 @@ module.exports = (
     ],
   };
 
-  const selected_button_index = filter_buttons_block.elements.findIndex(
-    button => button.action_id === selected_button
+  const selectedButtonIndex = filterButtonsBlock.elements.findIndex(
+    button => button.action_id === selectedButton
   );
 
-  filter_buttons_block.elements[selected_button_index].style = 'primary'; // Colors the selected button green
+  filterButtonsBlock.elements[selectedButtonIndex].style = 'primary'; // Colors the selected button green
 
   // The block that contains the select_menu elements for filtering on the App Home page
-  const selection_block = {
+  const selectionBlock = {
     'type': 'actions',
     'elements': [
-      static_select_element(
-        'main_level_filter_selection',
+      staticSelectElement(
+        'mainLevelFilterSelection',
         'Select a scope',
         [
           {name: 'All', value: 'All'},
           {name: 'Internal', value: 'Internal'},
           {name: 'External', value: 'External'},
         ],
-        {name: main_level_filter_selection, value: main_level_filter_selection} // Note: all untriaged -> "All" for both parameters
+        {name: mainLevelFilterSelection, value: mainLevelFilterSelection} // Note: all untriaged -> "All" for both parameters
       ),
     ],
   };
@@ -77,16 +77,16 @@ module.exports = (
   return {
     'type': 'home',
     'blocks':
-      main_level_filter_selection !== 'NoTeam'
+      mainLevelFilterSelection !== 'NoTeam'
         ? [
-            selection_block,
-            filter_buttons_block,
+            selectionBlock,
+            filterButtonsBlock,
             {
               'type': 'divider',
             },
             // TODO if project has no issues, render nothing
             // If issue blocks have been provided, render them here
-            ...(typeof issue_blocks !== 'undefined' ? issue_blocks : []),
+            ...(typeof issueBlocks !== 'undefined' ? issueBlocks : []),
 
             // If the more info block has been provided, render it here
             // ...(typeof more_info_blocks !== 'undefined' ? more_info_blocks : []),
@@ -121,23 +121,18 @@ module.exports = (
 
 // TODO the initial option should be gotten from the previous state of the view
 
-function static_select_element(
-  action_id,
-  place_holder_text,
-  options,
-  initial_option = {}
-) {
+function staticSelectElement(actionId, placeHolderText, options, initialOption = {}) {
   return {
-    'action_id': action_id,
+    'action_id': actionId,
     'type': 'static_select',
     'placeholder': {
       'type': 'plain_text',
-      'text': place_holder_text,
+      'text': placeHolderText,
       'emoji': true,
     },
     'options': options.map(option => SubBlocks.option_obj(option.name, option.value)),
-    ...(Object.keys(initial_option).length !== 0 && {
-      'initial_option': SubBlocks.option_obj(initial_option.name, initial_option.value),
+    ...(Object.keys(initialOption).length !== 0 && {
+      'initialOption': SubBlocks.option_obj(initialOption.name, initialOption.value),
     }),
   };
 }

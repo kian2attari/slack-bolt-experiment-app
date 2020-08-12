@@ -5,7 +5,7 @@ const {
   find_triage_team_by_slack_user,
   find_documents,
 } = require('../db');
-const {reg_exp} = require('../constants');
+const {regExp} = require('../constants');
 
 /* This is where all the DB operations are abstracted to. The goal is to avoid directly using the mongodb client methods throughout the 
 code (ex. update, find, set etc) and instead abstract the functionalities here (ex. assign label to issue -- which will do all the mongodb calls under the hood) */
@@ -81,13 +81,13 @@ async function associate_team_with_installation(
 
   // Every iteration is another week with i = 0 being the current week.
   for (let i = 0; i < 4; i += 1) {
-    const assigned_team_member = sorted_slack_user_ids[i % team_size]; // So we don't go out of range on our team member array
+    const assignedTeamMember = sorted_slack_user_ids[i % team_size]; // So we don't go out of range on our team member array
 
     triage_duty_assignments[i] = {
       date: current_week_monday_date.getTime() + i * 604800000, // 604800000 is the number of milliseconds in a week
-      assigned_team_member,
+      assignedTeamMember,
       substitutes: sorted_slack_user_ids.filter(
-        slack_user_id => slack_user_id !== assigned_team_member
+        slack_user_id => slack_user_id !== assignedTeamMember
       ),
     };
   }
@@ -348,7 +348,7 @@ async function mark_element_as_untriaged(
   installation_id
 ) {
   const triage_label_count = labels.filter(label =>
-    reg_exp.find_triage_labels(label.description)
+    regExp.find_triage_labels(label.description)
   ).length;
 
   // TODO turn this into its own function

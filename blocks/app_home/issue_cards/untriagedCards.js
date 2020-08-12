@@ -1,12 +1,12 @@
-exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array}) => {
-  const external_issues_block = external_issue_card_array.flatMap(card => {
-    const card_data = card.content;
-    const card_repo_triage_labels = card_data.repository.labels.nodes;
+exports.untriagedCards = ({externalIssueCardArray, internalIssueCardArray}) => {
+  const externalIssuesBlock = externalIssueCardArray.flatMap(card => {
+    const cardData = card.content;
+    const cardRepoTriageLabels = cardData.repository.labels.nodes;
     // const card_id = card_data.id;
     // const card_labels = card_data.labels.nodes;
 
     // Indicates whether the issue in question is closed
-    const closed_text = card_data.closed ? ':closed_lock_with_key:' : '';
+    const closedText = cardData.closed ? ':closed_lock_with_key:' : '';
 
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
     return [
@@ -14,7 +14,7 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': `${closed_text} *${card_data.repository.name}*: ${card_data.title}`,
+          'text': `${closedText} *${cardData.repository.name}*: ${cardData.title}`,
         },
         'accessory': {
           'type': 'button',
@@ -23,7 +23,7 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
             'text': 'View Issue on GitHub',
             'emoji': true,
           },
-          'url': card_data.url,
+          'url': cardData.url,
           'action_id': 'link_button',
         },
       },
@@ -31,7 +31,7 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
         'type': 'section',
         'text': {
           'type': 'plain_text',
-          'text': `${card_data.body} \n`,
+          'text': `${cardData.body} \n`,
         },
       },
       /* The GitHub GraphQL API needs both the issue ID and 
@@ -41,7 +41,7 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
 
       {
         'type': 'section',
-        // "block_id": issue_id,
+        // "block_id": issueId,
         'text': {
           'type': 'mrkdwn',
           'text': 'Triage this issue',
@@ -50,7 +50,7 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
       // Passing in the id of the issue so that the label could be applied to said issue
       // We only want the buttons to appear if the repo has triage labels defined properly. The spread operator makes it so that nothing is added to the array if the function returns {}
       // EXTRA_TODO instead of just not returning anything, we could have a bit of text there to tell the user to create the labels on the repo
-      ...external_issue_label_buttons_block(card_data.id, card_repo_triage_labels),
+      ...externalIssueLabelButtonsBlock(cardData.id, cardRepoTriageLabels),
       {
         'type': 'context',
         'elements': [
@@ -60,12 +60,12 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
           },
           {
             'type': 'image',
-            'image_url': card_data.author.avatarUrl,
-            'alt_text': `${card_data.author.login}`,
+            'image_url': cardData.author.avatarUrl,
+            'alt_text': `${cardData.author.login}`,
           },
           {
             'type': 'mrkdwn',
-            'text': `*${card_data.author.login}*`,
+            'text': `*${cardData.author.login}*`,
           },
         ],
       },
@@ -75,12 +75,12 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
     ];
   });
 
-  const internal_issues_block = internal_issue_card_array.flatMap(internal_issue => [
+  const internalIssuesBlock = internalIssueCardArray.flatMap(internalIssue => [
     {
       'type': 'section',
       'text': {
         'type': 'mrkdwn',
-        'text': `*Internal Issue*: ${internal_issue.urgency.toUpperCase()} urgency`,
+        'text': `*Internal Issue*: ${internalIssue.urgency.toUpperCase()} urgency`,
       },
       'accessory': {
         'type': 'button',
@@ -89,7 +89,7 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
           'text': 'View Issue',
           'emoji': true,
         },
-        'url': internal_issue.deep_link_to_message,
+        'url': internalIssue.deepLinkToMessage,
         'action_id': 'link_button',
       },
     },
@@ -97,19 +97,19 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
       'type': 'section',
       'text': {
         'type': 'plain_text',
-        'text': `${internal_issue.text} \n`,
+        'text': `${internalIssue.text} \n`,
       },
     },
 
     {
       'type': 'section',
-      // "block_id": issue_id,
+      // "block_id": issueId,
       'text': {
         'type': 'mrkdwn',
         'text': 'Triage this issue',
       },
     },
-    ...internal_issue_label_buttons_block(internal_issue.issue_message_ts),
+    ...internalIssueLabelButtonsBlock(internalIssue.issueMessageTs),
     {
       'type': 'context',
       'elements': [
@@ -124,7 +124,7 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
         // },
         {
           'type': 'mrkdwn',
-          'text': `*<@${internal_issue.user}>*`,
+          'text': `*<@${internalIssue.user}>*`,
         },
       ],
     },
@@ -133,26 +133,26 @@ exports.untriaged_cards = ({external_issue_card_array, internal_issue_card_array
     },
   ]);
 
-  const combined_issues_block = internal_issues_block.concat(external_issues_block);
+  const combinedIssuesBlock = internalIssuesBlock.concat(externalIssuesBlock);
 
-  return combined_issues_block;
+  return combinedIssuesBlock;
 };
 
 /**
  * Creates the triage buttons for the Untriaged page on the app home. Uses the button value
- * to send the issue_id and label_id.
+ * to send the issueId and label_id.
  *
- * @param {any} issue_id
+ * @param {any} issueId
  * @param {any} triage_label_array
  * @returns {any} An action block whose elements consist of the triage buttons
  */
-function external_issue_label_buttons_block(issue_id, triage_label_array) {
-  const labels_block =
-    triage_label_array.length !== 0
+function externalIssueLabelButtonsBlock(issueId, triageLabelArray) {
+  const labelsBlock =
+    triageLabelArray.length !== 0
       ? [
           {
             'type': 'actions',
-            'elements': triage_label_array.map(label => {
+            'elements': triageLabelArray.map(label => {
               return {
                 'type': 'button',
                 'text': {
@@ -161,16 +161,16 @@ function external_issue_label_buttons_block(issue_id, triage_label_array) {
                   'emoji': true,
                 },
                 'action_id': `assign_${label.name.toLowerCase()}_label`,
-                'value': JSON.stringify({issue_id, label_id: label.id}),
+                'value': JSON.stringify({issueId, label_id: label.id}),
               };
             }),
           },
         ]
       : [];
-  return labels_block;
+  return labelsBlock;
 }
 
-function internal_issue_label_buttons_block(issue_message_ts) {
+function internalIssueLabelButtonsBlock(issueMessageTs) {
   return [
     {
       'type': 'actions',
@@ -183,7 +183,7 @@ function internal_issue_label_buttons_block(issue_message_ts) {
             'emoji': true,
           },
           'action_id': `assign_eyes_label`,
-          'value': JSON.stringify({issue_message_ts, name: 'eyes'}),
+          'value': JSON.stringify({issueMessageTs, name: 'eyes'}),
         },
         {
           'type': 'button',
@@ -193,7 +193,7 @@ function internal_issue_label_buttons_block(issue_message_ts) {
             'emoji': true,
           },
           'action_id': `assign_checkmark_label`,
-          'value': JSON.stringify({issue_message_ts, name: 'white_check_mark'}),
+          'value': JSON.stringify({issueMessageTs, name: 'white_check_mark'}),
         },
       ],
     },

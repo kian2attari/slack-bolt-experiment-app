@@ -1,19 +1,19 @@
 /**
  * Returns an object for the options: or initial_option: property of a select_menu
  *
- * @param {string} option_text
- * @param {string} [option_val] Default is `option_text`
+ * @param {string} optionText
+ * @param {string} [optionVal] Default is `optionText`
  * @returns {object} An option object
  */
-function option_obj(option_text, option_val = option_text) {
+function optionObj(optionText, optionVal = optionText) {
   return {
     'text': {
       'type': 'plain_text',
-      'text': option_text,
+      'text': optionText,
       'emoji': true,
     },
-    'value': option_val,
+    'value': optionVal,
   };
 }
 
-exports.option_obj = option_obj;
+exports.optionObj = optionObj;

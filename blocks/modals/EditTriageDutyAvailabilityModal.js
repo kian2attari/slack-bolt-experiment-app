@@ -1,6 +1,6 @@
-exports.EditTriageDutyAvailabilityModal = triage_duty_assignments_obj => {
+exports.EditTriageDutyAvailabilityModal = triageDutyAssignmentsObj => {
   const {SubBlocks} = require('../index');
-  const {date_formatter} = require('../../helper-functions');
+  const {dateFormatter} = require('../../helper-functions');
 
   return {
     'type': 'modal',
@@ -30,22 +30,22 @@ exports.EditTriageDutyAvailabilityModal = triage_duty_assignments_obj => {
         },
       },
 
-      ...triage_duty_assignments_obj.flatMap((assignment, index) => {
-        const available_option = SubBlocks.option_obj(
+      ...triageDutyAssignmentsObj.flatMap((assignment, index) => {
+        const availableOption = SubBlocks.optionObj(
           "I'm available",
           JSON.stringify({
             avail: true,
             index,
-            user_id: assignment.assigned_team_member,
+            user_id: assignment.assignedTeamMember,
           })
         );
 
-        const unavailable_option = SubBlocks.option_obj(
+        const unavailableOption = SubBlocks.optionObj(
           "I'm unavailable",
           JSON.stringify({
             avail: false,
             index,
-            user_id: assignment.assigned_team_member,
+            user_id: assignment.assignedTeamMember,
           })
         );
 
@@ -54,16 +54,14 @@ exports.EditTriageDutyAvailabilityModal = triage_duty_assignments_obj => {
             'type': 'input',
             'label': {
               'type': 'plain_text',
-              'text': `:spiral_calendar_pad: ${date_formatter(
-                new Date(assignment.date)
-              )}`,
+              'text': `:spiral_calendar_pad: ${dateFormatter(new Date(assignment.date))}`,
               'emoji': true,
             },
             'element': {
               'type': 'radio_buttons',
               'action_id': 'triage_duty_availability_radio',
-              'initial_option': available_option,
-              'options': [available_option, unavailable_option],
+              'initial_option': availableOption,
+              'options': [availableOption, unavailableOption],
             },
           },
           {
@@ -75,7 +73,7 @@ exports.EditTriageDutyAvailabilityModal = triage_duty_assignments_obj => {
               },
               {
                 'type': 'mrkdwn',
-                'text': `<@${assignment.assigned_team_member}>`,
+                'text': `<@${assignment.assignedTeamMember}>`,
               },
             ],
           },
@@ -94,7 +92,7 @@ exports.EditTriageDutyAvailabilityModal = triage_duty_assignments_obj => {
           //     // },
           //     {
           //       'type': 'mrkdwn',
-          //       'text': `<@${assignment.assigned_team_member}>`,
+          //       'text': `<@${assignment.assignedTeamMember}>`,
           //     },
           //   ],
           // },

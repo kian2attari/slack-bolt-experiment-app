@@ -1,7 +1,7 @@
-exports.setup_org_project_modal = selected_org_node_id => ({
+exports.setupOrgProjectModal = selectedOrgNodeId => ({
   'type': 'modal',
-  'callback_id': 'setup_org_project_modal',
-  'private_metadata': JSON.stringify({selected_org_node_id}), // Needed when the view is submitted in order to show a list of the org's projects
+  'callback_id': 'setupOrgProjectModal',
+  'private_metadata': JSON.stringify({selectedOrgNodeId}), // Needed when the view is submitted in order to show a list of the org's projects
   'title': {
     'type': 'plain_text',
     'text': 'Select an Org project',

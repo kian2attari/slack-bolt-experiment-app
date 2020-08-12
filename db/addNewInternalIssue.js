@@ -1,5 +1,5 @@
 const {connectToMongoCollection} = require('./dbConnection');
-const {reg_exp} = require('../constants');
+const {regExp} = require('../constants');
 
 /**
  * @param {{
@@ -32,7 +32,7 @@ async function add_new_internal_issue(new_issue_message_obj) {
     const {internal_triage_item} = new_issue_message_obj;
     // the dots in the ts will confuse mongo, they need to be replaced with dashes.
     const fixed_format_ts = internal_triage_item.issue_message_ts.replace(
-      reg_exp.find_all_dots,
+      regExp.find_all_dots,
       '_'
     );
 

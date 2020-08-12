@@ -14,7 +14,7 @@ function next_week(date = new Date()) {
  * @param {Date} date
  * @returns {String} The formatting Date string
  */
-function date_formatter(date) {
+function dateFormatter(date) {
   const options_long = {weekday: 'long', month: 'long', day: 'numeric'};
   const options_short = {day: 'numeric', month: 'numeric'};
   return `${date.toLocaleDateString('en-US', options_long)} (${date.toLocaleDateString(
@@ -24,4 +24,4 @@ function date_formatter(date) {
 }
 
 exports.next_week = next_week;
-exports.date_formatter = date_formatter;
+exports.dateFormatter = dateFormatter;

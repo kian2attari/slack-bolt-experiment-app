@@ -7,7 +7,7 @@ const {
 const {find_triage_team_by_slack_user} = require('../../db');
 const {add_labels_to_card, get_github_username_by_user_id} = require('../../models');
 const {SafeAccess} = require('../../helper-functions');
-const {reg_exp} = require('../../constants');
+const {regExp} = require('../../constants');
 
 /** @param {App} app */
 async function open_map_modal_button(app) {
@@ -68,7 +68,7 @@ function show_up_for_grabs_filter_button(app) {
     // Only issues/PR's that are triaged!
     const external_card_filter_callback_generator = () => card =>
       card.content.labels.nodes.some(label =>
-        reg_exp.find_triage_labels.test(label.description)
+        regExp.find_triage_labels.test(label.description)
       );
 
     try {

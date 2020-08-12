@@ -1,33 +1,33 @@
-const {reg_exp} = require('../../../constants');
+const {regExp} = require('../../../constants');
 
-exports.triaged_cards = (
-  external_card_array,
-  internal_issue_array,
-  show_only_claimed_internal_issues,
-  show_only_done
+exports.triagedCards = (
+  externalCardArray,
+  internalIssueArray,
+  showOnlyClaimedInternalIssues,
+  showOnlyDone
 ) => {
-  const external_issues_block = external_card_array.flatMap(card => {
-    const card_data = card.content;
-    const repo_labels = card_data.repository.labels.nodes;
-    const card_id = card_data.id;
-    const card_labels = card_data.labels.nodes;
+  const externalIssuesBlock = externalCardArray.flatMap(card => {
+    const cardData = card.content;
+    const repoLabels = cardData.repository.labels.nodes;
+    const cardId = cardData.id;
+    const cardLabels = cardData.labels.nodes;
 
-    const label_map_callback = label => {
+    const labelMapCallback = label => {
       return {
         'text': {
           'type': 'plain_text',
           'text': label.name,
         },
-        'value': JSON.stringify([label.id, card_id]),
+        'value': JSON.stringify([label.id, cardId]),
       };
     };
 
-    const non_triage_labels = label_array =>
-      label_array.filter(label => !reg_exp.find_triage_labels.test(label.description));
+    const nonTriageLabels = labelArray =>
+      labelArray.filter(label => !regExp.findTriageLabels.test(label.description));
 
-    const label_possible_options = non_triage_labels(repo_labels).map(label_map_callback);
+    const labelPossibleOptions = nonTriageLabels(repoLabels).map(labelMapCallback);
 
-    const label_initial_options = non_triage_labels(card_labels).map(label_map_callback);
+    const labelInitialOptions = nonTriageLabels(cardLabels).map(labelMapCallback);
 
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
 
@@ -38,7 +38,7 @@ exports.triaged_cards = (
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': `*${card_data.title}*`,
+          'text': `*${cardData.title}*`,
         },
         'accessory': {
           'type': 'button',
@@ -47,7 +47,7 @@ exports.triaged_cards = (
             'text': 'View Issue on GitHub',
             'emoji': true,
           },
-          'url': card_data.url,
+          'url': cardData.url,
           'action_id': 'link_button',
         },
       },
@@ -55,10 +55,10 @@ exports.triaged_cards = (
         'type': 'section',
         'text': {
           'type': 'plain_text',
-          'text': card_data.body,
+          'text': cardData.body,
         },
       },
-      ...(show_only_done
+      ...(showOnlyDone
         ? []
         : [
             {
@@ -76,10 +76,10 @@ exports.triaged_cards = (
                   'type': 'plain_text',
                   'text': 'Select a label',
                 },
-                'options': label_possible_options,
+                'options': labelPossibleOptions,
                 // TODO Initial Options stateless transition
-                ...(label_initial_options.length !== 0 && {
-                  'initial_options': label_initial_options,
+                ...(labelInitialOptions.length !== 0 && {
+                  'initial_options': labelInitialOptions,
                 }),
               },
             },
@@ -110,12 +110,12 @@ exports.triaged_cards = (
           },
           {
             'type': 'image',
-            'image_url': card_data.author.avatarUrl,
-            'alt_text': `${card_data.author.login}`,
+            'image_url': cardData.author.avatarUrl,
+            'alt_text': `${cardData.author.login}`,
           },
           {
             'type': 'mrkdwn',
-            'text': `*${card_data.author.login}*`,
+            'text': `*${cardData.author.login}*`,
           },
         ],
       },
@@ -125,8 +125,8 @@ exports.triaged_cards = (
     ];
   });
 
-  const internal_issues_block = internal_issue_array.flatMap(internal_issue => {
-    const {urgency, text, deep_link_to_message, issue_message_ts, user} = internal_issue;
+  const internalIssuesBlock = internalIssueArray.flatMap(internalIssue => {
+    const {urgency, text, deepLinkToMessage, issueMessageTs, user} = internalIssue;
     return [
       {
         'type': 'section',
@@ -141,7 +141,7 @@ exports.triaged_cards = (
             'text': 'View Original Message',
             'emoji': true,
           },
-          'url': deep_link_to_message,
+          'url': deepLinkToMessage,
           'action_id': 'link_button',
         },
       },
@@ -152,13 +152,13 @@ exports.triaged_cards = (
           'text': `${text} \n \n`,
         },
       },
-      ...(show_only_done
+      ...(showOnlyDone
         ? []
         : [
             {
               'type': 'actions',
               'elements': [
-                ...(show_only_claimed_internal_issues
+                ...(showOnlyClaimedInternalIssues
                   ? []
                   : [
                       {
@@ -169,7 +169,10 @@ exports.triaged_cards = (
                           'emoji': true,
                         },
                         'action_id': `assign_eyes_label`,
-                        'value': JSON.stringify({issue_message_ts, name: 'eyes'}),
+                        'value': JSON.stringify({
+                          issue_message_ts: issueMessageTs,
+                          name: 'eyes',
+                        }),
                       },
                     ]),
                 {
@@ -180,7 +183,10 @@ exports.triaged_cards = (
                     'emoji': true,
                   },
                   'action_id': `assign_checkmark_label`,
-                  'value': JSON.stringify({issue_message_ts, name: 'white_check_mark'}),
+                  'value': JSON.stringify({
+                    issue_message_ts: issueMessageTs,
+                    name: 'white_check_mark',
+                  }),
                 },
               ],
             },
@@ -209,8 +215,8 @@ exports.triaged_cards = (
     ];
   });
 
-  console.log('external_issues_block', external_issues_block);
-  const combined_issues_block = internal_issues_block.concat(external_issues_block);
+  console.log('external_issues_block', externalIssuesBlock);
+  const combinedIssuesBlock = internalIssuesBlock.concat(externalIssuesBlock);
 
-  return combined_issues_block;
+  return combinedIssuesBlock;
 };

@@ -1,4 +1,4 @@
-exports.UsernameMapModal = (github_username = '') => ({
+exports.UsernameMapModal = (githubUsername = '') => ({
   'type': 'modal',
   'callback_id': 'map_username_modal',
   'title': {
@@ -22,8 +22,8 @@ exports.UsernameMapModal = (github_username = '') => ({
       'text': {
         'type': 'mrkdwn',
         'text':
-          github_username.length !== 0
-            ? `Your GitHub username is currently set to *${github_username}*. If you would like to change it, enter a new username below.`
+          githubUsername.length !== 0
+            ? `Your GitHub username is currently set to *${githubUsername}*. If you would like to change it, enter a new username below.`
             : 'Mapping your GitHub username allows GitWave to DM you whenever you are mentioned on a team GitHub repo. You have not currently set your GitHub username. Please enter it below.',
       },
     },
