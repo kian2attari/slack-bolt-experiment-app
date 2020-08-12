@@ -61,24 +61,15 @@ function rotate_triage_duty_assignment(app) {
   return async () => {
     const team_data = await get_team_triage_duty_assignments();
 
-    console.log(': -------------------------------------------------------------');
-    console.log('function rotate_triage_duty_assignment -> team_data', team_data);
-    console.log(': -------------------------------------------------------------');
-
     const {triage_duty_assignments, team_channel_id, team_members} = team_data[0];
 
     const team_member_alphabetic_array = Object.keys(team_members).sort();
 
-    console.log('team_member_alphabetic_array', team_member_alphabetic_array);
-
-    console.log('triage_duty_assignments', triage_duty_assignments);
-
+    // Get the current latest assignment in the array
     const {
       assigned_team_member: last_assigned_member,
       date: last_assignment_date,
-    } = triage_duty_assignments[3];
-
-    console.log('last_assigned_member', last_assigned_member);
+    } = triage_duty_assignments[triage_duty_assignments.length - 1];
 
     const last_assigned_member_index = team_member_alphabetic_array.indexOf(
       last_assigned_member
@@ -96,20 +87,11 @@ function rotate_triage_duty_assignment(app) {
 
     const new_triage_assignment_date = date_formatter(new_triage_assignment_date_obj);
 
-    console.log('new_last_assigned_member', new_last_assigned_member);
-
-    // Remove the current week
+    // Remove the current week for the assignments since its already passed
     triage_duty_assignments.shift();
 
+    // Remove the user that we just assigned to the furthest week from the list of possible substitutes for that week
     team_member_alphabetic_array.splice(index_of_new_last_assigned_member, 1);
-
-    await app.client.conversations.setTopic({
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: team_channel_id,
-      topic: `<@${triage_duty_assignments[0].assigned_team_member}> is on triage duty for the week of ${new_triage_assignment_date}!`,
-    });
-
-    console.log('team_member_alphabetic_array post splice', team_member_alphabetic_array);
 
     triage_duty_assignments.push({
       'date': new_triage_assignment_date_obj.getTime(),
@@ -119,14 +101,21 @@ function rotate_triage_duty_assignment(app) {
 
     try {
       await set_triage_duty_assignments(team_channel_id, triage_duty_assignments);
-      await app.client.chat.postMessage({
-        // Since there is no context we just use the original token
-        token: process.env.SLACK_BOT_TOKEN,
-        channel: new_last_assigned_member,
-        // Just in case there is an issue loading the blocks.
-        // EXTRA_TODO add blocks that also display a button that opens up the Edit Triage availability Modal
-        text: `Hey <@${new_last_assigned_member}>, you are up for triage duty assignment on *${new_triage_assignment_date}*. \n If you are not available then, make sure to indicate that using the \`Triage Duty Availability\` Shortcut!`,
-      });
+      await Promise.all([
+        app.client.conversations.setTopic({
+          token: process.env.SLACK_BOT_TOKEN,
+          channel: team_channel_id,
+          topic: `<@${triage_duty_assignments[0].assigned_team_member}> is on triage duty for the week of ${new_triage_assignment_date}!`,
+        }),
+        app.client.chat.postMessage({
+          // Since there is no context we just use the original token
+          token: process.env.SLACK_BOT_TOKEN,
+          channel: new_last_assigned_member,
+          // Just in case there is an issue loading the blocks.
+          // EXTRA_TODO add blocks that also display a button that opens up the Edit Triage availability Modal
+          text: `Hey <@${new_last_assigned_member}>, you are up for triage duty assignment on *${new_triage_assignment_date}*. \n If you are not available then, make sure to indicate that using the \`Triage Duty Availability\` Shortcut!`,
+        }),
+      ]);
     } catch (error) {
       console.error(error);
     }
@@ -134,8 +123,8 @@ function rotate_triage_duty_assignment(app) {
 }
 
 // Everyday, check the pending PR review requests of every team, and message the user the review was requested of after 1 day, and after 3 days
+// TODO have this cron job run every week day and only send reminders to users who wanted them on that day in particular
 // REVIEW change the cron_pattern to '0 10,15 * * *' so that the job is run everyday at 10am and 3pm or just '0 10 * * *' for 10 am etc
-// REVIEW Should I use const review_request_cron_job = app => or function syntax?
 function review_request_cron_job(app) {
   return new CronJob(
     '0 10,17 * * *',
@@ -152,9 +141,7 @@ function triage_duty_rotation(app) {
     rotate_triage_duty_assignment(app),
     null,
     true,
-    'America/Los_Angeles',
-    undefined,
-    true
+    'America/Los_Angeles'
   );
 }
 
