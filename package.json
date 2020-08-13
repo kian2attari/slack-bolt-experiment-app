@@ -10,7 +10,7 @@
     "lint-fix": "eslint --ext .js src --fix"
   },
   "author": "kattari",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@octokit/auth-app": "^2.4.7",
     "@octokit/graphql": "^4.5.1",

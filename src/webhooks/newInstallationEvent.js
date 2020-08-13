@@ -1,8 +1,6 @@
 const {addNewDocument} = require('../db');
 
 exports.newGitwaveInstallation = async (req, res) => {
-  console.log('new installation -> req', req.body);
-
   const {
     installation: {
       /* eslint-disable-next-line custom-gitwave-rules/camelCaseWithFixer */
@@ -23,7 +21,7 @@ exports.newGitwaveInstallation = async (req, res) => {
   (rather than an org-scale install), the installation id would be the same for all repos under that
   user/org the app is installed on. The installation ID stays the same even if the installation scope
   is later changed to an org-level installation and vice versa. The only case the installation ID would change for a repo
-  would be if you uninstalled the app entireley from the repo and then reinstalled it. */
+  would be if you uninstalled the app entirely from the repo and then reinstalled it. */
   // A new document is created for every Installation ID
   newInstallationObj.gitwaveGithubAppInstallationId = id;
   /* Details about the current scope of the installation. If repositorySelection is 'all', then we know the app was installed 

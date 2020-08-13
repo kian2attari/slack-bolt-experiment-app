@@ -43,8 +43,6 @@ async function pullRequestReviewRequested(app, req, res) {
       installationId,
     };
 
-    console.log('mentioned slack user 1 ', mentionedSlackUser);
-
     if (mentionedSlackUser) {
       try {
         await addReviewRequest(mentionEventData, installationId);

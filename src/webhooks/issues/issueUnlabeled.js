@@ -13,9 +13,6 @@ async function issueUnlabeled(req, res) {
   const labelId = request.label.node_id;
   const untriagedLabelId = await getRepoUntriagedLabel(repoId, installationId);
 
-  // const label_id = request.label.node_id
-  // console.log(label_id)
-  // console.log(untriaged_label.label_id)
   // if (label_id == untriaged_label.label_id) {
   //   const addCardToColumn_variables = {"issue": {"projectColumnId" : untriaged_label.column_id, "contentId": issue_node_id}}
   //   graphql.callGhGraphql(mutation.addCardToColumn, addCardToColumn_variables)
