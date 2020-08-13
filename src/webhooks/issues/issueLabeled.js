@@ -93,6 +93,19 @@ async function issueLabeled(req, res) {
         break;
       }
 
+      case 'Discussion': {
+        const variablesMoveProjectCard = {
+          cardId: issueCard.id,
+          columnId: projectColumns.Discussion.id,
+        };
+        await graphql.callGhGraphql(
+          mutation.moveProjectCard,
+          variablesMoveProjectCard,
+          installationId
+        );
+        break;
+      }
+
       default: {
         const variablesMoveProjectCard = {
           cardId: issueCard.id,

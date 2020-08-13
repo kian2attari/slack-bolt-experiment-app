@@ -220,9 +220,6 @@ async function getGithubUsernameByUserId(slackUserId) {
   const slackIdToGhUsernameMatch =
     triageTeamMembersResponse[0].teamMembers[slackUserId].githubUserData.githubUsername;
 
-  console.log(': ------------------------------------------------------------');
-  console.log('1 slackIdToGhUsernameMatch.teamMembers', slackIdToGhUsernameMatch);
-  console.log(': ------------------------------------------------------------');
   return slackIdToGhUsernameMatch;
 }
 
