@@ -81,8 +81,6 @@ actionsListener.assignTeamMember(app);
 
 optionsListener.orgLevelProjectInput(app);
 
-optionsListener.assignableTeamMembers(app);
-
 optionsListener.githubOrgSelectInput(app);
 
 // !SECTION

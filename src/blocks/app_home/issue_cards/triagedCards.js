@@ -1,6 +1,8 @@
 const {regExp} = require('../../../constants');
+const {optionObj} = require('../../SubBlocks');
 
 exports.triagedCards = (
+  assignableTeamMembersArray,
   externalCardArray,
   internalIssueArray,
   showOnlyClaimedInternalIssues,
@@ -28,6 +30,10 @@ exports.triagedCards = (
     const labelPossibleOptions = nonTriageLabels(repoLabels).map(labelMapCallback);
 
     const labelInitialOptions = nonTriageLabels(cardLabels).map(labelMapCallback);
+
+    const assignableTeamMemberOptionsObj = assignableTeamMembersArray.map(slackUserId =>
+      optionObj(slackUserId, JSON.stringify({issueOrPrId: cardData.id}))
+    );
 
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
 
@@ -89,15 +95,16 @@ exports.triagedCards = (
                 'type': 'mrkdwn',
                 'text': 'Assign the issue',
               },
+              'block_id': cardData.id,
               'accessory': {
-                'type': 'external_select',
+                'type': 'static_select',
                 'placeholder': {
                   'type': 'plain_text',
                   'text': 'Select a user',
                   'emoji': true,
                 },
+                'options': assignableTeamMemberOptionsObj,
                 'action_id': 'assignable_team_members',
-                'min_query_length': 0,
               },
             },
           ]),
@@ -215,7 +222,6 @@ exports.triagedCards = (
     ];
   });
 
-  console.log('external_issues_block', externalIssuesBlock);
   const combinedIssuesBlock = internalIssuesBlock.concat(externalIssuesBlock);
 
   return combinedIssuesBlock;
