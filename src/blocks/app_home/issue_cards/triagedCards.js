@@ -42,8 +42,6 @@ exports.triagedCards = (
     );
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
 
-    // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
-
     return [
       {
         'type': 'section',
@@ -88,7 +86,6 @@ exports.triagedCards = (
                   'text': 'Select a label',
                 },
                 'options': labelPossibleOptions,
-                // TODO Initial Options stateless transition
                 ...(labelInitialOptions.length !== 0 && {
                   'initial_options': labelInitialOptions,
                 }),

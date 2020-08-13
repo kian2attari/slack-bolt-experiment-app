@@ -1,5 +1,5 @@
 const SubBlocks = require('../SubBlocks');
-// TODO remove the default value for selectedButton. It's only temporarily needed for the transition to statelessness
+
 module.exports = (
   mainLevelFilterSelection = 'All', // This can be "all", or only "internal" and "external"
   issueBlocks = undefined,
@@ -84,7 +84,6 @@ module.exports = (
             {
               'type': 'divider',
             },
-            // TODO if project has no issues, render nothing
             // If issue blocks have been provided, render them here
             ...(typeof issueBlocks !== 'undefined' ? issueBlocks : []),
 

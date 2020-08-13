@@ -11,7 +11,6 @@ const {
   setTriageDutyAssignments,
 } = require('./models');
 
-// TODO remove passing this app parameter, there must be a way of avoiding this.
 function checkReviewRequests(app) {
   return async () => {
     /* This is an array of objects, with each object representing a separate team/installation. 
@@ -122,11 +121,11 @@ function rotateTriageDutyAssignment(app) {
 }
 
 // Everyday, check the pending PR review requests of every team, and message the user the review was requested of after 1 day, and after 3 days
-// TODO have this cron job run every week day and only send reminders to users who wanted them on that day in particular
+// TODO only send reminders to users who wanted them on that day in particular
 // REVIEW change the cron_pattern to '0 10,15 * * *' so that the job is run everyday at 10am and 3pm or just '0 10 * * *' for 10 am etc
 function reviewRequestCronJob(app) {
   return new CronJob(
-    '0 10,17 * * *',
+    '0 10,17 * * 1-5',
     checkReviewRequests(app),
     null,
     true,
