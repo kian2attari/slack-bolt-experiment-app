@@ -7,7 +7,7 @@ module.exports = app => {
     try {
       const actionBody = body.actions[0];
 
-      const {selectedOption} = actionBody;
+      const {selected_option: selectedOption} = actionBody;
 
       const selectedMainLevelView = selectedOption.text.text;
 

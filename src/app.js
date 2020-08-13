@@ -72,6 +72,8 @@ actionsListener.mainLevelFilterSelection(app);
 /* ------ TODO - add a clear all labels button ----- */
 actionsListener.labelAssignment(app);
 
+actionsListener.assignTeamMember(app);
+
 // !SECTION
 
 /* ----------------------- SECTION Listen for options ----------------------- */

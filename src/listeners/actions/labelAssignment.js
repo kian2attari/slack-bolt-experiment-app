@@ -11,12 +11,14 @@ module.exports = app => {
 
       console.log('body payload', actionBody);
 
-      const {selectedOptions} = actionBody;
+      const {
+        selected_options: selectedOptions,
+        initial_options: initialOptions,
+      } = actionBody;
       console.log(': ----------------------------------');
       console.log('selected_options', selectedOptions);
       console.log(': ----------------------------------');
 
-      const {initialOptions} = actionBody;
       console.log(': --------------------------------');
       console.log('initial_options', initialOptions);
       console.log(': --------------------------------');
