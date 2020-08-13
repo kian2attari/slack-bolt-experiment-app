@@ -170,7 +170,7 @@ async function setUserGithubUsername(slackUserId, githubUsername) {
 
   const {gitwaveGithubAppInstallationId: installationId, orgAccount} = dbQueryResponse[0];
 
-  const usernameData = await graphql.callGhGraphql(
+  const {user: usernameData, organization} = await graphql.callGhGraphql(
     query.getGithubUsernameData,
     {
       githubUsername,
@@ -182,7 +182,7 @@ async function setUserGithubUsername(slackUserId, githubUsername) {
   console.log('username Data', usernameData);
 
   // if either the user doesn't exist or isn't a part of the expected organization
-  if (usernameData.user === null || usernameData.organization === null) {
+  if (usernameData === null || organization === null) {
     const errorMsg = `${usernameData.user} is not a member of the team's GitHub organization: ${usernameData.organization}`;
     console.error(errorMsg);
     throw Error(`Hey <@${slackUserId}>,  ${errorMsg}`);
@@ -190,7 +190,11 @@ async function setUserGithubUsername(slackUserId, githubUsername) {
 
   const usernameUpdateObj = {};
 
-  usernameUpdateObj[`teamMembers.${slackUserId}.githubUserData`] = usernameData.user;
+  usernameUpdateObj[`teamMembers.${slackUserId}.githubUserData`] = {
+    id: usernameData.id,
+    githubUsername: usernameData.login,
+    name: usernameData.name,
+  };
 
   const dbUserFilter = {};
 

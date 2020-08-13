@@ -17,24 +17,16 @@ async function openMapModalButton(app) {
 
     const userSlackId = body.user.id;
 
-    const userSetGithubUsername = await getGithubUsernameByUserId(userSlackId);
+    const userSetGithubUsername = (await getGithubUsernameByUserId(userSlackId)) || '';
 
     console.log('open_map_modal_button user_set_github_username', userSetGithubUsername);
 
     // User has set a github username
-    if (userSetGithubUsername === null) {
-      await client.views.open({
-        token: context.botToken,
-        'trigger_id': body.trigger_id,
-        view: Modals.UsernameMapModal(),
-      });
-    } else {
-      await client.views.open({
-        token: context.botToken,
-        'trigger_id': body.trigger_id,
-        view: Modals.UsernameMapModal(userSetGithubUsername),
-      });
-    }
+    await client.views.open({
+      token: context.botToken,
+      'trigger_id': body.trigger_id,
+      view: Modals.UsernameMapModal(userSetGithubUsername),
+    });
   });
 }
 
@@ -60,11 +52,11 @@ function showUpForGrabsFilterButton(app) {
     const internalIssueFilterCallbackGenerator = () => internalIssue =>
       typeof internalIssue.issueTriageData === 'undefined';
 
-    // Only issues/PR's that are triaged!
+    // Only issues/PR's that are triaged but not assigned to anyone!
     const externalCardFilterCallbackGenerator = () => card =>
       card.content.labels.nodes.some(label =>
         regExp.findTriageLabels.test(label.description)
-      );
+      ) && card.content.assignees.nodes.length === 0;
 
     try {
       await showTriagedCards(
@@ -95,6 +87,8 @@ function showAssignedToUserFilterButton(app) {
 
       const externalCardFilterCallbackGenerator = userGithubUsername => card =>
         card.content.assignees.nodes.some(user => {
+          console.log('userGithubUsername', userGithubUsername);
+          console.log('user.login', user.login);
           console.log('is_equal?', user.login === userGithubUsername);
           return user.login === userGithubUsername;
         });
@@ -106,7 +100,9 @@ function showAssignedToUserFilterButton(app) {
           internalIssueFilterCallbackGenerator,
           externalCardFilterCallbackGenerator,
           'In Progress',
-          true
+          true,
+          false,
+          body.user.id
         );
       } catch (error) {
         console.error(error);

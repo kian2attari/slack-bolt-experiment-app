@@ -6,7 +6,8 @@ exports.triagedCards = (
   externalCardArray,
   internalIssueArray,
   showOnlyClaimedInternalIssues,
-  showOnlyDone
+  showOnlyDone,
+  assignedToSlackUserId
 ) => {
   const externalIssuesBlock = externalCardArray.flatMap(card => {
     const cardData = card.content;
@@ -35,6 +36,10 @@ exports.triagedCards = (
       optionObj(slackUserId, JSON.stringify({issueOrPrId: cardData.id}))
     );
 
+    const initialAssignableTeamMemberOptionObj = optionObj(
+      `<@${assignedToSlackUserId}>`,
+      JSON.stringify({issueOrPrId: cardData.id})
+    );
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
 
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
@@ -103,7 +108,11 @@ exports.triagedCards = (
                   'text': 'Select a user',
                   'emoji': true,
                 },
+
                 'options': assignableTeamMemberOptionsObj,
+                ...(assignedToSlackUserId.length !== '' && {
+                  'initial_option': initialAssignableTeamMemberOptionObj,
+                }),
                 'action_id': 'assignable_team_members',
               },
             },

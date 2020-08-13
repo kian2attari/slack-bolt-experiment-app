@@ -101,7 +101,8 @@ async function showTriagedCards(
   externalCardFilterCallbackGenerator,
   projectBoardColumn,
   showOnlyClaimedInternalIssues = false,
-  showOnlyDone = false
+  showOnlyDone = false,
+  assignedToSlackUserId = ''
 ) {
   const {body, client, context} = contextDataObj;
 
@@ -116,6 +117,8 @@ We only need the project board data so a projection is passed in as the second p
     teamMembers: 1,
     internalTriageItems: 1,
   });
+
+  console.log('response', response[0].teamMembers[userId]);
 
   const selectedColumn =
     response[0].orgLevelProjectBoard.projectColumns[projectBoardColumn];
@@ -141,10 +144,6 @@ We only need the project board data so a projection is passed in as the second p
     externalCardFilterCallbackGenerator(userGithubUsername)
   );
 
-  console.log(': ------------------------------------------------------------------');
-  console.log('filteredExternalCards', filteredExternalCards);
-  console.log(': ------------------------------------------------------------------');
-
   const filteredInternalIssues = internalIssuesFilterCallbackGenerator // In case a generator wasn't provided
     ? Object.values(response[0].internalTriageItems).filter(
         internalIssuesFilterCallbackGenerator(userId)
@@ -158,7 +157,8 @@ We only need the project board data so a projection is passed in as the second p
     filteredExternalCards,
     filteredInternalIssues,
     showOnlyClaimedInternalIssues,
-    showOnlyDone
+    showOnlyDone,
+    assignedToSlackUserId
   );
 
   const homeView = AppHome.BaseAppHome('All', cardBlocks, selectedButton);
