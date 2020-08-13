@@ -7,10 +7,12 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 11,
   },
-  plugins: ['node'],
+  plugins: ['node', 'custom-gitwave-rules'],
   rules: {
+    // 'camelcase': 'off',
+    // 'custom-gitwave-rules/camelCaseWithFixer': 'error',
+    // 'custom-gitwave-rules/noUndefSnakeCaseToCamelCaseFixer': 'error',
     'global-require': 'off',
-    'camelcase': 'off',
     'no-use-before-define': ['error', {'functions': false}],
     'no-console': 'off',
     // Modified no-restricted-syntax to remove the restriction on ForOf statements.

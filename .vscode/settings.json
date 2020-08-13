@@ -1,3 +1,12 @@
 {
-    "eslint.enable": true
+  "eslint.enable": true,
+  "editor.formatOnSave": false,
+  "[javascript]": {
+    "editor.formatOnSave": true
+  },
+  "[typescript]": {
+    "editor.formatOnSave": true
+  },
+  "prettier.configPath": ".prettierrc",
+  "editor.tabSize": 2
 }
