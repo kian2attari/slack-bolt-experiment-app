@@ -18,6 +18,7 @@ const {
   addLabelsToCard,
   getTeamTriageDutyAssignments,
   setTriageDutyAssignments,
+  assignTeamMemberToIssueOrPR,
 } = TriageTeamData;
 
 exports.addTeamMembers = addTeamMembers;
@@ -37,3 +38,4 @@ exports.getUserIdByGithubUsername = getUserIdByGithubUsername;
 exports.addLabelsToCard = addLabelsToCard;
 exports.getTeamTriageDutyAssignments = getTeamTriageDutyAssignments;
 exports.setTriageDutyAssignments = setTriageDutyAssignments;
+exports.assignTeamMemberToIssueOrPR = assignTeamMemberToIssueOrPR;

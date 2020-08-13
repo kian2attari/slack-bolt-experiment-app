@@ -10,7 +10,7 @@ exports.newGitwaveInstallation = async (req, res) => {
       repository_selection: repositorySelection,
     },
     repositories: repositoriesArray,
-  } = req.body;
+  } = req;
 
   const newInstallationObj = {};
 

@@ -26,7 +26,7 @@ module.exports = app => {
       await setUserGithubUsername(slackUserId, githubUsername);
     } catch (error) {
       console.error(error);
-      replyMessage.text = `Hey <@${slackUserId}>,  ${githubUsername} is not a valid GitHub username. Please double check your spelling. `;
+      replyMessage.text = error.message;
     }
 
     // Message the user

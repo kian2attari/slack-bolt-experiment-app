@@ -6,6 +6,7 @@ const {
   findDocuments,
 } = require('../db');
 const {regExp} = require('../constants');
+const {shuffleArray} = require('../helper-functions');
 
 /* This is where all the DB operations are abstracted to. The goal is to avoid directly using the mongodb client methods throughout the 
 code (ex. update, find, set etc) and instead abstract the functionalities here (ex. assign label to issue -- which will do all the mongodb calls under the hood) */
@@ -53,7 +54,10 @@ async function associateTeamWithInstallation(
   selectedGithubOrg
 ) {
   const teamMemberObj = slackUserIds.reduce((accumulator, currentValue) => {
-    accumulator[currentValue] = {githubUsername: null, userSettings: {}};
+    accumulator[currentValue] = {
+      githubUserData: {githubUsername: null},
+      userSettings: {},
+    };
     return accumulator;
   }, {});
 
@@ -86,8 +90,8 @@ async function associateTeamWithInstallation(
     triageDutyAssignments[i] = {
       date: currentWeekMondayDate.getTime() + i * 604800000, // 604800000 is the number of milliseconds in a week
       assignedTeamMember,
-      substitutes: sortedSlackUserIds.filter(
-        slackUserId => slackUserId !== assignedTeamMember
+      substitutes: shuffleArray(
+        sortedSlackUserIds.filter(slackUserId => slackUserId !== assignedTeamMember)
       ),
     };
   }
@@ -150,24 +154,43 @@ async function setOrgLevelProject(projectObj, installationId) {
  * @returns {Promise}
  */
 async function setUserGithubUsername(slackUserId, githubUsername) {
-  // RegExp for checking the username
-  // TODO add this to the constants under important regex
-  const githubUsernameChecker = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
-
-  const validGithubUsername = githubUsernameChecker.test(githubUsername);
-
-  console.log(': --------------------------------------------');
-  console.log('validGithubUsername', validGithubUsername);
-  console.log(': --------------------------------------------');
-
-  if (!validGithubUsername) {
+  const isValidGithubUsername = regExp.validGithubUsername.test(githubUsername);
+  // A preliminary local check of the username just to make sure its possible GH username before querying the API
+  if (!isValidGithubUsername) {
     console.error('Invalid GH username');
-    throw Error('invalid_github_username');
+    throw Error(
+      `Hey <@${slackUserId}>,  ${githubUsername} is not a valid GitHub username. Please double check your spelling. `
+    );
+  }
+  // We find the installation ID of the installation that this user's team is associated with
+  const dbQueryResponse = await findTriageTeamBySlackUser(slackUserId, {
+    gitwaveGithubAppInstallationId: 1,
+    orgAccount: 1,
+  });
+
+  const {gitwaveGithubAppInstallationId: installationId, orgAccount} = dbQueryResponse[0];
+
+  const usernameData = await graphql.callGhGraphql(
+    query.getGithubUsernameData,
+    {
+      githubUsername,
+      organizationName: orgAccount.login, // we want to check that the account specified is indeed a member of the organization that the team is associated with
+    },
+    installationId
+  );
+
+  console.log('username Data', usernameData);
+
+  // if either the user doesn't exist or isn't a part of the expected organization
+  if (usernameData.user === null || usernameData.organization === null) {
+    const errorMsg = `${usernameData.user} is not a member of the team's GitHub organization: ${usernameData.organization}`;
+    console.error(errorMsg);
+    throw Error(`Hey <@${slackUserId}>,  ${errorMsg}`);
   }
 
   const usernameUpdateObj = {};
 
-  usernameUpdateObj[`teamMembers.${slackUserId}.githubUsername`] = githubUsername;
+  usernameUpdateObj[`teamMembers.${slackUserId}.githubUserData`] = usernameData.user;
 
   const dbUserFilter = {};
 
@@ -189,8 +212,9 @@ async function getGithubUsernameByUserId(slackUserId) {
     teamMembers: 1,
   });
 
+  // TODO SafeAccess
   const slackIdToGhUsernameMatch =
-    triageTeamMembersResponse[0].teamMembers[slackUserId].githubUsername;
+    triageTeamMembersResponse[0].teamMembers[slackUserId].githubUserData.githubUsername;
 
   console.log(': ------------------------------------------------------------');
   console.log('1 slackIdToGhUsernameMatch.teamMembers', slackIdToGhUsernameMatch);
@@ -221,7 +245,7 @@ async function getUserIdByGithubUsername(githubUsername, installationId) {
   console.log('teamMembers', teamMembers);
 
   const ghUsernameToSlackIdMatch = Object.keys(teamMembers).find(
-    key => teamMembers[key].githubUsername === githubUsername
+    key => teamMembers[key].githubUserData.githubUsername === githubUsername
   );
 
   console.log(': ------------------------------------------------------------');
@@ -469,6 +493,24 @@ async function setTriageDutyAssignments(teamChannelId, setTriageDutyAssignmentsO
   );
 }
 
+async function assignTeamMemberToIssueOrPR(slackUserId, elementNodeId) {
+  const userData = await findTriageTeamBySlackUser(slackUserId, {
+    teamMembers: 1,
+    gitwaveGithubAppInstallationId: 1,
+  });
+
+  const {teamMembers, gitwaveGithubAppInstallationId: installationId} = userData[0];
+
+  return graphql.callGhGraphql(
+    mutation.assignTeamMemberToIssueOrPR,
+    {
+      assignableId: elementNodeId,
+      assigneeIds: [teamMembers[slackUserId].githubUserData.id],
+    },
+    installationId
+  );
+}
+
 exports.TriageTeamData = {
   addTeamMembers,
   getCardsByColumn,
@@ -487,4 +529,5 @@ exports.TriageTeamData = {
   addLabelsToCard,
   getTeamTriageDutyAssignments,
   setTriageDutyAssignments,
+  assignTeamMemberToIssueOrPR,
 };

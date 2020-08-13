@@ -1,5 +1,10 @@
 const {CronJob} = require('cron');
-const {sendMentionMessage, nextWeek, dateFormatter} = require('./helper-functions');
+const {
+  sendMentionMessage,
+  nextWeek,
+  dateFormatter,
+  shuffleArray,
+} = require('./helper-functions');
 const {
   getPendingReviewRequests,
   getTeamTriageDutyAssignments,
@@ -90,7 +95,7 @@ function rotateTriageDutyAssignment(app) {
     triageDutyAssignments.push({
       'date': newTriageAssignmentDateObj.getTime(),
       'assignedTeamMember': newLastAssignedMember,
-      'substitutes': teamMemberAlphabeticArray,
+      'substitutes': shuffleArray(teamMemberAlphabeticArray),
     });
 
     try {

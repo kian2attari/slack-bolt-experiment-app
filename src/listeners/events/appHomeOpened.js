@@ -12,6 +12,7 @@ function appHomeOpened(app) {
     // Find the team (if there is one) that the current use is a member in.
     // EXTRA CREDIT: turn this section of code into a middleware that adds context.triageTeam, then you don't need to
     // write this code more than once.
+    // TODO turn the code below into its own function so that the app home can be refreshed by actions and not just the app home opened event (ex. after a modal submission)
 
     console.log('event.user', event.user);
 

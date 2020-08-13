@@ -22,7 +22,7 @@ function assignableTeamMembers(app) {
 
       const assignableUserArray = Object.keys(teamMembers).reduce(
         (assignableUsers, slackUserId) => {
-          if (teamMembers[slackUserId].githubUsername !== null)
+          if (teamMembers[slackUserId].githubUserData.githubUsername !== null)
             assignableUsers.push(`<@${slackUserId}>`);
           return assignableUsers;
         },

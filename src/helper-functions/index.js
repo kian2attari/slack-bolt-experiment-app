@@ -4,6 +4,7 @@ const {checkForMentions} = require('./checkForMentions');
 const sendMentionMessage = require('./sendMentionMessage');
 const {asyncArrayMap} = require('./asyncArrayMap');
 const {nextWeek, dateFormatter} = require('./dateHelpers');
+const {shuffleArray} = require('./shuffleArray');
 
 exports.reduceArrayToObj = reduceArrayToObj;
 exports.SafeAccess = SafeAccess;
@@ -12,3 +13,4 @@ exports.sendMentionMessage = sendMentionMessage;
 exports.asyncArrayMap = asyncArrayMap;
 exports.nextWeek = nextWeek;
 exports.dateFormatter = dateFormatter;
+exports.shuffleArray = shuffleArray;

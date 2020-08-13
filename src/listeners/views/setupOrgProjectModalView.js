@@ -38,6 +38,7 @@ module.exports = app => {
         channel: user,
         text: `Hi <@${user}>, the organization project board was set successfully!`,
       });
+      // TODO Also refresh the app home page automatically here
     } catch (error) {
       console.error(error);
     }
