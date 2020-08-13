@@ -2,10 +2,8 @@ const {checkForMentions} = require('../../helper-functions');
 const {markElementAsUntriaged} = require('../../models');
 
 async function pullRequestOpened(app, req, res) {
-  // EXTRA_TODO strip request to req.body in GitHubWebhookListener.js so we dont have to do this everytime
-  const request = req.body;
-  const installationId = request.installation.id;
-  const {repository} = request;
+  const installationId = req.installation.id;
+  const {repository} = req;
 
   const {
     labels,
@@ -15,7 +13,7 @@ async function pullRequestOpened(app, req, res) {
     html_url: htmlUrl,
     user,
     created_at: createdAt,
-  } = request.pull_request;
+  } = req.pull_request;
 
   const contentCreateDate = new Date(createdAt);
 

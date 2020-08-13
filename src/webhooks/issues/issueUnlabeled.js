@@ -1,16 +1,14 @@
 const {getRepoUntriagedLabel} = require('../../models');
 
 async function issueUnlabeled(req, res) {
-  const request = req.body;
-
-  const installationId = request.installation.id;
+  const installationId = req.installation.id;
   // eslint-disable-next-line no-unused-vars
-  const {node_id: repoId} = request.repository;
+  const {node_id: repoId} = req.repository;
 
   /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
   // const issue_label_array = request.issue.labels;
 
-  const labelId = request.label.node_id;
+  const labelId = req.label.node_id;
   const untriagedLabelId = await getRepoUntriagedLabel(repoId, installationId);
 
   // if (label_id == untriaged_label.label_id) {

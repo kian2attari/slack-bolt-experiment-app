@@ -1,33 +1,71 @@
 const {query, mutation, graphql} = require('../../graphql');
 const {getTeamOrgLevelProjectBoard} = require('../../models');
-const {regExp} = require('../../constants');
+const {
+  regExp: {findTriageLabels},
+} = require('../../constants');
 
 async function issueLabeled(req, res) {
-  const request = req.body;
-  const installationId = request.installation.id;
+  const installationId = req.installation.id;
 
-  // eslint-disable-next-line no-unused-vars
-  // const {node_id: repo_id} = request.repository;
+  // const {node_id: repo_id} = req.repository;
 
-  const issueNodeId = request.issue.node_id;
+  const issueNodeId = req.issue.node_id;
 
-  /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
-  // const issue_label_array = request.issue.labels;
+  const currentIssueLabelsArray = req.issue.labels;
+  console.log(': ----------------------------------------------------------------');
+  console.log('issueLabeled -> currentIssueLabelsArray', currentIssueLabelsArray);
+  console.log(': ----------------------------------------------------------------');
 
-  const {name: labelName, description: labelDescription} = request.label;
+  // Checking to see if the issue already has a triage label.
+  const currentTriageLabel = currentIssueLabelsArray.filter(issue =>
+    findTriageLabels.test(issue.description)
+  );
+
+  console.log(': ------------------------------------------------------');
+  console.log('issueLabeled -> currentTriageLabel', currentTriageLabel);
+  console.log(': ------------------------------------------------------');
+
+  // An issue/PR can never have more than 1 triage label
+  if (currentTriageLabel.length > 1) {
+    // TODO message the team to let them know of this
+    console.log('Issue contains multiple triage labels');
+    res.send();
+    return;
+  }
+
+  const {name: labelName, description: labelDescription} = req.label;
 
   const {
-    project_id: orgLevelProjectBoardId,
+    projectId: orgLevelProjectBoardId,
     projectColumns,
   } = await getTeamOrgLevelProjectBoard(installationId);
 
-  // If the label is a triage label
-  if (regExp.findTriageLabels.test(labelDescription)) {
-    /* TODO if the applied label was a triage label, there should not be any other triage label currently applied to it. If there is:
-      Message the team to let the know it happened */
+  const isTriageLabel = findTriageLabels.test(labelDescription);
+
+  if (labelName === 'Untriaged') {
+    console.log(
+      'project board id array',
+      [orgLevelProjectBoardId],
+      orgLevelProjectBoardId
+    );
+    const variablesAssignIssueToProject = {
+      issueId: issueNodeId,
+      projectIds: [orgLevelProjectBoardId],
+    };
+
+    // REVIEW should i return the promise up to webhookEvents.js rather than awaiting it here and returning nothing?
+    await graphql.callGhGraphql(
+      mutation.assignIssueToProject,
+      variablesAssignIssueToProject,
+      installationId
+    );
+
+    res.send();
+
+    return;
   }
 
-  if (labelName === 'Question') {
+  if (isTriageLabel) {
     const variablesGetAllUntriaged = {
       projectIds: [orgLevelProjectBoardId],
     };
@@ -41,26 +79,32 @@ async function issueLabeled(req, res) {
     const issueCard = projectCardsResponse.nodes[0].pendingCards.nodes.find(
       card => card.content.id === issueNodeId
     );
+    switch (labelName) {
+      case 'Question': {
+        const variablesMoveProjectCard = {
+          cardId: issueCard.id,
+          columnId: projectColumns.Question.id,
+        };
+        await graphql.callGhGraphql(
+          mutation.moveProjectCard,
+          variablesMoveProjectCard,
+          installationId
+        );
+        break;
+      }
 
-    const variablesMoveProjectCard = {
-      cardId: issueCard.id,
-      columnId: projectColumns.Question.id,
-    };
-    await graphql.callGhGraphql(
-      mutation.moveProjectCard,
-      variablesMoveProjectCard,
-      installationId
-    );
-  } else if (labelName === 'Untriaged') {
-    const variablesAssignIssueToProject = {
-      issueId: issueNodeId,
-      projectIds: [orgLevelProjectBoardId],
-    };
-    await graphql.callGhGraphql(
-      mutation.assignIssueToProject,
-      variablesAssignIssueToProject,
-      installationId
-    );
+      default: {
+        const variablesMoveProjectCard = {
+          cardId: issueCard.id,
+          columnId: projectColumns['To Do'].id,
+        };
+        await graphql.callGhGraphql(
+          mutation.moveProjectCard,
+          variablesMoveProjectCard,
+          installationId
+        );
+      }
+    }
   }
 
   // REVIEW maybe we only assign the card to the org-wide repo?

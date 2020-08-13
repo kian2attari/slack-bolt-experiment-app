@@ -1,15 +1,12 @@
 const {checkForMentions, sendMentionMessage} = require('../../helper-functions');
 
 async function issueCommentCreated(app, req, res) {
-  // TODO refactor these constant declarations
-  const request = req.body;
-
-  const installationId = request.installation.id;
-  const {html_url: htmlUrl, title, state} = request.issue;
-  const {body} = request.comment;
-  const commentCreator = request.comment.user.login;
-  const creatorAvatarUrl = request.comment.user.avatar_url;
-  const contentCreateDate = new Date(request.comment.created_at);
+  const installationId = req.installation.id;
+  const {html_url: htmlUrl, title, state} = req.issue;
+  const {body} = req.comment;
+  const commentCreator = req.comment.user.login;
+  const creatorAvatarUrl = req.comment.user.avatar_url;
+  const contentCreateDate = new Date(req.comment.created_at);
 
   if (state === 'closed') {
     const mentionEventData = {

@@ -2,10 +2,9 @@ const {checkForMentions} = require('../../helper-functions');
 const {markElementAsUntriaged} = require('../../models');
 
 async function issueOpenedReopened(app, req, res) {
-  const request = req.body;
-  const installationId = request.installation.id;
+  const installationId = req.installation.id;
 
-  const {node_id: repoId} = request.repository;
+  const {node_id: repoId} = req.repository;
   const {
     title,
     body,
@@ -14,7 +13,7 @@ async function issueOpenedReopened(app, req, res) {
     created_at: createdAt,
     node_id: issueNodeId,
     user,
-  } = request.issue;
+  } = req.issue;
   const contentCreateDate = new Date(createdAt);
 
   // TODO if the issue doesn't have a triage label, add the untriaged label

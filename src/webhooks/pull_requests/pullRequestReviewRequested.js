@@ -2,13 +2,12 @@ const {getUserIdByGithubUsername, addReviewRequest} = require('../../models');
 const {asyncArrayMap, sendMentionMessage} = require('../../helper-functions');
 
 async function pullRequestReviewRequested(app, req, res) {
-  const request = req.body;
   const {
     // repository: {full_name: repo_path},
     sender: {login: requestorLogin},
     pullRequest,
     installation: {id: installationId},
-  } = request;
+  } = req;
 
   const {
     requested_reviewers: requestedReviewers,

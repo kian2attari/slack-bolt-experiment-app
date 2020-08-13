@@ -23,7 +23,7 @@ const app = new App({
   // EXTRA_TODO: start using the built-in OAuth support to go multi-workspace (or multi-org)
   token: process.env.SLACK_BOT_TOKEN,
   receiver: expressReceiver,
-  logLevel: LogLevel.DEBUG, // TODO set this logLevel with EnvironmentVariables
+  logLevel: process.env.SLACK_LOG_LEVEL || LogLevel.DEBUG,
 });
 
 // TODO Organize these listeners into their own modules by function
