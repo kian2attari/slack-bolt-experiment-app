@@ -7,11 +7,8 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 11,
   },
-  plugins: ['node', 'custom-gitwave-rules'],
+  plugins: ['node'],
   rules: {
-    // 'camelcase': 'off',
-    // 'custom-gitwave-rules/camelCaseWithFixer': 'error',
-    // 'custom-gitwave-rules/noUndefSnakeCaseToCamelCaseFixer': 'error',
     'global-require': 'off',
     'no-use-before-define': ['error', {'functions': false}],
     'no-console': 'off',

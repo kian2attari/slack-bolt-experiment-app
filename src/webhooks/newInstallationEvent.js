@@ -1,13 +1,11 @@
 const {addNewDocument} = require('../db');
 
 exports.newGitwaveInstallation = async (req, res) => {
-  // TODO HIGH also grab the last-updated project board for that repository (as the repo project board) so that changes can be synced to it as well
+  // TODO HIGH grab the last-updated project board for each repository and designate them as the repo project board in the db so that changes can be synced to it as well
   const {
     installation: {
-      /* eslint-disable-next-line custom-gitwave-rules/camelCaseWithFixer */
       account: {login, node_id: nodeId, type},
       id,
-      /* eslint-disable-next-line custom-gitwave-rules/camelCaseWithFixer */
       repository_selection: repositorySelection,
     },
     repositories: repositoriesArray,
