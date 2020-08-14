@@ -353,6 +353,8 @@ async function getTeamOrgLevelProjectBoard(installationId) {
   return orgLevelProjectBoardResponse[0].orgLevelProjectBoard;
 }
 /**
+ * Marks a PR/Issue on GitHub as Untriaged
+ *
  * @param {[{name: String; id: String; description: String}]} labels
  * @param {String} elementNodeId
  * @param {String} repoNodeId
@@ -459,9 +461,15 @@ async function getTeamRepoSubscriptions(slackUserId) {
  *
  * @param {String} slackUserId
  * @returns {{
- *   teamMembers: [String];
- *   triageDutyAssignments: {};
- *   teamChannelId: String;
+ * teamMembers: [String];
+ * triageDutyAssignments: {[
+ * {
+ * date: String;
+ * assignedTeamMember: String;
+ * substitutes: [String];
+ * }
+ * ]};
+ * teamChannelId: String;
  * }}
  */
 async function getTeamTriageDutyAssignments(slackUserId = null) {
@@ -486,14 +494,32 @@ async function getTeamTriageDutyAssignments(slackUserId = null) {
 
   return teamData;
 }
-
-async function setTriageDutyAssignments(teamChannelId, setTriageDutyAssignmentsObj) {
+/**
+ * Updates the DB with new triage assignments
+ *
+ * @param {String} teamChannelId
+ * @param {[
+ *   {
+ *     date: String;
+ *     assignedTeamMember: String;
+ *     substitutes: [String];
+ *   }
+ * ]} setTriageDutyAssignmentsArray
+ * @returns {Promise}
+ */
+async function setTriageDutyAssignments(teamChannelId, setTriageDutyAssignmentsArray) {
   return updateDocument(
     {teamChannelId},
-    {triageDutyAssignments: setTriageDutyAssignmentsObj}
+    {triageDutyAssignments: setTriageDutyAssignmentsArray}
   );
 }
-
+/**
+ * Assign a team member to an Issue/PR on GitHub.
+ *
+ * @param {String} slackUserId The Slack user ID of the team member
+ * @param {String} elementNodeId The node ID of the Issue/PR
+ * @returns {Promise} The promise response from the GraphQL mutation
+ */
 async function assignTeamMemberToIssueOrPR(slackUserId, elementNodeId) {
   const userData = await findTriageTeamBySlackUser(slackUserId, {
     teamMembers: 1,

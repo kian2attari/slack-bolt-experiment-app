@@ -4,6 +4,7 @@ const {findDocuments} = require('../../db');
 module.exports = app => {
   app.view('setup_org_project_modal', async ({ack, body, view, context}) => {
     // Acknowledge the view_submission event
+    // TODO HIGH if the modal was closed/cancelled, then update the app home to say that GitWave needs an Org Level project board in order to work. Have a button that reopens this modal
     await ack();
 
     const user = body.user.id;
