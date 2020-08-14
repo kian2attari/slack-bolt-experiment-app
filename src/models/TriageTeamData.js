@@ -27,13 +27,17 @@ async function addTeamMembers(slackUserIds, triageTeamChannel) {
  * Fetches the cards of a column given its Node ID
  *
  * @param {String} columnId
+ * @param {String} installationId
  * @returns {[Cards]}
  */
 async function getCardsByColumn(columnId, installationId) {
-  const columnDataResponse = await graphql.callGhGraphql(query.getCardsByProjColumn, {
-    columnId,
-    installationId,
-  });
+  const columnDataResponse = await graphql.callGhGraphql(
+    query.getCardsByProjColumn,
+    {
+      columnId,
+    },
+    installationId
+  );
   return columnDataResponse.node.cards.nodes;
 }
 /**
@@ -159,7 +163,7 @@ async function setUserGithubUsername(slackUserId, githubUsername) {
   if (!isValidGithubUsername) {
     console.error('Invalid GH username');
     throw Error(
-      `Hey <@${slackUserId}>,  ${githubUsername} is not a valid GitHub username. Please double check your spelling. `
+      `Hey <@${slackUserId}>,  *${githubUsername}* is not a valid GitHub username. Please double check your spelling. `
     );
   }
   // We find the installation ID of the installation that this user's team is associated with
@@ -170,20 +174,26 @@ async function setUserGithubUsername(slackUserId, githubUsername) {
 
   const {gitwaveGithubAppInstallationId: installationId, orgAccount} = dbQueryResponse[0];
 
-  const {user: usernameData, organization} = await graphql.callGhGraphql(
+  console.log('orgAccount.login', orgAccount.login);
+
+  const userData = await graphql.callGhGraphql(
     query.getGithubUsernameData,
     {
       githubUsername,
-      organizationName: orgAccount.login, // we want to check that the account specified is indeed a member of the organization that the team is associated with
+      // we want to check that the account specified is indeed a member of the organization that the team is associated with
+      // REIVEW is this worth having? It requires membership in the org to be publicly visible, but it's also a good check to ensure that the GitHub username in question is indeed a part of the team's GitHub org
+      organizationName: orgAccount.login,
     },
     installationId
   );
 
-  console.log('username Data', usernameData);
+  console.log('userData ', userData);
+
+  const usernameData = userData.user;
 
   // if either the user doesn't exist or isn't a part of the expected organization
-  if (usernameData === null || organization === null) {
-    const errorMsg = `${usernameData.user} is not a member of the team's GitHub organization: ${usernameData.organization}`;
+  if (usernameData === null || usernameData.organization === null) {
+    const errorMsg = `*${usernameData.user}* is not a member of the team's GitHub organization: *${orgAccount.login}*. If they are, please make sure their membership is publicly visible for this step so that GitWave can see it!`;
     console.error(errorMsg);
     throw Error(`Hey <@${slackUserId}>,  ${errorMsg}`);
   }

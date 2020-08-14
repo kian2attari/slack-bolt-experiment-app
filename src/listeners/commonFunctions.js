@@ -1,9 +1,9 @@
 const {graphql, query} = require('../graphql');
-const {AppHome} = require('../blocks');
-const {Modals} = require('../blocks');
+const {AppHome, Modals} = require('../blocks');
 
 const {SafeAccess} = require('../helper-functions');
 const {updateDocument, findTriageTeamBySlackUser} = require('../db');
+const {getCardsByColumn} = require('../models');
 const {regExp} = require('../constants');
 
 /**
@@ -118,8 +118,6 @@ We only need the project board data so a projection is passed in as the second p
     internalTriageItems: 1,
   });
 
-  console.log('response', response[0].teamMembers[userId]);
-
   const selectedColumn =
     response[0].orgLevelProjectBoard.projectColumns[projectBoardColumn];
 
@@ -128,19 +126,11 @@ We only need the project board data so a projection is passed in as the second p
   const userGithubUsername =
     response[0].teamMembers[userId].githubUserData.githubUsername;
 
-  const getCardsByProjColumnVars = {
-    columnId: selectedColumn.id,
-  };
-
-  const cardsResponse = await graphql.callGhGraphql(
-    query.getCardsByProjColumn,
-    getCardsByProjColumnVars,
-    installationId
-  );
+  const cardsResponse = await getCardsByColumn(selectedColumn.id, installationId);
 
   // We only want the cards that are assigned to this particular user so we gotta thin the stack out a bit
 
-  const filteredExternalCards = cardsResponse.node.cards.nodes.filter(
+  const filteredExternalCards = cardsResponse.filter(
     externalCardFilterCallbackGenerator(userGithubUsername)
   );
 
