@@ -40,7 +40,7 @@ exports.githubEvent = (router, app) => {
     pullRequestActions.pullRequestOpened(app, req, res)
   );
 
-  // TODO all the commented stuff
+  // TODO all the commented listeners
 
   // github_event.on('pull_request.assigned', (req, res) =>
   //   pull_request_actions.pull_request_assigned(app, req, res)
