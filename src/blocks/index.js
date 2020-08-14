@@ -1,7 +1,7 @@
 const {optionObj} = require('./SubBlocks');
 
 module.exports = {
-  AppHome: require('./app_home'),
+  AppHome: require('./app-home'),
   Messages: require('./messages'),
   Modals: require('./modals'),
   SubBlocks: {optionObj},
