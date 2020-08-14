@@ -4,6 +4,7 @@ const getIdLabel = require('./getIdLabel');
 const getAllUntriaged = require('./getAllUntriaged');
 const getOrgAndUserLevelProjects = require('./getOrgAndUserLevelProjects');
 const {getGithubUsernameData} = require('./getGithubUsernameData');
+const {getRepoLevelProjectBoards} = require('./getRepoLevelProjectBoards');
 
 module.exports = {
   getCardsByProjColumn,
@@ -12,4 +13,5 @@ module.exports = {
   getAllUntriaged,
   getOrgAndUserLevelProjects,
   getGithubUsernameData,
+  getRepoLevelProjectBoards,
 };

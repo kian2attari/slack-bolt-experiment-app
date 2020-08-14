@@ -1,6 +1,6 @@
 const issueActions = require('./issues');
-const issueCommentActions = require('./issue_comments');
-const pullRequestActions = require('./pull_requests');
+const issueCommentActions = require('./issue-comments');
+const pullRequestActions = require('./pull-requests');
 // const pull_request_review_actions = require('./pull_request_reviews');
 const {newGitwaveInstallation} = require('./newInstallationEvent');
 

@@ -1,15 +1,21 @@
 const {addNewDocument} = require('../db');
+const {graphql, query} = require('../graphql');
 
 exports.newGitwaveInstallation = async (req, res) => {
-  // TODO HIGH grab the last-updated project board for each repository and designate them as the repo project board in the db so that changes can be synced to it as well
   const {
     installation: {
       account: {login, node_id: nodeId, type},
-      id,
+      id: installationId,
       repository_selection: repositorySelection,
     },
     repositories: repositoriesArray,
   } = req;
+
+  const {nodes: repoLevelProjectsArray} = await graphql.callGhGraphql(
+    query.getRepoLevelProjectBoards,
+    {repoNodeIds: repositoriesArray.map(repo => repo.node_id)},
+    installationId
+  );
 
   const newInstallationObj = {};
 
@@ -22,7 +28,7 @@ exports.newGitwaveInstallation = async (req, res) => {
   is later changed to an org-level installation and vice versa. The only case the installation ID would change for a repo
   would be if you uninstalled the app entirely from the repo and then reinstalled it. */
   // A new document is created for every Installation ID
-  newInstallationObj.gitwaveGithubAppInstallationId = id;
+  newInstallationObj.gitwaveGithubAppInstallationId = installationId;
   /* Details about the current scope of the installation. If repositorySelection is 'all', then we know the app was installed 
     on an org-level. If repositorySelection is 'selected', then we know the app was installed on a repo-level */
   newInstallationObj.gitwaveGithubAppInstallationScope = repositorySelection;
@@ -35,13 +41,14 @@ exports.newGitwaveInstallation = async (req, res) => {
   // TODO if the installation is org level, the team should be subscribed to every future repo as well
   // Converts the array of repo objs to an object that maps the repo full name -> repo obj
   newInstallationObj.subscribedRepos = repositoriesArray.reduce(
-    (obj, item) => ({
+    (obj, item, currIndex) => ({
       ...obj,
       [item.full_name]: {
         nodeId: item.node_id,
         fullName: item.full_name,
         name: item.name,
         private: item.private,
+        repoLevelProject: repoLevelProjectsArray[currIndex].projects.nodes[0],
       },
     }),
     {}
