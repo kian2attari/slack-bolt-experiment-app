@@ -11,10 +11,6 @@ async function issueUnlabeled(req, res) {
   const labelId = req.label.node_id;
   const untriagedLabelId = await getRepoUntriagedLabel(repoId, installationId);
 
-  // if (label_id == untriaged_label.label_id) {
-  //   const addCardToColumn_variables = {"issue": {"projectColumnId" : untriaged_label.column_id, "contentId": issue_node_id}}
-  //   graphql.callGhGraphql(mutation.addCardToColumn, addCardToColumn_variables)
-  // }
   // TODO if there are neither the untriaged label nor any of the triage labels now, add the untriaged label
   console.log(': ------------------');
   console.log('label_id', labelId);

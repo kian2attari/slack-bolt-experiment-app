@@ -7,6 +7,12 @@ exports.getRepoLevelProjectBoards = `query getRepoLevelProjectBoards($repoNodeId
         nodes {
           id
           name
+          columns(first: 10) {
+            nodes {
+              id
+              name
+            }
+          }
         }
       }
     }

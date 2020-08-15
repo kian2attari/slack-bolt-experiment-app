@@ -33,14 +33,14 @@ async function showUntriagedCards(contextDataObj) {
   const {
     internalTriageItems,
     gitwaveGithubAppInstallationId: installationId,
-    orgLevelProjectBoard: {projectId: repoProjectId},
+    orgLevelProjectBoard: {projectId: orgProjectId},
   } = teamData[0];
 
   const triggerId = SafeAccess(() => contextDataObj.body.triggerId);
 
   /* A default project hasn't been set, open the modal. This is only if the trigger ID exists 
      was given because that indicated it was the result of an action not an event */
-  if (typeof repoProjectId === 'undefined' && triggerId !== null) {
+  if (typeof orgProjectId === 'undefined' && triggerId !== null) {
     console.log("A default untriaged project hasn't been set, opening the setup modal");
     return client.views.open({
       token: context.botToken,
@@ -49,7 +49,7 @@ async function showUntriagedCards(contextDataObj) {
     });
   }
 
-  if (!repoProjectId) {
+  if (!orgProjectId) {
     console.log('No subscribed repos or some other issue occurred with the repo');
     // TODO open a modal showing this error
     throw Error('No subscribed repos or some other issue occurred with the repo');
@@ -58,7 +58,7 @@ async function showUntriagedCards(contextDataObj) {
   // Show all untriaged issues from all repos
   const githubUntriagedCardsResponse = await graphql.callGhGraphql(
     query.getAllUntriaged,
-    {projectIds: [repoProjectId]},
+    {projectIds: [orgProjectId]},
     installationId
   );
 

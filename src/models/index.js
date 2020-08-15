@@ -12,7 +12,7 @@ const {
   addReviewRequest,
   getRepoUntriagedLabel,
   markElementAsUntriaged,
-  getTeamOrgLevelProjectBoard,
+  getTeamOrgAndRepoLevelProjectBoards,
   getTeamChannelId,
   getUserIdByGithubUsername,
   addLabelsToCard,
@@ -32,7 +32,7 @@ exports.getPendingReviewRequests = getPendingReviewRequests;
 exports.addReviewRequest = addReviewRequest;
 exports.getRepoUntriagedLabel = getRepoUntriagedLabel;
 exports.markElementAsUntriaged = markElementAsUntriaged;
-exports.getTeamOrgLevelProjectBoard = getTeamOrgLevelProjectBoard;
+exports.getTeamOrgAndRepoLevelProjectBoards = getTeamOrgAndRepoLevelProjectBoards;
 exports.getTeamChannelId = getTeamChannelId;
 exports.getUserIdByGithubUsername = getUserIdByGithubUsername;
 exports.addLabelsToCard = addLabelsToCard;

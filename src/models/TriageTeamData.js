@@ -347,20 +347,30 @@ async function getTeamChannelId(installationId) {
   return teamDiscussionChannelId[0].teamChannelId;
 }
 /**
- * Get the org-level project board of the team associated with a particular Installation ID
+ * Get the org-level and repo-level project boards of the team associated with a particular
+ * Installation ID
  *
  * @param {String} installationId
+ * @param {String} repoFullName The full name of the repo in owner/repo-name format
  * @returns {{projectName: String; projectId: String; projectColumns: {}}} The Project board
  */
-async function getTeamOrgLevelProjectBoard(installationId) {
-  const orgLevelProjectBoardResponse = await findDocuments(
+async function getTeamOrgAndRepoLevelProjectBoards(repoFullName, installationId) {
+  const queryProjection = {orgLevelProjectBoard: 1};
+  // We only want the data of the specified repo's project board
+  queryProjection[`subscribedRepos.${repoFullName}`] = 1;
+
+  const projectBoardsResponse = await findDocuments(
     {
       gitwaveGithubAppInstallationId: installationId,
     },
-    {orgLevelProjectBoard: 1}
+    queryProjection
   );
 
-  return orgLevelProjectBoardResponse[0].orgLevelProjectBoard;
+  return {
+    orgLevelProjectBoard: projectBoardsResponse[0].orgLevelProjectBoard,
+    repoLevelProjectBoard:
+      projectBoardsResponse[0].subscribedRepos[repoFullName].repoLevelProject,
+  };
 }
 /**
  * Marks a PR/Issue on GitHub as Untriaged
@@ -560,7 +570,7 @@ exports.TriageTeamData = {
   addReviewRequest,
   getRepoUntriagedLabel,
   markElementAsUntriaged,
-  getTeamOrgLevelProjectBoard,
+  getTeamOrgAndRepoLevelProjectBoards,
   getTeamChannelId,
   getUserIdByGithubUsername,
   addLabelsToCard,

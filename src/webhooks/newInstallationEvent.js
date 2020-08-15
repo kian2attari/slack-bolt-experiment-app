@@ -12,11 +12,20 @@ exports.newGitwaveInstallation = async (req, res) => {
   } = req;
 
   // We grab the repo-level project board for each repo. These repo-level project boards will be synced to the org-level project board
-  const {nodes: repoLevelProjectsArray} = await graphql.callGhGraphql(
+  const {nodes: repoLevelProjectsResponse} = await graphql.callGhGraphql(
     query.getRepoLevelProjectBoards,
     {repoNodeIds: repositoriesArray.map(repo => repo.node_id)},
     installationId
   );
+
+  const repoLevelProjectsArray = repoLevelProjectsResponse.map(project => {
+    const projectObj = project.projects.nodes[0];
+    projectObj.columns = projectObj.columns.nodes.reduce(
+      (accObj, column) => ({...accObj, [column.name]: column}),
+      {}
+    );
+    return projectObj;
+  });
 
   const newInstallationObj = {
     /* The ID of the app installation. This is needed to use the GitHub GraphQL API.
@@ -44,26 +53,12 @@ exports.newGitwaveInstallation = async (req, res) => {
           fullName: item.full_name,
           name: item.name,
           private: item.private,
-          repoLevelProject: repoLevelProjectsArray[currIndex].projects.nodes[0],
+          repoLevelProject: repoLevelProjectsArray[currIndex],
         },
       }),
       {}
     ),
   };
-
-  newInstallationObj.subscribedRepos = repositoriesArray.reduce(
-    (obj, item, currIndex) => ({
-      ...obj,
-      [item.full_name]: {
-        nodeId: item.node_id,
-        fullName: item.full_name,
-        name: item.name,
-        private: item.private,
-        repoLevelProject: repoLevelProjectsArray[currIndex].projects.nodes[0],
-      },
-    }),
-    {}
-  );
 
   await addNewDocument(newInstallationObj);
 
