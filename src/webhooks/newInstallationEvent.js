@@ -20,7 +20,7 @@ exports.newGitwaveInstallation = async (req, res) => {
 
   const repoLevelProjectsArray = repoLevelProjectsResponse
     .map(project => {
-      if (project.projects.length !== 0) {
+      if (project.projects.nodes.length !== 0) {
         const projectObj = project.projects.nodes[0];
         projectObj.columns = projectObj.columns.nodes.reduce(
           (accObj, column) => ({...accObj, [column.name]: column}),
