@@ -1,6 +1,6 @@
 const {checkForMentions, sendMentionMessage} = require('../../helper-functions');
 
-async function issueCommentCreated(app, req, res) {
+async function issueCommentCreated(req, res, app) {
   const installationId = req.installation.id;
   const {html_url: htmlUrl, title, state} = req.issue;
   const {body} = req.comment;

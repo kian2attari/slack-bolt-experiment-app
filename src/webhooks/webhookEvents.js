@@ -28,41 +28,53 @@ exports.githubEvent = (router, app) => {
   // });
 
   githubEvent.on('issues.opened', (req, res) =>
-    issueActions.issueOpenedReopened(app, req, res)
+    issueActions.issueOpenedReopened(req, res, app)
   );
   githubEvent.on('issues.labeled', (req, res) => issueActions.issueLabeled(req, res));
   githubEvent.on('issues.unlabeled', (req, res) => issueActions.issueUnlabeled(req, res));
   githubEvent.on('issue_comment.created', (req, res) =>
-    issueCommentActions.issueCommentCreated(app, req, res)
+    issueCommentActions.issueCommentCreated(req, res, app)
   );
 
   githubEvent.on('pull_request.opened', (req, res) =>
-    pullRequestActions.pullRequestOpened(app, req, res)
+    pullRequestActions.pullRequestOpened(req, res, app)
   );
 
   // TODO all the commented listeners
 
   // github_event.on('pull_request.assigned', (req, res) =>
-  //   pull_request_actions.pull_request_assigned(app, req, res)
+  //   pull_request_actions.pull_request_assigned(req, res, app)
   // );
 
   githubEvent.on('pull_request.review_requested', (req, res) =>
-    pullRequestActions.pullRequestReviewRequested(app, req, res)
+    pullRequestActions.pullRequestReviewRequested(req, res, app)
   );
 
   // github_event.on('pull_request.labeled', (req, res) =>
-  //   pull_request_actions.pull_request_labeled(app, req, res)
+  //   pull_request_actions.pull_request_labeled(req, res, app)
   // );
 
   // github_event.on('pull_request.unlabeled', (req, res) =>
-  //   pull_request_actions.pull_request_unlabeled(app, req, res)
+  //   pull_request_actions.pull_request_unlabeled(req, res, app)
   // );
 
   // github_event.on('pull_request_review.submitted', (req, res) =>
-  //   pull_request_review_actions.pull_request_review_submitted(app, req, res)
+  //   pull_request_review_actions.pull_request_review_submitted(req, res, app)
   // );
 
   // github_event.on('pull_request.review_request_removed', (req, res) =>
-  //   pull_request_actions.pull_request_review_request_removed(app, req, res)
+  //   pull_request_actions.pull_request_review_request_removed(req, res, app)
+  // );
+
+  // github_event.on('label.created', (req, res) =>
+  //   labelActions.labelCreated(req, res, app)
+  // );
+
+  // github_event.on('label.edited', (req, res) =>
+  //   labelActions.labelEdited(req, res, app)
+  // );
+
+  // github_event.on('label.deleted', (req, res) =>
+  //   labelActions.labelDeleted(req, res, app)
   // );
 };

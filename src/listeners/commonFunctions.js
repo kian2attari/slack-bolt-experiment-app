@@ -27,7 +27,6 @@ async function showUntriagedCards(contextDataObj) {
     gitwaveGithubAppInstallationId: 1,
     orgLevelProjectBoard: 1,
     internalTriageItems: 1,
-    // team_internal_triage_channel_id: 1,
   });
 
   const {

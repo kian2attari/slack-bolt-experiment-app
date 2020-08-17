@@ -1,7 +1,7 @@
 const {checkForMentions} = require('../../helper-functions');
 const {markElementAsUntriaged} = require('../../models');
 
-async function pullRequestOpened(app, req, res) {
+async function pullRequestOpened(req, res, app) {
   const installationId = req.installation.id;
   const {repository} = req;
 
