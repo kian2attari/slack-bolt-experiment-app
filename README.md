@@ -1,4 +1,4 @@
-# GitWave 🌊 
+# GitWave 🌊
 
 [Docs](https://www.gitwave.com)
 
@@ -17,21 +17,20 @@ GitWave uses its GitHub app counterpart in order to access a team's GitHub repos
 - ✅ Manage issues, view their current labels, and assign new labels all on the App Home page
 - ✅ Assigned issues are automatically moved to the In Progress column
 - ✅ Closed issues are automatically moved to the Done column
-- 
-- ✅ Issues labeled question are automatically moved to the Questions column
-- ✅ Automatically remove the untriaged label and move the issue to the To Do (to be assigned column)
-- ✅ Assign issues to yourself or other people right on the App Home Page
-- ✅ Setup automated weekly “on triage duty” assignments for the triage team(s) with the option for users to mark unavailability for a week and redelegate the responsibility.
-- ✅Two way sync between the single all-repo project board and the individual project boards
+- ✅ I ssues labeled question are automatically moved to the Questions column
+- ✅  Automatically remove the untriaged label and move the issue to the To Do (to be assigned column)
+- ✅  Assign issues to yourself or other people right on the App Home Page
+- ✅  Setup automated weekly “on triage duty” assignments for the triage team(s) with the option for users to mark unavailability for a week and redelegate the responsibility.
+- ✅  Two way sync between the single all-repo project board and the individual project boards
 
-- 🔖 Automatically turn TODOs in the code to issues (a specific marker like @TODO-ISSUE could be used to make it so that not all TODO’s are turned into issues)
-- 🔖 A better way to find potentially-related/duplicate issues with the click of a button
+- 🔖  Automatically turn TODOs in the code to issues (a specific marker like @TODO-ISSUE could be used to make it so that not all TODO’s are turned into issues)
+- 🔖  A better way to find potentially-related/duplicate issues with the click of a button
 
-- 🤔 Automate the release process
-- 🤔 Automatically mark issues 
-- 🤔 Automatically move stale issues to a ‘waiting on response’ column (rather than a stale label)
-- 🤔 Collect up all the ‘done’ items by each person and compile them into a personalized ‘weekly wins’ notification 
-- 🤔 Filter issues on the App Home page by project, label, or column
+- 🤔  Automate the release process
+- 🤔  Automatically mark issues
+- 🤔  Automatically move stale issues to a ‘waiting on response’ column (rather than a stale label)
+- 🤔  Collect up all the ‘done’ items by each person and compile them into a personalized ‘weekly wins’ notification
+- 🤔  Filter issues on the App Home page by project, label, or column
 
 ## Setup
 
@@ -49,5 +48,5 @@ In addition, each of the repos should have at least 1 *triage label* in their se
 ## Usage
 
 ```bash
-npm start 
+npm start
 ```
