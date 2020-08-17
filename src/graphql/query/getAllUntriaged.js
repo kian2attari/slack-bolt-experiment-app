@@ -32,7 +32,7 @@ query getAllUntriaged($projectIds: [ID!]!) {
               repository {
                 id
                 name
-                labels(query: "MAIN-TRIAGE:", first: 10, orderBy: {field: NAME, direction: ASC}) {
+                labels(query: "M-T:", first: 10, orderBy: {field: NAME, direction: ASC}) {
                   nodes {
                     id
                     name
@@ -61,7 +61,7 @@ query getAllUntriaged($projectIds: [ID!]!) {
               repository {
                 id
                 name
-                labels(query: "MAIN-TRIAGE:", first: 10, orderBy: {field: NAME, direction: ASC}) {
+                labels(query: "M-T:", first: 10, orderBy: {field: NAME, direction: ASC}) {
                   nodes {
                     id
                     name

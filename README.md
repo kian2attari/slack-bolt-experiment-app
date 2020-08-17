@@ -41,7 +41,7 @@ For GitWave to work properly, you'll need to have set up a GitHub organization t
 - **Has an organization-level project board**: This is used by GitWave to provide an umbrella view across all repos.
 - **Contains all the repos that the team is responsible for triaging:** GitWave does not need access to all the repos in an organization, however, since GitHub app installations happen on an organization level (even if the scope is limited to a single repo), it is important that the repos for a single team be under a single organization.
   
-In addition, each of the repos should have at least 1 *triage label* in their set of labels. GitWave will treat a label as a triage label if the label's description starts with  `MAIN-TRIAGE:`
+In addition, each of the repos should have at least 1 *triage label* in their set of labels. GitWave will treat a label as a triage label if the label's description starts with  `M-T:`
 
 ![Triage label example](https://i.ibb.co/4F6VvJ5/Screen-Shot-2020-08-17-at-1-58-22-PM.png)
 

@@ -4,7 +4,7 @@ const individualCirclesRegexp = /red|blue|white/;
 
 const findAllDots = /\./g;
 
-const findTriageLabels = /^MAIN-TRIAGE:/;
+const findTriageLabels = /^M-T:/;
 
 const findMentions = /\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi;
 
