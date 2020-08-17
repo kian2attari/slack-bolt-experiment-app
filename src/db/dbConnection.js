@@ -2,7 +2,7 @@ const {MongoClient} = require('mongodb');
 
 let dbClient = null;
 let collection = null;
-const url = process.env.MONGODB_URI;
+const url = process.env.DB_URI;
 const options = {
   useUnifiedTopology: true,
 };
