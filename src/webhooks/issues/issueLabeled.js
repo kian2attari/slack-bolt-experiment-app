@@ -48,14 +48,24 @@ async function issueLabeled(req, res) {
 
   const isTriageLabel = findTriageLabels.test(labelDescription);
 
+  const validProjectIds = [orgLevelProjectBoardId, repoLevelProjectBoardId];
+
+  const projectColumnsArray = [orgLevelProjectColumns, repoLevelProjectColumns];
+
+  // This means the repo doesn't have a valid repo-level project. In this case, we'd only want to move the cards around on the org-level project board
+  if (
+    typeof repoLevelProjectBoardId === 'undefined' ||
+    typeof repoLevelProjectColumns === 'undefined'
+  ) {
+    validProjectIds.pop();
+    projectColumnsArray.pop();
+    // TODO message the team to tell them that they need to create a repo level project with the expected columns for the above repo
+  }
   if (labelName === 'Untriaged') {
-    console.log('project board id array', [
-      orgLevelProjectBoardId,
-      repoLevelProjectBoardId,
-    ]);
+    console.log('project board id array', validProjectIds);
     const variablesAssignIssueToProject = {
       issueId: issueNodeId,
-      projectIds: [orgLevelProjectBoardId, repoLevelProjectBoardId],
+      projectIds: validProjectIds,
     };
 
     // REVIEW should i return the promise up to webhookEvents.js rather than awaiting it here and returning nothing?
@@ -72,7 +82,7 @@ async function issueLabeled(req, res) {
 
   if (isTriageLabel) {
     const variablesGetAllUntriaged = {
-      projectIds: [orgLevelProjectBoardId, repoLevelProjectBoardId],
+      projectIds: validProjectIds,
     };
 
     const projectCardsResponse = await graphql.callGhGraphql(
@@ -81,77 +91,44 @@ async function issueLabeled(req, res) {
       installationId
     );
 
-    const issueCards = projectCardsResponse.nodes.map(project =>
-      project.pendingCards.nodes.find(card => card.content.id === issueNodeId)
-    );
+    const filteredIssueCards = projectCardsResponse.nodes
+      .map(
+        project =>
+          project.pendingCards.nodes.find(card => card.content.id === issueNodeId) // We find the card in each project board that map to the issue/PR that just got labeled
+      )
+      .filter(card => typeof card !== 'undefined'); // In the case that the card exists in the org level board but not the repo level board
 
-    console.log('issueCards', issueCards);
+    // TODO rather than just moving the card only in the org-level project if the card doesn't exist in the repo-level project, we could create a card for the issue in the repo-level project here
+
+    const projectColumnGraphqlMutationPromises = columnName =>
+      projectColumnsArray.map((projectColumnsObj, index) =>
+        filteredIssueCards[index] // If that project has the card then we make the call
+          ? graphql.callGhGraphql(
+              mutation.moveProjectCard,
+              {
+                cardId: filteredIssueCards[index].id,
+                columnId: projectColumnsObj[columnName].id,
+              },
+              installationId
+            )
+          : undefined
+      );
+
+    console.log('filteredIssueCards', filteredIssueCards);
     switch (labelName) {
       case 'Question': {
         // We move the card for the issue/PR to the appropriate column in both the repo level board and the org level board
-        await Promise.all([
-          graphql.callGhGraphql(
-            mutation.moveProjectCard,
-            {
-              cardId: issueCards[0].id,
-              columnId: orgLevelProjectColumns.Question.id,
-            },
-            installationId
-          ),
-          graphql.callGhGraphql(
-            mutation.moveProjectCard,
-            {
-              cardId: issueCards[1].id,
-              columnId: repoLevelProjectColumns.Question.id,
-            },
-            installationId
-          ),
-        ]);
+        await Promise.all(projectColumnGraphqlMutationPromises('Question'));
         break;
       }
 
       case 'Discussion': {
-        await Promise.all([
-          graphql.callGhGraphql(
-            mutation.moveProjectCard,
-            {
-              cardId: issueCards[0].id,
-              columnId: orgLevelProjectColumns.Discussion.id,
-            },
-            installationId
-          ),
-          graphql.callGhGraphql(
-            mutation.moveProjectCard,
-            {
-              cardId: issueCards[1].id,
-              columnId: repoLevelProjectColumns.Discussion.id,
-            },
-            installationId
-          ),
-        ]);
-
+        await Promise.all(projectColumnGraphqlMutationPromises('Discussion'));
         break;
       }
 
       default: {
-        await Promise.all([
-          graphql.callGhGraphql(
-            mutation.moveProjectCard,
-            {
-              cardId: issueCards[0].id,
-              columnId: orgLevelProjectColumns['To Do'].id,
-            },
-            installationId
-          ),
-          graphql.callGhGraphql(
-            mutation.moveProjectCard,
-            {
-              cardId: issueCards[1].id,
-              columnId: repoLevelProjectColumns['To Do'].id,
-            },
-            installationId
-          ),
-        ]);
+        await Promise.all(projectColumnGraphqlMutationPromises('To Do'));
       }
     }
   }

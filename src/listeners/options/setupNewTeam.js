@@ -14,7 +14,10 @@ function githubOrgSelectInput(app) {
   app.options('github_org_select_input', async ({options, ack}) => {
     try {
       // The query paramater is empty since we want to return all installations
-      const orgsResponseArray = await findDocuments({}, {orgAccount: 1});
+      const orgsResponseArray = await findDocuments(
+        {},
+        {orgAccount: 1, teamChannelId: 1}
+      );
 
       const orgsWithoutExistingTeamArray = orgsResponseArray.filter(
         org => typeof org.teamChannelId === 'undefined'
