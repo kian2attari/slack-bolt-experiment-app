@@ -7,6 +7,10 @@ const callGhGraphql = async (query, variables, installationId) => {
       throw Error('You must provide an installationId in order to query the GitHub API!');
     }
 
+    console.log('id', process.env.APP_ID);
+    console.log('installationId', installationId);
+    console.log('privateKey', process.env.PRIVATE_KEY);
+
     const auth = createAppAuth({
       id: process.env.APP_ID,
       installationId,
