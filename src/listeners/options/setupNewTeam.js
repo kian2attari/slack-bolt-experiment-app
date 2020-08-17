@@ -16,20 +16,24 @@ function githubOrgSelectInput(app) {
       // The query paramater is empty since we want to return all installations
       const orgsResponseArray = await findDocuments({}, {orgAccount: 1});
 
+      const orgsWithoutExistingTeamArray = orgsResponseArray.filter(
+        org => typeof org.teamChannelId === 'undefined'
+      );
+
       console.log(
         ': ---------------------------------------------------------------------------'
       );
       console.log(
-        'function github_org_select_input -> orgs_response_array',
-        orgsResponseArray
+        'function github_org_select_input -> orgsWithoutExistingTeamArray',
+        orgsWithoutExistingTeamArray
       );
       console.log(
         ': ---------------------------------------------------------------------------'
       );
 
-      if (orgsResponseArray.size !== 0) {
+      if (orgsWithoutExistingTeamArray.size !== 0) {
         // Creates the options blocks out of the orgs
-        const orgOptionsBlockList = orgsResponseArray.map(org => {
+        const orgOptionsBlockList = orgsWithoutExistingTeamArray.map(org => {
           return SubBlocks.optionObj(org.orgAccount.login, org.orgAccount.nodeId);
         });
 

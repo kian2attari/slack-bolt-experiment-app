@@ -19,6 +19,4 @@ async function connectToMongoCollection() {
   return collection;
 }
 
-// TODO just export the function, not this Object
-
 exports.connectToMongoCollection = connectToMongoCollection;
