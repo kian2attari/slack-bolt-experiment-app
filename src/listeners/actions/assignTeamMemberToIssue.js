@@ -31,7 +31,7 @@ function assignTeamMember(app) {
       await client.chat.postMessage({
         token: context.botToken,
         channel: selectedUserId,
-        text: `Hey <@${selectedUserId}>! <@${body.user.id}> just assigned you to: `,
+        text: `Hey <@${selectedUserId}>! <@${body.user.id}> just assigned you to an issue. Check it out on your Assigned to me tab on GitWave!`,
       });
     } catch (error) {
       console.error(error);
