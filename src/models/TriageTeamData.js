@@ -315,6 +315,15 @@ async function getRepoUntriagedLabel(repoNodeId, installationId) {
     getIdLabelVars,
     installationId
   );
+
+  if (untriagedLabelResponse.node.label === null) {
+    console.log(
+      'No untriaged label found. Remember, label names are case sensitive. The label should be "untriaged"'
+    );
+    throw Error(
+      'No untriaged label found. Remember, label names are case sensitive. The label should be "untriaged"'
+    );
+  }
   return untriagedLabelResponse.node.label.id;
 }
 /**
