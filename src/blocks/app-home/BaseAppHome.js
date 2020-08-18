@@ -58,21 +58,21 @@ module.exports = (
   filterButtonsBlock.elements[selectedButtonIndex].style = 'primary'; // Colors the selected button green
 
   // The block that contains the select_menu elements for filtering on the App Home page
-  const selectionBlock = {
-    'type': 'actions',
-    'elements': [
-      staticSelectElement(
-        'main_level_filter_selection',
-        'Select a scope',
-        [
-          {name: 'All', value: 'All'},
-          {name: 'Internal', value: 'Internal'},
-          {name: 'External', value: 'External'},
-        ],
-        {name: mainLevelFilterSelection, value: mainLevelFilterSelection} // Note: all untriaged -> "All" for both parameters
-      ),
-    ],
-  };
+  // const selectionBlock = {
+  //   'type': 'actions',
+  //   'elements': [
+  //     staticSelectElement(
+  //       'main_level_filter_selection',
+  //       'Select a scope',
+  //       [
+  //         {name: 'All', value: 'All'},
+  //         {name: 'Internal', value: 'Internal'},
+  //         {name: 'External', value: 'External'},
+  //       ],
+  //       {name: mainLevelFilterSelection, value: mainLevelFilterSelection} // Note: all untriaged -> "All" for both parameters
+  //     ),
+  //   ],
+  // };
 
   return {
     'type': 'home',
@@ -86,9 +86,6 @@ module.exports = (
             },
             // If issue blocks have been provided, render them here
             ...(typeof issueBlocks !== 'undefined' ? issueBlocks : []),
-
-            // If the more info block has been provided, render it here
-            // ...(typeof more_info_blocks !== 'undefined' ? more_info_blocks : []),
           ]
         : [
             {
