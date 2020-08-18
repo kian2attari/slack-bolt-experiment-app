@@ -34,7 +34,7 @@ async function getCardsByColumn(columnId, installationId) {
   const columnDataResponse = await graphql.callGhGraphql(
     query.getCardsByProjColumn,
     {
-      columnId,
+      columnIds: [columnId],
     },
     installationId
   );

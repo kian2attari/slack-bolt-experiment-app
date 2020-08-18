@@ -32,6 +32,8 @@ exports.githubEvent = (router, app) => {
   );
   githubEvent.on('issues.labeled', (req, res) => issueActions.issueLabeled(req, res));
   githubEvent.on('issues.unlabeled', (req, res) => issueActions.issueUnlabeled(req, res));
+  githubEvent.on('issues.assigned', (req, res) => issueActions.issueAssigned(req, res));
+
   githubEvent.on('issue_comment.created', (req, res) =>
     issueCommentActions.issueCommentCreated(req, res, app)
   );

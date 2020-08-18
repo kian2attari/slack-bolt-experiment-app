@@ -1,12 +1,14 @@
 // TODO get PR cards as well
 module.exports = `
-query getCardsByProjColumn($columnId: ID!) {
-  node(id: $columnId) {
+query getCardsByProjColumn($columnIds: [ID!]!) {
+  nodes(ids: $columnIds) {
     ... on ProjectColumn {
       id
       name
       cards(first: 20) {
         nodes {
+          id
+          url
           content {
             ... on Issue {
               author {
@@ -47,5 +49,4 @@ query getCardsByProjColumn($columnId: ID!) {
     }
   }
 }
-
 `;
