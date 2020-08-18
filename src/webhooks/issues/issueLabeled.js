@@ -61,7 +61,7 @@ async function issueLabeled(req, res) {
     projectColumnsArray.pop();
     // TODO message the team to tell them that they need to create a repo level project with the expected columns for the above repo
   }
-  if (labelName === 'Untriaged') {
+  if (labelName === 'untriaged') {
     console.log('project board id array', validProjectIds);
     const variablesAssignIssueToProject = {
       issueId: issueNodeId,
@@ -116,13 +116,13 @@ async function issueLabeled(req, res) {
 
     console.log('filteredIssueCards', filteredIssueCards);
     switch (labelName) {
-      case 'Question': {
+      case 'question': {
         // We move the card for the issue/PR to the appropriate column in both the repo level board and the org level board
         await Promise.all(projectColumnGraphqlMutationPromises('Question'));
         break;
       }
 
-      case 'Discussion': {
+      case 'discussion': {
         await Promise.all(projectColumnGraphqlMutationPromises('Discussion'));
         break;
       }
