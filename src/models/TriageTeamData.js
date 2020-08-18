@@ -316,6 +316,8 @@ async function getRepoUntriagedLabel(repoNodeId, installationId) {
     installationId
   );
 
+  console.log('untriagedLabelResponse', untriagedLabelResponse);
+
   if (untriagedLabelResponse.node.label === null) {
     console.log(
       'No untriaged label found. Remember, label names are case sensitive. The label should be "untriaged"'

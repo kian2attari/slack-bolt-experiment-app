@@ -18,19 +18,17 @@ exports.newGitwaveInstallation = async (req, res) => {
     installationId
   );
 
-  const repoLevelProjectsArray = repoLevelProjectsResponse
-    .map(project => {
-      if (project.projects.nodes.length !== 0) {
-        const projectObj = project.projects.nodes[0];
-        projectObj.columns = projectObj.columns.nodes.reduce(
-          (accObj, column) => ({...accObj, [column.name]: column}),
-          {}
-        );
-        return projectObj;
-      }
-      return undefined;
-    })
-    .filter(projectObject => typeof projectObject !== 'undefined');
+  const repoLevelProjectsArray = repoLevelProjectsResponse.map(project => {
+    if (project.projects.nodes.length !== 0) {
+      const projectObj = project.projects.nodes[0];
+      projectObj.columns = projectObj.columns.nodes.reduce(
+        (accObj, column) => ({...accObj, [column.name]: column}),
+        {}
+      );
+      return projectObj;
+    }
+    return null; // Returning null here is necessary in order to preserve the indexing for the repoLevelProject property on line 59
+  });
 
   const newInstallationObj = {
     /* The ID of the app installation. This is needed to use the GitHub GraphQL API.

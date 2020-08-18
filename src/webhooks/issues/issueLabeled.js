@@ -40,11 +40,11 @@ async function issueLabeled(req, res) {
       projectId: orgLevelProjectBoardId,
       projectColumns: orgLevelProjectColumns,
     },
-    repoLevelProjectBoard: {
-      id: repoLevelProjectBoardId,
-      columns: repoLevelProjectColumns,
-    },
+    repoLevelProjectBoard,
   } = await getTeamOrgAndRepoLevelProjectBoards(repoFullName, installationId); // TODO Get both org and repo project boards
+
+  const {id: repoLevelProjectBoardId, columns: repoLevelProjectColumns} =
+    repoLevelProjectBoard || {}; // If the repoLevelProjectBoard does not exist, this will prevent a typeError
 
   const isTriageLabel = findTriageLabels.test(labelDescription);
 
