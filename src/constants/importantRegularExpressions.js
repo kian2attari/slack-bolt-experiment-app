@@ -8,6 +8,8 @@ const findTriageLabels = /^M-T:/;
 
 const findMentions = /\B@([a-z0-9](?:-?[a-z0-9]){0,38})/gi;
 
+const isIssue = /issues\/\d*$/;
+
 const validGithubUsername = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
 exports.regExp = {
   triageCirclesRegexp,
@@ -16,4 +18,5 @@ exports.regExp = {
   findTriageLabels,
   findMentions,
   validGithubUsername,
+  isIssue,
 };

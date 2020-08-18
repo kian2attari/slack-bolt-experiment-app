@@ -1,3 +1,7 @@
+const {
+  regExp: {isIssue},
+} = require('../../constants');
+
 module.exports = ({
   title,
   body,
@@ -9,16 +13,13 @@ module.exports = ({
   reviewRequested,
   requestorLogin,
 }) => {
-  // TODO put this in constants under important RegEx
-  const isIssue = /issues\/\d*$/.test(htmlUrl);
+  const isIssueBool = isIssue.test(htmlUrl);
 
-  const issueOrPr = isIssue ? 'issue' : 'PR';
-
-  console.log('url', htmlUrl);
+  const issueOrPr = isIssueBool ? 'issue' : 'PR';
 
   // If the message is being sent as an alert for a PR review request, this text is placed before the title
   const reviewRequestedText =
-    reviewRequested && !isIssue
+    reviewRequested && !isIssueBool
       ? `*:pushpin: ${requestorLogin} requested your review* ->`
       : '';
   /* The @ symbol for mentions is not concatenated here because the convention for mentioning is different 
