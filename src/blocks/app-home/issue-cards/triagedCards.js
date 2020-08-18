@@ -9,6 +9,26 @@ exports.triagedCards = (
   showOnlyDone,
   assignedToSlackUserId
 ) => {
+  const noAssignableTeamMemberWarningBlocks = [
+    {
+      'type': 'section',
+      'text': {
+        'type': 'mrkdwn',
+        'text':
+          "There are currently no assignable team members. GitWave needs to know at least one team member's GitHub username in order to assign them to issues/PR's on GitHub.",
+      },
+      'accessory': {
+        'type': 'button',
+        'text': {
+          'type': 'plain_text',
+          'text': 'Enter your GitHub Username',
+          'emoji': true,
+        },
+        'action_id': 'open_map_modal_button',
+      },
+    },
+  ];
+  let noAssignableTeamMembers = false;
   const externalIssuesBlock = externalCardArray.flatMap(card => {
     const cardData = card.content;
     const repoLabels = cardData.repository.labels.nodes;
@@ -32,7 +52,7 @@ exports.triagedCards = (
 
     const labelInitialOptions = nonTriageLabels(cardLabels).map(labelMapCallback);
 
-    const assignableTeamMemberOptionsObj = assignableTeamMembersArray.map(slackUserId =>
+    const assignableTeamMemberOptionsArray = assignableTeamMembersArray.map(slackUserId =>
       optionObj(slackUserId, JSON.stringify({issueOrPrId: cardData.id}))
     );
 
@@ -40,6 +60,10 @@ exports.triagedCards = (
       `<@${assignedToSlackUserId}>`,
       JSON.stringify({issueOrPrId: cardData.id})
     );
+
+    if (assignableTeamMembersArray.length === 0) {
+      noAssignableTeamMembers = true;
+    }
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
 
     return [
@@ -64,7 +88,7 @@ exports.triagedCards = (
         'type': 'section',
         'text': {
           'type': 'plain_text',
-          'text': cardData.body,
+          'text': cardData.body || 'No body',
         },
       },
       ...(showOnlyDone
@@ -106,8 +130,8 @@ exports.triagedCards = (
                   'emoji': true,
                 },
 
-                'options': assignableTeamMemberOptionsObj,
-                ...(assignedToSlackUserId.length !== '' && {
+                'options': assignableTeamMemberOptionsArray,
+                ...(assignedToSlackUserId.length !== 0 && {
                   'initial_option': initialAssignableTeamMemberOptionObj,
                 }),
                 'action_id': 'assignable_team_members',
@@ -228,7 +252,11 @@ exports.triagedCards = (
     ];
   });
 
-  const combinedIssuesBlock = internalIssuesBlock.concat(externalIssuesBlock);
+  console.log('external ', externalIssuesBlock);
+
+  const combinedIssuesBlock = internalIssuesBlock.concat(
+    noAssignableTeamMembers ? noAssignableTeamMemberWarningBlocks : externalIssuesBlock // If there are no assignable teammates, show that message
+  );
 
   return combinedIssuesBlock;
 };
