@@ -172,17 +172,12 @@ async function setUserGithubUsername(slackUserId, githubUsername) {
     orgAccount: 1,
   });
 
-  const {gitwaveGithubAppInstallationId: installationId, orgAccount} = dbQueryResponse[0];
-
-  console.log('orgAccount.login', orgAccount.login);
+  const {gitwaveGithubAppInstallationId: installationId} = dbQueryResponse[0];
 
   const userData = await graphql.callGhGraphql(
     query.getGithubUsernameData,
     {
       githubUsername,
-      // we want to check that the account specified is indeed a member of the organization that the team is associated with
-      // REIVEW is this worth having? It requires membership in the org to be publicly visible, but it's also a good check to ensure that the GitHub username in question is indeed a part of the team's GitHub org
-      organizationName: orgAccount.login,
     },
     installationId
   );
@@ -190,13 +185,6 @@ async function setUserGithubUsername(slackUserId, githubUsername) {
   console.log('userData ', userData);
 
   const usernameData = userData.user;
-
-  // if either the user doesn't exist or isn't a part of the expected organization
-  if (usernameData === null || usernameData.organization === null) {
-    const errorMsg = `*${usernameData.user}* is not a member of the team's GitHub organization: *${orgAccount.login}*. If they are, please make sure their membership is publicly visible for this step so that GitWave can see it!`;
-    console.error(errorMsg);
-    throw Error(`Hey <@${slackUserId}>,  ${errorMsg}`);
-  }
 
   const usernameUpdateObj = {};
 

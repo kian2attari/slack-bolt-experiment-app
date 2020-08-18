@@ -1,13 +1,9 @@
 exports.getGithubUsernameData = `
-query getGithubUsernameData($githubUsername: String!, $organizationName: String!) {
+query getGithubUsernameData($githubUsername: String!) {
   __typename
   user(login: $githubUsername) {
     id
     login
     name
-    organization(login: $organizationName) {
-      login
-      name
-    }
   }
 }`;
