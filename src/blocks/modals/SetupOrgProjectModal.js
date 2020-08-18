@@ -31,7 +31,7 @@ exports.setupOrgProjectModal = selectedOrgNodeId => ({
       'block_id': 'org_project_input_block',
       'label': {
         'type': 'plain_text',
-        'text': 'Assign the GitHub org for this team',
+        'text': 'Assign a GitHub org-level project',
         'emoji': true,
       },
       'element': {
