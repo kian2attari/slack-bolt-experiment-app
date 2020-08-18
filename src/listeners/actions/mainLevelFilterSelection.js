@@ -24,6 +24,7 @@ module.exports = app => {
 
         return;
       }
+      // TODO the mainLevelViews for internal and external only selections
 
       // const updated_home_view = AppHome.BaseAppHome();
       // // QUESTION: should i use views.update or views.publish to update the app home view?

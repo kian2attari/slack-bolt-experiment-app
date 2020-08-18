@@ -62,7 +62,7 @@ module.exports = (
     'type': 'actions',
     'elements': [
       staticSelectElement(
-        'mainLevelFilterSelection',
+        'main_level_filter_selection',
         'Select a scope',
         [
           {name: 'All', value: 'All'},
@@ -79,7 +79,7 @@ module.exports = (
     'blocks':
       mainLevelFilterSelection !== 'NoTeam'
         ? [
-            selectionBlock,
+            // selectionBlock, // TODO uncomment this when mainLevelFilterSelection.js is complete
             filterButtonsBlock,
             {
               'type': 'divider',
