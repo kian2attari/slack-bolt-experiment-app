@@ -167,6 +167,7 @@ We only need the project board data so a projection is passed in as the second p
  * @returns {Promise}
  */
 async function updateInternalTriageStatusInDb(eventMetadata) {
+  console.log('eventMetadata', eventMetadata);
   const {user, reaction, eventTs, channel, issueMessageTs} = eventMetadata;
 
   const issueTriageData = {

@@ -186,19 +186,19 @@ function appHomeInternalTriageButtons(app) {
 
       const {teamInternalTriageChannelId} = response[0];
 
-      const {name, issue_message_ts: timestamp} = JSON.parse(actions[0].value);
+      const {name, issueMessageTs} = JSON.parse(actions[0].value);
       try {
         await Promise.all([
           client.reactions.add({
             token: context.botToken,
             channel: teamInternalTriageChannelId, // Review is there a better way to get this id?
             name,
-            timestamp,
+            timestamp: issueMessageTs,
           }),
           client.chat.postMessage({
             token: context.botToken,
             channel: teamInternalTriageChannelId, // Review is there a better way to get this id?
-            'thread_ts': timestamp,
+            'thread_ts': issueMessageTs,
             text: `<@${reactingUserId}> ${responseText}`,
           }),
           updateInternalTriageStatusInDb({
@@ -206,7 +206,7 @@ function appHomeInternalTriageButtons(app) {
             reaction: button === 'assign_eyes_label' ? 'eyes' : 'white_check_mark',
             eventTs: actions[0].action_ts,
             channel: teamInternalTriageChannelId,
-            issueMessageTs: timestamp,
+            issueMessageTs,
           }),
         ]);
       } catch (error) {
