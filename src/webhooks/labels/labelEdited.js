@@ -12,18 +12,11 @@ async function labelEdited(req, res) {
   const issueNodeId = req.issue.node_id;
 
   const currentIssueLabelsArray = req.issue.labels;
-  console.log(': ----------------------------------------------------------------');
-  console.log('issueLabeled -> currentIssueLabelsArray', currentIssueLabelsArray);
-  console.log(': ----------------------------------------------------------------');
 
   // Checking to see if the issue already has a triage label.
   const currentTriageLabel = currentIssueLabelsArray.filter(issue =>
     findTriageLabels.test(issue.description)
   );
-
-  console.log(': ------------------------------------------------------');
-  console.log('issueLabeled -> currentTriageLabel', currentTriageLabel);
-  console.log(': ------------------------------------------------------');
 
   // An issue/PR can never have more than 1 triage label
   if (currentTriageLabel.length > 1) {
