@@ -318,7 +318,7 @@ async function addLabelsToCard(slackUserId, graphqlVariables) {
  */
 async function getRepoUntriagedLabel(repoNodeId, installationId) {
   const getIdLabelVars = {
-    labelName: 'Untriaged',
+    labelName: 'untriaged',
     repoId: repoNodeId,
   };
 
