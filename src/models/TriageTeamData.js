@@ -38,7 +38,7 @@ async function getCardsByColumn(columnId, installationId) {
     },
     installationId
   );
-  return columnDataResponse.node.cards.nodes;
+  return columnDataResponse.nodes[0].cards.nodes;
 }
 /**
  * Link a team with an installation instance of GitWave. Installation ID's are always on an
