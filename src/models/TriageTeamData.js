@@ -509,8 +509,6 @@ async function getTeamTriageDutyAssignments(slackUserId = null) {
         });
   const teamData = await dbQuery;
 
-  console.log('team data', teamData);
-
   return teamData;
 }
 /**

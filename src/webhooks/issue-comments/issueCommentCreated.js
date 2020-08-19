@@ -1,4 +1,6 @@
-const {checkForMentions, sendMentionMessage} = require('../../helper-functions');
+const {checkForMentions} = require('../../helper-functions');
+const {Messages} = require('../../blocks');
+const {getTeamChannelId} = require('../../models');
 
 async function issueCommentCreated(req, res, app) {
   const installationId = req.installation.id;
@@ -20,8 +22,15 @@ async function issueCommentCreated(req, res, app) {
       isClosed: true,
       installationId,
     };
-    // TODO make a new function that sends a message to the team and adds the untriaged label to said issue
-    await sendMentionMessage(app, mentionEventData);
+    await app.client.chat.postMessage({
+      // Since there is no context we just use the original token
+      token: process.env.SLACK_BOT_TOKEN,
+      channel: await getTeamChannelId(installationId),
+      // Conditional on whether the message should go to channel or just to a user as a DM
+      blocks: Messages.CommentOnClosedIssueMessage(mentionEventData),
+      // Just in case there is an issue loading the blocks.
+      text: `Comment on closed issue: ${title} posted by ${commentCreator} on ${contentCreateDate}. Link: ${htmlUrl}`,
+    });
 
     res.send();
   }
