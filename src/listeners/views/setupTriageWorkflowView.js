@@ -18,10 +18,16 @@ module.exports = app => {
     const selectedInternalTriageChannel =
       values.triage_channel_select_input.triage_channel.selected_channel;
 
+    if (selectedDiscussionChannel === selectedInternalTriageChannel) {
+      // TODO Open a modal to tell the user they cant have the same channel for both
+      return;
+    }
+
     const selectedGithubOrg =
       values.github_org_input_block.github_org_select_input.selected_option;
 
     const createNewTeamResult = await associateTeamWithInstallation(
+      app,
       selectedUsersArray,
       selectedDiscussionChannel,
       selectedInternalTriageChannel,

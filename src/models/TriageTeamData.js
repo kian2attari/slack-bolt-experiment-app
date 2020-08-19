@@ -6,7 +6,10 @@ const {
   findDocuments,
 } = require('../db');
 const {regExp} = require('../constants');
-const {shuffleArray} = require('../helper-functions');
+const {
+  shuffleArray,
+  setChannelTopicAndNotifyLatestAssignee,
+} = require('../helper-functions');
 
 /* This is where all the DB operations are abstracted to. The goal is to avoid directly using the mongodb client methods throughout the 
 code (ex. update, find, set etc) and instead abstract the functionalities here (ex. assign label to issue -- which will do all the mongodb calls under the hood) */
@@ -52,6 +55,7 @@ async function getCardsByColumn(columnId, installationId) {
  * @returns {Promise}
  */
 async function associateTeamWithInstallation(
+  app,
   slackUserIds,
   teamChannelId,
   teamInternalTriageChannelId,
@@ -87,8 +91,11 @@ async function associateTeamWithInstallation(
   // Here we make triage assignments for the current week and next 3 weeks
   const triageDutyAssignments = [];
 
+  // Up to how many weeks in advance you want GitWave to generate assignments for
+  const weeksInAdvance = 3;
+
   // Every iteration is another week with i = 0 being the current week.
-  for (let i = 0; i < 4; i += 1) {
+  for (let i = 0; i <= weeksInAdvance; i += 1) {
     const assignedTeamMember = sortedSlackUserIds[i % teamSize]; // So we don't go out of range on our team member array
 
     triageDutyAssignments[i] = {
@@ -102,7 +109,7 @@ async function associateTeamWithInstallation(
 
   const filter = {'orgAccount.nodeId': selectedGithubOrg.value};
 
-  const newObj = {
+  const triageDutyAssignmentsObj = {
     teamChannelId,
     teamInternalTriageChannelId,
     internalTriageItems: {},
@@ -110,7 +117,19 @@ async function associateTeamWithInstallation(
     pendingReviewRequests: [],
     triageDutyAssignments,
   };
-  return updateDocument(filter, newObj);
+  try {
+    const updateDocResponse = await updateDocument(filter, triageDutyAssignmentsObj);
+    await setChannelTopicAndNotifyLatestAssignee(
+      app,
+      teamChannelId,
+      triageDutyAssignments[0],
+      triageDutyAssignments[triageDutyAssignments.length - 1]
+    );
+    return updateDocResponse;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 /**
  * Set a team's org-level project board. This board is synced up with all the repo-level

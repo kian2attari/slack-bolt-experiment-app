@@ -63,7 +63,12 @@ exports.newGitwaveInstallation = async (req, res) => {
     ),
   };
 
-  await addNewDocument(newInstallationObj);
-
-  res.send();
+  try {
+    await addNewDocument(newInstallationObj);
+  } catch (error) {
+    console.error(error);
+    // This could mean a duplicate installation in the DB
+  } finally {
+    res.send();
+  }
 };

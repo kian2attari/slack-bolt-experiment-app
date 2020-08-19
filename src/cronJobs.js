@@ -4,6 +4,7 @@ const {
   nextWeek,
   dateFormatter,
   shuffleArray,
+  setChannelTopicAndNotifyLatestAssignee,
 } = require('./helper-functions');
 const {
   getPendingReviewRequests,
@@ -99,21 +100,12 @@ function rotateTriageDutyAssignment(app) {
 
     try {
       await setTriageDutyAssignments(teamChannelId, triageDutyAssignments);
-      await Promise.all([
-        app.client.conversations.setTopic({
-          token: process.env.SLACK_BOT_TOKEN,
-          channel: teamChannelId,
-          topic: `<@${triageDutyAssignments[0].assignedTeamMember}> is on triage duty for the week of ${newTriageAssignmentDate}!`,
-        }),
-        app.client.chat.postMessage({
-          // Since there is no context we just use the original token
-          token: process.env.SLACK_BOT_TOKEN,
-          channel: newLastAssignedMember,
-          // Just in case there is an issue loading the blocks.
-          // EXTRA_TODO add blocks that also display a button that opens up the Edit Triage availability Modal
-          text: `Hey <@${newLastAssignedMember}>, you are up for triage duty assignment on *${newTriageAssignmentDate}*. \n If you are not available then, make sure to indicate that using the \`Triage Duty Availability\` Shortcut!`,
-        }),
-      ]);
+      await setChannelTopicAndNotifyLatestAssignee(
+        app,
+        teamChannelId,
+        triageDutyAssignments[0],
+        {'assignedTeamMember': newLastAssignedMember, date: newTriageAssignmentDate}
+      );
     } catch (error) {
       console.error(error);
     }
