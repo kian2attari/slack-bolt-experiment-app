@@ -19,6 +19,8 @@ async function issueAssigned(req, res) {
     currentIssueLabelsArray
   );
 
+  console.log('projectColumnsArray', projectColumnsArray);
+
   const variablesGetCardsByProjColumn = {
     columnIds: projectColumnsArray.map(project => project['To Do'].id),
   };

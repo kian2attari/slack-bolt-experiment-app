@@ -17,7 +17,7 @@ function reactionAdded(app) {
       await updateInternalTriageStatusInDb({
         user,
         reaction,
-        eventTs,
+        event_ts: eventTs,
         channel: item.channel,
         issueMessageTs: item.ts,
       });
