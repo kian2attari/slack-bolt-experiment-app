@@ -8,7 +8,6 @@ const {
 const {regExp} = require('../constants');
 const {
   gitwaveUserData: {updateUserObj},
-  gitwaveUserData,
 } = require('./gitwaveUserData');
 const {
   shuffleArray,
@@ -488,22 +487,32 @@ async function getTeamTriageDutyAssignments(slackUserId = null) {
 
   return teamData;
 }
+
 /**
  * Updates the DB with new triage assignments
  *
- * @param {String} teamChannelId
- * @param {[
- *   {
- *     date: String;
- *     assignedTeamMember: String;
- *     substitutes: [String];
- *   }
- * ]} setTriageDutyAssignmentsArray
- * @returns {Promise}
+ * @param {any} teamChannelId
+ * @param {any} setTriageDutyAssignmentsArray
+ * @param {string} [slackUserId] Default is `''`
+ * @returns {any}
  */
-async function setTriageDutyAssignments(teamChannelId, setTriageDutyAssignmentsArray) {
-  return updateDocument(
-    {teamChannelId},
+async function setTriageDutyAssignments(
+  teamChannelId,
+  setTriageDutyAssignmentsArray,
+  slackUserId = ''
+) {
+  let triageTeamChannelId = teamChannelId;
+  console.log('teamChannelId 1', triageTeamChannelId);
+  if (triageTeamChannelId === null) {
+    triageTeamChannelId = (
+      await findTriageTeamBySlackUser(slackUserId, {
+        teamChannelId: 1,
+      })
+    )[0].teamChannelId;
+  }
+  console.log('teamChannelId 2', triageTeamChannelId);
+  await updateDocument(
+    {teamChannelId: triageTeamChannelId},
     {triageDutyAssignments: setTriageDutyAssignmentsArray}
   );
 }
