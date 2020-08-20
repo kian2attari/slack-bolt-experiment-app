@@ -139,7 +139,8 @@ function showDoneByUserFilterButton(app) {
         externalCardFilterCallbackGenerator,
         'Done',
         true,
-        true
+        true,
+        body.user.id
       );
     } catch (error) {
       console.error(error);
