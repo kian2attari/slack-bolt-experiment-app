@@ -22,6 +22,8 @@ exports.editTriageDutyAvailabilityModal = app => {
 
     console.log('availability_selections', availabilitySelections);
 
+    let currentWeekAssignmentChange = false;
+
     availabilitySelections.forEach((availabilitySelection, index) => {
       if (availabilitySelection.avail === availabilitySelection.wasAvail) {
         return;
@@ -30,6 +32,7 @@ exports.editTriageDutyAvailabilityModal = app => {
       const {assignedTeamMember, substitutes} = assignmentWeek;
 
       if (assignedTeamMember === slackUserId) {
+        currentWeekAssignmentChange = index === 0;
         // Replacing with a substitute
         triageDutyAssignmentsObjArray[index].assignedTeamMember = substitutes.pop();
         return;
@@ -44,7 +47,13 @@ exports.editTriageDutyAvailabilityModal = app => {
 
     // Success! Message the user
     try {
-      await setTriageDutyAssignments(null, triageDutyAssignmentsObjArray, slackUserId);
+      await setTriageDutyAssignments(
+        null,
+        triageDutyAssignmentsObjArray,
+        app,
+        currentWeekAssignmentChange,
+        slackUserId
+      );
       await app.client.chat.postMessage({
         token: context.botToken,
         // EXTRA_TODO message the user telling them what weeks they're up/not up for anymore

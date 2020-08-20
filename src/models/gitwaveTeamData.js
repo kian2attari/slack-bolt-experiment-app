@@ -493,12 +493,15 @@ async function getTeamTriageDutyAssignments(slackUserId = null) {
  *
  * @param {any} teamChannelId
  * @param {any} setTriageDutyAssignmentsArray
+ * @param {bool} [currentWeekAssignmentChange] Default is `false`
  * @param {string} [slackUserId] Default is `''`
  * @returns {any}
  */
 async function setTriageDutyAssignments(
   teamChannelId,
   setTriageDutyAssignmentsArray,
+  app = undefined,
+  currentWeekAssignmentChange = false,
   slackUserId = ''
 ) {
   let triageTeamChannelId = teamChannelId;
@@ -515,6 +518,15 @@ async function setTriageDutyAssignments(
     {teamChannelId: triageTeamChannelId},
     {triageDutyAssignments: setTriageDutyAssignmentsArray}
   );
+
+  // If this week's assignment changes, update the triage team channel topic and message the newly-assigned
+  if (currentWeekAssignmentChange) {
+    await setChannelTopicAndNotifyLatestAssignee(
+      app,
+      triageTeamChannelId,
+      setTriageDutyAssignmentsArray[0]
+    );
+  }
 }
 /**
  * Assign a team member to an Issue/PR on GitHub.
