@@ -4,7 +4,7 @@ exports.setChannelTopicAndNotifyLatestAssignee = (
   app,
   teamChannelId,
   thisWeek,
-  finalWeek = undefined
+  finalWeek = undefined // If the final week is not defined, that means its not a regular triage rotation, the currently assigned person just marked themselves unavailable
 ) =>
   Promise.all([
     app.client.conversations.setTopic({
@@ -12,7 +12,9 @@ exports.setChannelTopicAndNotifyLatestAssignee = (
       channel: teamChannelId,
       topic: `<@${
         thisWeek.assignedTeamMember
-      }> is on triage duty for the week of ${dateFormatter(new Date(thisWeek.date))}!`,
+      }> is now on triage duty for the week of ${dateFormatter(
+        new Date(thisWeek.date)
+      )}!`,
     }),
     app.client.chat.postMessage({
       // Since there is no context we just use the original token
