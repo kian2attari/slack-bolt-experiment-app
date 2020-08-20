@@ -5,7 +5,7 @@ async function pullRequestReviewRequested(req, res, app) {
   const {
     // repository: {full_name: repo_path},
     sender: {login: requestorLogin},
-    pullRequest,
+    pull_request: pullRequest,
     installation: {id: installationId},
   } = req;
 
@@ -13,7 +13,7 @@ async function pullRequestReviewRequested(req, res, app) {
     requested_reviewers: requestedReviewers,
     title,
     body,
-    htmlUrl,
+    html_url: htmlUrl,
     user: pullRequestCreator,
     createdAt,
   } = pullRequest;
