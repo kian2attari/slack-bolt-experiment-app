@@ -5,7 +5,10 @@ const {
   showTriagedCards,
 } = require('../commonFunctions');
 const {findTriageTeamBySlackUser} = require('../../db');
-const {addLabelsToCard, getGithubUsernameByUserId} = require('../../models');
+const {
+  addLabelsToCard,
+  gitwaveUserData: {getGithubUsernamesFromSlackUserIds},
+} = require('../../models');
 const {SafeAccess} = require('../../helper-functions');
 const {regExp} = require('../../constants');
 
@@ -17,7 +20,8 @@ async function openMapModalButton(app) {
 
     const userSlackId = body.user.id;
 
-    const userSetGithubUsername = (await getGithubUsernameByUserId(userSlackId)) || '';
+    const userSetGithubUsername =
+      (await getGithubUsernamesFromSlackUserIds([userSlackId]))[0].githubUsername || '';
 
     console.log('open_map_modal_button user_set_github_username', userSetGithubUsername);
 

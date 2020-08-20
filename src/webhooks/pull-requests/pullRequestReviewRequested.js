@@ -23,10 +23,7 @@ async function pullRequestReviewRequested(req, res, app) {
   const requestedReviewerCallback = async requestedReviewer => {
     const githubUsername = requestedReviewer.login;
 
-    const mentionedSlackUser = await getUserIdByGithubUsername(
-      githubUsername,
-      installationId
-    );
+    const mentionedSlackUser = await getUserIdByGithubUsername(githubUsername);
 
     // Message the team members whose review was requested
     const mentionEventData = {

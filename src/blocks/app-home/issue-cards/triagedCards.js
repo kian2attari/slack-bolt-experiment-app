@@ -52,13 +52,20 @@ exports.triagedCards = (
 
     const labelInitialOptions = nonTriageLabels(cardLabels).map(labelMapCallback);
 
-    const assignableTeamMemberOptionsArray = assignableTeamMembersArray.map(slackUserId =>
-      optionObj(slackUserId, JSON.stringify({issueOrPrId: cardData.id}))
+    const assignableTeamMemberOptionsArray = assignableTeamMembersArray.map(teamMember =>
+      optionObj(
+        `<@${teamMember.slackUserId}>`,
+        JSON.stringify([cardData.id, teamMember.githubUserId])
+      )
+    );
+
+    const assignedToUserObj = assignableTeamMembersArray.find(
+      teamMember => teamMember.slackUserId === assignedToSlackUserId
     );
 
     const initialAssignableTeamMemberOptionObj = optionObj(
       `<@${assignedToSlackUserId}>`,
-      JSON.stringify({issueOrPrId: cardData.id})
+      JSON.stringify([cardData.id, assignedToUserObj.githubUserId])
     );
 
     if (assignableTeamMembersArray.length === 0) {
@@ -251,8 +258,6 @@ exports.triagedCards = (
       },
     ];
   });
-
-  console.log('external ', externalIssuesBlock);
 
   const combinedIssuesBlock = internalIssuesBlock.concat(
     noAssignableTeamMembers ? noAssignableTeamMemberWarningBlocks : externalIssuesBlock // If there are no assignable teammates, show that message

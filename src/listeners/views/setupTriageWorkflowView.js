@@ -1,5 +1,8 @@
 const {Messages, Modals} = require('../../blocks');
-const {associateTeamWithInstallation} = require('../../models');
+const {
+  associateTeamWithInstallation,
+  gitwaveUserData: {addNewUsers},
+} = require('../../models');
 
 module.exports = app => {
   app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
@@ -50,6 +53,7 @@ module.exports = app => {
     }
 
     try {
+      await addNewUsers(selectedUsersArray);
       // Message the creator of the team
       await app.client.chat.postMessage({
         token: context.botToken,

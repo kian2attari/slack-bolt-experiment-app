@@ -25,7 +25,7 @@ async function issueAssigned(req, res) {
     columnIds: projectColumnsArray.map(project => project['To Do'].id),
   };
 
-  // TODO use getCardsByColumn function in TriageTeamData
+  // TODO use getCardsByColumn function in gitwaveTeamData
   const projectCardsResponse = await graphql.callGhGraphql(
     query.getCardsByProjColumn,
     variablesGetCardsByProjColumn,

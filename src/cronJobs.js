@@ -65,7 +65,7 @@ function rotateTriageDutyAssignment(app) {
 
     const {triageDutyAssignments, teamChannelId, teamMembers} = teamData[0];
 
-    const teamMemberAlphabeticArray = Object.keys(teamMembers).sort();
+    const teamMemberAlphabeticArray = teamMembers.sort();
 
     // Get the current latest assignment in the array
     const {
