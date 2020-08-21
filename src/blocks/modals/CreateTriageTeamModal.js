@@ -1,8 +1,9 @@
-exports.CreateTriageTeamModal = {
+exports.CreateTriageTeamModal = (existingTeamData = null) => ({
   'callback_id': 'setup_triage_workflow_view',
+  'private_metadata': JSON.stringify(existingTeamData),
   'title': {
     'type': 'plain_text',
-    'text': 'Setup GitWave',
+    'text': existingTeamData ? 'Modify team setup' : 'Setup new team',
     'emoji': true,
   },
   'submit': {
@@ -33,6 +34,8 @@ exports.CreateTriageTeamModal = {
       'block_id': 'users_select_input',
       'element': {
         'type': 'multi_users_select',
+        // Pre-select the teammates
+        ...(existingTeamData && {'initial_users': existingTeamData.teamMembers}),
         'action_id': 'triage_users',
         'placeholder': {
           'type': 'plain_text',
@@ -51,6 +54,10 @@ exports.CreateTriageTeamModal = {
       'block_id': 'discussion_channel_select_input',
       'element': {
         'type': 'channels_select',
+        // Pre-select the discussion channel
+        ...(existingTeamData && {
+          'initial_channel': existingTeamData.teamInternalTriageChannelId,
+        }),
         'action_id': 'discussion_channel',
         'placeholder': {
           'type': 'plain_text',
@@ -69,6 +76,10 @@ exports.CreateTriageTeamModal = {
       'block_id': 'triage_channel_select_input',
       'element': {
         'type': 'channels_select',
+        // Pre-select the team channel
+        ...(existingTeamData && {
+          'initial_channel': existingTeamData.teamChannelId,
+        }),
         'action_id': 'triage_channel',
         'placeholder': {
           'type': 'plain_text',
@@ -82,24 +93,28 @@ exports.CreateTriageTeamModal = {
         'emoji': true,
       },
     },
-    {
-      'type': 'input',
-      'block_id': 'github_org_input_block',
-      'label': {
-        'type': 'plain_text',
-        'text': 'Assign the GitHub org for this team',
-        'emoji': true,
-      },
-      'element': {
-        'type': 'external_select',
-        'min_query_length': 0,
-        'placeholder': {
-          'type': 'plain_text',
-          'text': 'Select an Organization',
-          'emoji': true,
-        },
-        'action_id': 'github_org_select_input',
-      },
-    },
+    ...(!existingTeamData
+      ? [
+          {
+            'type': 'input',
+            'block_id': 'github_org_input_block',
+            'label': {
+              'type': 'plain_text',
+              'text': 'Assign the GitHub org for this team',
+              'emoji': true,
+            },
+            'element': {
+              'type': 'external_select',
+              'min_query_length': 0,
+              'placeholder': {
+                'type': 'plain_text',
+                'text': 'Select an Organization',
+                'emoji': true,
+              },
+              'action_id': 'github_org_select_input',
+            },
+          },
+        ]
+      : []),
   ],
-};
+});

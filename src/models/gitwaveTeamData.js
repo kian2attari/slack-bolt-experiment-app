@@ -55,6 +55,7 @@ async function getCardsByColumn(columnId, installationId) {
  * @param {String} teamChannelId
  * @param {String} teamInternalTriageChannelId
  * @param {{}} selectedGithubOrg
+ * @param {any} [gitwaveGithubAppInstallationId] Default is `null`
  * @returns {Promise}
  */
 async function associateTeamWithInstallation(
@@ -62,7 +63,8 @@ async function associateTeamWithInstallation(
   slackUserIds,
   teamChannelId,
   teamInternalTriageChannelId,
-  selectedGithubOrg
+  selectedGithubOrg,
+  gitwaveGithubAppInstallationId = null
 ) {
   const sortedSlackUserIds = slackUserIds.sort();
 
@@ -78,10 +80,6 @@ async function associateTeamWithInstallation(
     currentDate.getMonth(),
     currentDate.getDate() + daysFromMonday
   );
-
-  console.log('currentWeekMondayDate', currentWeekMondayDate);
-
-  console.log('sortedSlackUserIds', sortedSlackUserIds);
 
   // Here we make triage assignments for the current week and next 3 weeks
   const triageDutyAssignments = [];
@@ -102,7 +100,12 @@ async function associateTeamWithInstallation(
     };
   }
 
-  const filter = {'orgAccount.nodeId': selectedGithubOrg.value};
+  // In the case of modifying an existing team setup, we don't want to delete the team members from gitwave_user_data
+
+  const filter =
+    gitwaveGithubAppInstallationId === null
+      ? {'orgAccount.nodeId': selectedGithubOrg.value}
+      : {gitwaveGithubAppInstallationId};
 
   const triageDutyAssignmentsObj = {
     teamChannelId,

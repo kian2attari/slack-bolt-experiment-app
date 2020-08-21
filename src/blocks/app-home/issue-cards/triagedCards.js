@@ -1,14 +1,15 @@
 const {regExp} = require('../../../constants');
 const {optionObj} = require('../../SubBlocks');
+const {trimString} = require('./trimString');
 
-exports.triagedCards = (
+function triagedCards(
   assignableTeamMembersArray,
   externalCardArray,
   internalIssueArray,
   showOnlyClaimedInternalIssues,
   showOnlyDone,
   assignedToSlackUserId
-) => {
+) {
   const noAssignableTeamMemberWarningBlocks = [
     {
       'type': 'section',
@@ -63,10 +64,17 @@ exports.triagedCards = (
       teamMember => teamMember.slackUserId === assignedToSlackUserId
     );
 
-    const initialAssignableTeamMemberOptionObj = optionObj(
-      `<@${assignedToSlackUserId}>`,
-      JSON.stringify([cardData.id, assignedToUserObj.githubUserId])
-    );
+    if (!assignedToUserObj) {
+      // REVIEW what to do if its assigned to someone not in the team?
+      console.error('could not find the teammate in question');
+    }
+
+    const initialAssignableTeamMemberOptionObj = assignedToUserObj
+      ? optionObj(
+          `<@${assignedToSlackUserId}>`,
+          JSON.stringify([cardData.id, assignedToUserObj.githubUserId])
+        )
+      : undefined;
 
     if (assignableTeamMembersArray.length === 0) {
       noAssignableTeamMembers = true;
@@ -94,8 +102,8 @@ exports.triagedCards = (
       {
         'type': 'section',
         'text': {
-          'type': 'plain_text',
-          'text': cardData.body || 'No body',
+          'type': 'mrkdwn',
+          'text': trimString(cardData.body, 2500) || 'No body',
         },
       },
       ...(showOnlyDone
@@ -138,9 +146,11 @@ exports.triagedCards = (
                 },
 
                 'options': assignableTeamMemberOptionsArray,
-                ...(assignedToSlackUserId.length !== 0 && {
-                  'initial_option': initialAssignableTeamMemberOptionObj,
-                }),
+                ...(assignedToSlackUserId.length !== 0 &&
+                  initialAssignableTeamMemberOptionObj && {
+                    // only if the assigned user is part of the team do we want to show this initial option
+                    'initial_option': initialAssignableTeamMemberOptionObj,
+                  }),
                 'action_id': 'assignable_team_members',
               },
             },
@@ -264,4 +274,5 @@ exports.triagedCards = (
   );
 
   return combinedIssuesBlock;
-};
+}
+exports.triagedCards = triagedCards;

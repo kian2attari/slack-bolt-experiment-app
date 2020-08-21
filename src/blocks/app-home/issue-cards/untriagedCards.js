@@ -1,4 +1,6 @@
-exports.untriagedCards = ({externalIssueCardArray, internalIssueCardArray}) => {
+const {trimString} = require('./trimString');
+
+function untriagedCards({externalIssueCardArray, internalIssueCardArray}) {
   const externalIssuesBlock = externalIssueCardArray.flatMap(card => {
     const cardData = card.content;
     const cardRepoTriageLabels = cardData.repository.labels.nodes;
@@ -31,7 +33,7 @@ exports.untriagedCards = ({externalIssueCardArray, internalIssueCardArray}) => {
         'type': 'section',
         'text': {
           'type': 'plain_text',
-          'text': `${cardData.body} \n`,
+          'text': `${trimString(cardData.body, 2500) || 'No body'} \n`,
         },
       },
       /* The GitHub GraphQL API needs both the issue ID and 
@@ -136,7 +138,7 @@ exports.untriagedCards = ({externalIssueCardArray, internalIssueCardArray}) => {
   const combinedIssuesBlock = internalIssuesBlock.concat(externalIssuesBlock);
 
   return combinedIssuesBlock;
-};
+}
 
 /**
  * Creates the triage buttons for the Untriaged page on the app home. Uses the button value
@@ -199,3 +201,5 @@ function internalIssueLabelButtonsBlock(issueMessageTs) {
     },
   ];
 }
+
+exports.untriagedCards = untriagedCards;
