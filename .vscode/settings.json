@@ -7,6 +7,9 @@
   "[typescript]": {
     "editor.formatOnSave": true
   },
+  "[markdown]": {
+    "editor.formatOnSave": true
+  },
   "prettier.configPath": ".prettierrc",
   "editor.tabSize": 2
 }
