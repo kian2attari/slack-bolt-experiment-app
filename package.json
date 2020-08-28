@@ -10,6 +10,9 @@
     "lint-docs": "eslint --ext .md docs",
     "lint-fix": "eslint --ext .js src --fix"
   },
+  "engines": {
+    "node": ">=11.0.0"
+  },
   "author": "kattari",
   "license": "MIT",
   "dependencies": {

@@ -49,7 +49,9 @@ async function getCardsByColumn(columnId, installationId) {
 /**
  * Link a team with an installation instance of GitWave. Installation ID's are always on an
  * org/user level, even if the app is only installed on a single repo. Each installation ID
- * can only be associated with one team and vice versa.
+ * can only be associated with one team and vice versa. This step also includes associating
+ * the triage team with an internal issue submission channel, and a unique discussion
+ * channel.
  *
  * @param {[String]} slackUserIds
  * @param {String} teamChannelId
@@ -60,12 +62,22 @@ async function getCardsByColumn(columnId, installationId) {
  */
 async function associateTeamWithInstallation(
   app,
+  context,
   slackUserIds,
   teamChannelId,
   teamInternalTriageChannelId,
   selectedGithubOrg,
   gitwaveGithubAppInstallationId = null
 ) {
+  // First we ensure that GitWave is part of those channels
+  await Promise.all([
+    app.client.conversations.join({token: context.botToken, channel: teamChannelId}),
+    app.client.conversations.join({
+      token: context.botToken,
+      channel: teamInternalTriageChannelId,
+    }),
+  ]);
+
   const sortedSlackUserIds = slackUserIds.sort();
 
   const teamSize = sortedSlackUserIds.length;

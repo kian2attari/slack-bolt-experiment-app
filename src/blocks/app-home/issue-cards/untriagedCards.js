@@ -1,6 +1,7 @@
 const {trimString} = require('./trimString');
 
 function untriagedCards({externalIssueCardArray, internalIssueCardArray}) {
+  // FlatMap is only available in Node 11+
   const externalIssuesBlock = externalIssueCardArray.flatMap(card => {
     const cardData = card.content;
     const cardRepoTriageLabels = cardData.repository.labels.nodes;

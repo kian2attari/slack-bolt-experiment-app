@@ -30,45 +30,49 @@ module.exports = app => {
     const selectedGithubOrg = SafeAccess(
       () => values.github_org_input_block.github_org_select_input.selected_option
     );
-    const createNewTeamResult = selectedGithubOrg
-      ? await associateTeamWithInstallation(
-          app,
-          selectedUsersArray,
-          selectedDiscussionChannel,
-          selectedInternalTriageChannel,
-          selectedGithubOrg
-        )
-      : await associateTeamWithInstallation(
-          app,
-          selectedUsersArray,
-          selectedDiscussionChannel,
-          selectedInternalTriageChannel,
-          selectedGithubOrg,
-          JSON.parse(view.private_metadata).gitwaveGithubAppInstallationId
-        );
-
-    if (createNewTeamResult.result.n !== 1) {
-      // TODO if the error is that the team already exists, explain this to the user
-      const errorMsg =
-        "There was an error creating the team and adding it to the DB. Make sure it doesn't already exist";
-
-      console.error(errorMsg);
-
-      await app.client.chat.postMessage({
-        token: context.botToken,
-        channel: user,
-        text: errorMsg,
-      });
-      return;
-    }
 
     try {
+      const createNewTeamResult = selectedGithubOrg
+        ? await associateTeamWithInstallation(
+            app,
+            context,
+            selectedUsersArray,
+            selectedDiscussionChannel,
+            selectedInternalTriageChannel,
+            selectedGithubOrg
+          )
+        : // If a github Org was not selected, that means the user is already part of a team and is just modifying some settings rather than creating a new team
+          await associateTeamWithInstallation(
+            app,
+            context,
+            selectedUsersArray,
+            selectedDiscussionChannel,
+            selectedInternalTriageChannel,
+            selectedGithubOrg,
+            JSON.parse(view.private_metadata).gitwaveGithubAppInstallationId
+          );
+
+      if (createNewTeamResult.result.n !== 1) {
+        // TODO if the error is that the team already exists, explain this to the user
+        const errorMsg =
+          "There was an error creating the team and adding it to the DB. Make sure it doesn't already exist";
+
+        console.error(errorMsg);
+
+        await app.client.chat.postMessage({
+          token: context.botToken,
+          channel: user,
+          text: errorMsg,
+        });
+        return;
+      }
+
       await addNewUsers(selectedUsersArray);
       // Message the creator of the team
       await app.client.chat.postMessage({
         token: context.botToken,
         channel: user,
-        text: 'Team added successfully.',
+        text: 'Team created successfully.',
       });
 
       // Open the org-level project selection modal
@@ -93,7 +97,5 @@ module.exports = app => {
     } catch (err) {
       console.error(err);
     }
-
-    console.log('create_new_team_result', createNewTeamResult);
   });
 };
