@@ -1,5 +1,5 @@
-const {getTeamOrgAndRepoLevelProjectBoards} = require('../models');
-const {mutation, graphql} = require('../graphql');
+const {getTeamOrgAndRepoLevelProjectBoards, getRepoUntriagedLabel} = require('../models');
+const {query, mutation, graphql} = require('../graphql');
 const {
   regExp: {findTriageLabels},
 } = require('../constants');
@@ -79,5 +79,114 @@ function projectColumnGraphqlMutationPromiseGenerator(
     );
 }
 
+async function issueOrPrLabeled(req, res) {
+  const installationId = req.installation.id;
+
+  const {full_name: repoFullName} = req.repository;
+
+  const elementNodeId = req.issue.node_id;
+
+  const currentIssueLabelsArray = req.issue.labels;
+
+  const {name: labelName, description: labelDescription} = req.label;
+
+  const {validProjectIds, projectColumnsArray} = await findValidProjectIds(
+    installationId,
+    repoFullName,
+    currentIssueLabelsArray
+  );
+
+  if (labelName === 'untriaged') {
+    console.log('project board id array', validProjectIds);
+    const variablesAssignIssueToProject = {
+      issueId: elementNodeId,
+      projectIds: validProjectIds,
+    };
+
+    // REVIEW should i return the promise up to webhookEvents.js rather than awaiting it here and returning nothing?
+    await graphql.callGhGraphql(
+      mutation.assignIssueToProject,
+      variablesAssignIssueToProject,
+      installationId
+    );
+
+    res.send();
+  }
+
+  const isTriageLabel = findTriageLabels.test(labelDescription);
+
+  if (isTriageLabel) {
+    const variablesGetAllUntriaged = {
+      projectIds: validProjectIds,
+    };
+
+    const projectCardsResponse = await graphql.callGhGraphql(
+      query.getAllUntriaged,
+      variablesGetAllUntriaged,
+      installationId
+    );
+
+    const filteredIssueCards = projectCardsResponse.nodes
+      .map(
+        project =>
+          project.pendingCards.nodes.find(card => card.content.id === elementNodeId) // We find the card in each project board that map to the issue/PR that just got labeled
+      )
+      .filter(card => typeof card !== 'undefined'); // In the case that the card exists in the org level board but not the repo level board
+
+    const projectColumnGraphqlMutationPromises = projectColumnGraphqlMutationPromiseGenerator(
+      projectColumnsArray,
+      filteredIssueCards,
+      installationId
+    );
+    switch (labelName) {
+      case 'question': {
+        // We move the card for the issue/PR to the appropriate column in both the repo level board and the org level board
+        await Promise.all(projectColumnGraphqlMutationPromises('Question'));
+        break;
+      }
+
+      case 'discussion': {
+        await Promise.all(projectColumnGraphqlMutationPromises('Discussion'));
+        break;
+      }
+
+      default: {
+        await Promise.all(projectColumnGraphqlMutationPromises('To Do'));
+      }
+    }
+  }
+
+  // REVIEW maybe we only assign the card to the org-wide repo?
+
+  // Success
+  res.send();
+}
+
+async function issueOrPrUnlabeled(req, res) {
+  const installationId = req.installation.id;
+  // eslint-disable-next-line no-unused-vars
+  const {node_id: repoId} = req.repository;
+
+  /* ---- ANCHOR What to do  there is a label added or removed from an issue ---- */
+  // const issue_label_array = request.issue.labels;
+
+  const labelId = req.label.node_id;
+  const untriagedLabelId = await getRepoUntriagedLabel(repoId, installationId);
+
+  // TODO if there are neither the untriaged label nor any of the triage labels now, add the untriaged label
+  console.log(': ------------------');
+  console.log('label_id', labelId);
+  console.log(': ------------------');
+
+  console.log(': --------------------------------------------------');
+  console.log('untriaged_label id', untriagedLabelId);
+  console.log(': --------------------------------------------------');
+
+  // Success
+  res.send();
+}
+
 exports.findValidProjectIds = findValidProjectIds;
 exports.projectColumnGraphqlMutationPromiseGenerator = projectColumnGraphqlMutationPromiseGenerator;
+exports.issueOrPrLabeled = issueOrPrLabeled;
+exports.issueOrPrUnlabeled = issueOrPrUnlabeled;

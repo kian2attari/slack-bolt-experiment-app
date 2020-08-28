@@ -244,7 +244,7 @@ function setupTriageWorkflowButton(app) {
       // The token you used to initialize your app is stored in the `context` object
       token: context.botToken,
       'trigger_id': body.trigger_id,
-      view: Modals.CreateTriageTeamModal,
+      view: Modals.CreateTriageTeamModal(),
     });
   });
 }

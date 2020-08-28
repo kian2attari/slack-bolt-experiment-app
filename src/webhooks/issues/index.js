@@ -1,6 +1,5 @@
-const {issueLabeled} = require('./issueLabeled');
 const {issueOpenedReopened} = require('./issueOpenedReopened');
-const {issueUnlabeled} = require('./issueUnlabeled');
+const {issueLabeled, issueUnlabeled} = require('./issueLabeledUnlabeled');
 const {issueAssigned} = require('./issueAssigned');
 
 exports.issueLabeled = issueLabeled;

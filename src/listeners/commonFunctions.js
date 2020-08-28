@@ -44,7 +44,7 @@ async function showUntriagedCards(contextDataObj) {
     return client.views.open({
       token: context.botToken,
       'trigger_id': triggerId,
-      view: Modals.CreateTriageTeamModal,
+      view: Modals.CreateTriageTeamModal(),
     });
   }
 
