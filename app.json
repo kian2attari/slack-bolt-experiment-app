@@ -1,0 +1,32 @@
+{
+  "name": "GitWave",
+  "description": "A Slack app that streamlines & supercharges your team's triaging flow!",
+  "repository": "https://github.com/slackapi/gitwave",
+  "keywords": ["Slack", "Slack API", "GitWave", "Bot", "Bolt-js", "Bolt", "Heroku"],
+  "env": {
+    "SLACK_SIGNING_SECRET": {
+      "description": "Slack Signing Secret",
+      "value": "***"
+    },
+    "SLACK_BOT_TOKEN": {
+      "description": "Slack App Bot Token",
+      "value": "xoxb-**"
+    },
+    "SLACK_LOG_LEVEL": {
+      "description": "Bolt App Log Level (debug/info/warn/error)",
+      "value": "info"
+    },
+    "DB_URI": {
+      "description": "The URI of the MongoDB Database",
+      "value": "info"
+    },
+    "APP_ID": {
+      "description": "The App ID of the GitWave Github app you created",
+      "value": "12345"
+    },
+    "PRIVATE_KEY": {
+      "description": "The private key you generated for the GitWave GitHub App counterpart. Used to sign access token requests.",
+      "value": "***"
+    }
+  }
+}
