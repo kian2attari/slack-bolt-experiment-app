@@ -26,16 +26,13 @@ async function checkForMentions(app, mentionMetadata) {
 
   const mentionCallback = async mentionedUsername => {
     /* FIXME Why does this require only work in this function scope but not if it were at the top of the file? Must be some node module cache conflict 
-    since the functions in TriageTeamData are required from different scopes of the project (ex require('../models) require('../../models') etc). */
+    since the functions in gitwaveTeamData are required from different scopes of the project (ex require('../models) require('../../models') etc). */
     const {getUserIdByGithubUsername} = require('../models');
     const githubUsername = mentionedUsername.substring(1);
 
     console.log(`mentioned gh username: ${githubUsername}`);
 
-    const mentionedSlackUser = await getUserIdByGithubUsername(
-      githubUsername,
-      installationId
-    );
+    const mentionedSlackUser = await getUserIdByGithubUsername(githubUsername);
 
     console.log(': --------------------------------------------------------------');
     console.log('containsMention -> mentionedSlackUser', mentionedSlackUser);

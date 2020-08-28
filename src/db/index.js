@@ -6,6 +6,7 @@ const {addNewDocument} = require('./addNewDocument');
 const {findDocuments} = require('./findDocuments');
 const {findValidTriageChannel} = require('./findValidTriageChannel');
 const {updateDocument} = require('./updateDocument');
+const {addMultipleNewDocuments} = require('./addMultipleNewDocuments');
 
 exports.connectToMongoCollection = connectToMongoCollection;
 exports.addNewInternalIssue = addNewInternalIssue;
@@ -15,3 +16,4 @@ exports.addNewDocument = addNewDocument;
 exports.findDocuments = findDocuments;
 exports.updateDocument = updateDocument;
 exports.findValidTriageChannel = findValidTriageChannel;
+exports.addMultipleNewDocuments = addMultipleNewDocuments;

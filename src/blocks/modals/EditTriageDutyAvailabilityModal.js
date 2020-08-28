@@ -1,10 +1,14 @@
-exports.EditTriageDutyAvailabilityModal = triageDutyAssignmentsObj => {
+exports.EditTriageDutyAvailabilityModal = (
+  triageDutyAssignmentsObjArray,
+  slackUserId
+) => {
   const {SubBlocks} = require('../index');
   const {dateFormatter} = require('../../helper-functions');
 
   return {
     'type': 'modal',
     'callback_id': 'edit_triage_duty_availability_modal',
+    'private_metadata': JSON.stringify(triageDutyAssignmentsObjArray),
     'title': {
       'type': 'plain_text',
       'text': 'Triage duty availability',
@@ -30,13 +34,18 @@ exports.EditTriageDutyAvailabilityModal = triageDutyAssignmentsObj => {
         },
       },
 
-      ...triageDutyAssignmentsObj.flatMap((assignment, index) => {
+      ...triageDutyAssignmentsObjArray.flatMap((assignment, index) => {
+        const isCurrentlyAvailable =
+          slackUserId === assignment.assignedTeamMember ||
+          assignment.substitutes.includes(slackUserId);
+
+        // TODO send the initial option over as a value as well.
         const availableOption = SubBlocks.optionObj(
           "I'm available",
           JSON.stringify({
             avail: true,
-            index,
-            userId: assignment.assignedTeamMember,
+            date: assignment.date,
+            wasAvail: isCurrentlyAvailable,
           })
         );
 
@@ -44,8 +53,8 @@ exports.EditTriageDutyAvailabilityModal = triageDutyAssignmentsObj => {
           "I'm unavailable",
           JSON.stringify({
             avail: false,
-            index,
-            userId: assignment.assignedTeamMember,
+            date: assignment.date,
+            wasAvail: isCurrentlyAvailable,
           })
         );
 
@@ -60,7 +69,9 @@ exports.EditTriageDutyAvailabilityModal = triageDutyAssignmentsObj => {
             'element': {
               'type': 'radio_buttons',
               'action_id': 'triage_duty_availability_radio',
-              'initial_option': availableOption,
+              'initial_option': isCurrentlyAvailable
+                ? availableOption
+                : unavailableOption,
               'options': [availableOption, unavailableOption],
             },
           },
@@ -96,7 +107,7 @@ exports.EditTriageDutyAvailabilityModal = triageDutyAssignmentsObj => {
           //     },
           //   ],
           // },
-          ...(index !== 3
+          ...(index !== triageDutyAssignmentsObjArray.length - 1
             ? [
                 {
                   'type': 'divider',

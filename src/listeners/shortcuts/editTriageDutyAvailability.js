@@ -9,18 +9,23 @@ exports.editTriageDutyAvailability = app => {
         // Acknowledge shortcut request
         await ack();
 
-        const teamData = await getTeamTriageDutyAssignments(shortcut.user.id);
+        const slackUserId = shortcut.user.id;
+
+        const teamData = await getTeamTriageDutyAssignments(slackUserId);
 
         const {triageDutyAssignments} = teamData[0];
 
-        console.log('triage_duty_assignments', triageDutyAssignments);
+        console.log('triageDutyAssignments', triageDutyAssignments);
 
         // Call the views.open method using one of the built-in WebClients
         const result = await client.views.open({
           // The token you used to initialize your app is stored in the `context` object
           token: context.botToken,
           'trigger_id': shortcut.trigger_id,
-          view: Modals.EditTriageDutyAvailabilityModal(triageDutyAssignments),
+          view: Modals.EditTriageDutyAvailabilityModal(
+            triageDutyAssignments,
+            slackUserId
+          ),
         });
 
         console.log(result);

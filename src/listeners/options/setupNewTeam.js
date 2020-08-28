@@ -62,9 +62,7 @@ function githubOrgSelectInput(app) {
 function orgLevelProjectInput(app) {
   app.options('org_level_project_input', async ({options, ack}) => {
     try {
-      const dbUserFilter = {};
-
-      dbUserFilter[`teamMembers.${options.user.id}`] = {$exists: true};
+      const dbUserFilter = {teamMembers: options.user.id};
 
       const dbQuery = await findDocuments(dbUserFilter, {
         gitwaveGithubAppInstallationId: 1,

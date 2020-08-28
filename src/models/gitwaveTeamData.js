@@ -6,7 +6,13 @@ const {
   findDocuments,
 } = require('../db');
 const {regExp} = require('../constants');
-const {shuffleArray} = require('../helper-functions');
+const {
+  gitwaveUserData: {updateUserObj},
+} = require('./gitwaveUserData');
+const {
+  shuffleArray,
+  setChannelTopicAndNotifyLatestAssignee,
+} = require('../helper-functions');
 
 /* This is where all the DB operations are abstracted to. The goal is to avoid directly using the mongodb client methods throughout the 
 code (ex. update, find, set etc) and instead abstract the functionalities here (ex. assign label to issue -- which will do all the mongodb calls under the hood) */
@@ -49,22 +55,17 @@ async function getCardsByColumn(columnId, installationId) {
  * @param {String} teamChannelId
  * @param {String} teamInternalTriageChannelId
  * @param {{}} selectedGithubOrg
+ * @param {any} [gitwaveGithubAppInstallationId] Default is `null`
  * @returns {Promise}
  */
 async function associateTeamWithInstallation(
+  app,
   slackUserIds,
   teamChannelId,
   teamInternalTriageChannelId,
-  selectedGithubOrg
+  selectedGithubOrg,
+  gitwaveGithubAppInstallationId = null
 ) {
-  const teamMemberObj = slackUserIds.reduce((accumulator, currentValue) => {
-    accumulator[currentValue] = {
-      githubUserData: {githubUsername: null},
-      userSettings: {},
-    };
-    return accumulator;
-  }, {});
-
   const sortedSlackUserIds = slackUserIds.sort();
 
   const teamSize = sortedSlackUserIds.length;
@@ -80,15 +81,14 @@ async function associateTeamWithInstallation(
     currentDate.getDate() + daysFromMonday
   );
 
-  console.log('currentWeekMondayDate', currentWeekMondayDate);
-
-  console.log('sortedSlackUserIds', sortedSlackUserIds);
-
   // Here we make triage assignments for the current week and next 3 weeks
   const triageDutyAssignments = [];
 
+  // Up to how many weeks in advance you want GitWave to generate assignments for
+  const weeksInAdvance = 3;
+
   // Every iteration is another week with i = 0 being the current week.
-  for (let i = 0; i < 4; i += 1) {
+  for (let i = 0; i <= weeksInAdvance; i += 1) {
     const assignedTeamMember = sortedSlackUserIds[i % teamSize]; // So we don't go out of range on our team member array
 
     triageDutyAssignments[i] = {
@@ -100,17 +100,34 @@ async function associateTeamWithInstallation(
     };
   }
 
-  const filter = {'orgAccount.nodeId': selectedGithubOrg.value};
+  // In the case of modifying an existing team setup, we don't want to delete the team members from gitwave_user_data
 
-  const newObj = {
+  const filter =
+    gitwaveGithubAppInstallationId === null
+      ? {'orgAccount.nodeId': selectedGithubOrg.value}
+      : {gitwaveGithubAppInstallationId};
+
+  const triageDutyAssignmentsObj = {
     teamChannelId,
     teamInternalTriageChannelId,
     internalTriageItems: {},
-    teamMembers: teamMemberObj,
+    teamMembers: slackUserIds,
     pendingReviewRequests: [],
     triageDutyAssignments,
   };
-  return updateDocument(filter, newObj);
+  try {
+    const updateDocResponse = await updateDocument(filter, triageDutyAssignmentsObj);
+    await setChannelTopicAndNotifyLatestAssignee(
+      app,
+      teamChannelId,
+      triageDutyAssignments[0],
+      triageDutyAssignments[triageDutyAssignments.length - 1]
+    );
+    return updateDocResponse;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 /**
  * Set a team's org-level project board. This board is synced up with all the repo-level
@@ -186,39 +203,13 @@ async function setUserGithubUsername(slackUserId, githubUsername) {
 
   const usernameData = userData.user;
 
-  const usernameUpdateObj = {};
-
-  usernameUpdateObj[`teamMembers.${slackUserId}.githubUserData`] = {
-    id: usernameData.id,
+  const usernameUpdateObj = {
+    githubUserId: usernameData.id,
     githubUsername: usernameData.login,
     name: usernameData.name,
   };
 
-  const dbUserFilter = {};
-
-  dbUserFilter[`teamMembers.${slackUserId}`] = {$exists: true};
-
-  return updateDocument(dbUserFilter, usernameUpdateObj);
-}
-
-// EXTRA_TODO modify the function so that it filters by installation ID. That way, a user can be part of multiple teams.
-/**
- * Get a team member's GitHub username by their Slack user ID
- *
- * @param {String} slackUserId
- * @returns {String} The team member's GitHub Username
- */
-async function getGithubUsernameByUserId(slackUserId) {
-  // First we check to see if the user has already mapped a github username
-  const triageTeamMembersResponse = await findTriageTeamBySlackUser(slackUserId, {
-    teamMembers: 1,
-  });
-
-  // TODO SafeAccess
-  const slackIdToGhUsernameMatch =
-    triageTeamMembersResponse[0].teamMembers[slackUserId].githubUserData.githubUsername;
-
-  return slackIdToGhUsernameMatch;
+  await updateUserObj(slackUserId, usernameUpdateObj);
 }
 
 /**
@@ -230,27 +221,17 @@ async function getGithubUsernameByUserId(slackUserId) {
  * @param {String} installationId
  * @returns {String} The team member's user ID
  */
-async function getUserIdByGithubUsername(githubUsername, installationId) {
-  // First we check to see if the user has already mapped a github username
-  const triageTeamMembersResponse = await findDocuments(
-    {
-      gitwaveGithubAppInstallationId: installationId,
-    },
-    {teamMembers: 1}
-  );
-
-  const {teamMembers} = triageTeamMembersResponse[0];
-
-  console.log('teamMembers', teamMembers);
-
-  const ghUsernameToSlackIdMatch = Object.keys(teamMembers).find(
-    key => teamMembers[key].githubUserData.githubUsername === githubUsername
+async function getUserIdByGithubUsername(githubUsername) {
+  const ghUsernameToSlackIdMatch = await findDocuments(
+    {githubUsername},
+    {slackUserId: 1, githubUsername: 1},
+    'gitwave_user_data'
   );
 
   console.log(': ------------------------------------------------------------');
   console.log('1 getUserIdByGithubUsername.teamMembers', ghUsernameToSlackIdMatch);
   console.log(': ------------------------------------------------------------');
-  return ghUsernameToSlackIdMatch;
+  return ghUsernameToSlackIdMatch[0].slackUserId;
 }
 /**
  * Add labels to a card on GitHub. The label is actually applied to the element on the card
@@ -263,9 +244,7 @@ async function getUserIdByGithubUsername(githubUsername, installationId) {
  */
 async function addLabelsToCard(slackUserId, graphqlVariables) {
   const {issueId, labelId} = graphqlVariables;
-  const dbUserFilter = {};
-
-  dbUserFilter[`teamMembers.${slackUserId}`] = {$exists: true};
+  const dbUserFilter = {teamMembers: slackUserId};
 
   const dbQuery = await findDocuments(dbUserFilter, {
     gitwaveGithubAppInstallationId: 1,
@@ -511,57 +490,98 @@ async function getTeamTriageDutyAssignments(slackUserId = null) {
 
   return teamData;
 }
+
 /**
  * Updates the DB with new triage assignments
  *
- * @param {String} teamChannelId
- * @param {[
- *   {
- *     date: String;
- *     assignedTeamMember: String;
- *     substitutes: [String];
- *   }
- * ]} setTriageDutyAssignmentsArray
- * @returns {Promise}
+ * @param {any} teamChannelId
+ * @param {any} setTriageDutyAssignmentsArray
+ * @param {bool} [currentWeekAssignmentChange] Default is `false`
+ * @param {string} [slackUserId] Default is `''`
+ * @returns {any}
  */
-async function setTriageDutyAssignments(teamChannelId, setTriageDutyAssignmentsArray) {
-  return updateDocument(
-    {teamChannelId},
+async function setTriageDutyAssignments(
+  teamChannelId,
+  setTriageDutyAssignmentsArray,
+  app = undefined,
+  currentWeekAssignmentChange = false,
+  slackUserId = ''
+) {
+  let triageTeamChannelId = teamChannelId;
+  console.log('teamChannelId 1', triageTeamChannelId);
+  if (triageTeamChannelId === null) {
+    triageTeamChannelId = (
+      await findTriageTeamBySlackUser(slackUserId, {
+        teamChannelId: 1,
+      })
+    )[0].teamChannelId;
+  }
+  console.log('teamChannelId 2', triageTeamChannelId);
+  await updateDocument(
+    {teamChannelId: triageTeamChannelId},
     {triageDutyAssignments: setTriageDutyAssignmentsArray}
   );
+
+  // If this week's assignment changes, update the triage team channel topic and message the newly-assigned
+  if (currentWeekAssignmentChange) {
+    await setChannelTopicAndNotifyLatestAssignee(
+      app,
+      triageTeamChannelId,
+      setTriageDutyAssignmentsArray[0]
+    );
+  }
 }
 /**
  * Assign a team member to an Issue/PR on GitHub.
  *
- * @param {String} slackUserId The Slack user ID of the team member
+ * @param {String} githubUserId The GitHub user ID of the team member
  * @param {String} elementNodeId The node ID of the Issue/PR
  * @returns {Promise} The promise response from the GraphQL mutation
  */
-async function assignTeamMemberToIssueOrPR(slackUserId, elementNodeId) {
-  const userData = await findTriageTeamBySlackUser(slackUserId, {
+async function assignTeamMemberToIssueOrPR(slackUserId, elementNodeId, githubUserId) {
+  const teamDataResponse = await findTriageTeamBySlackUser(slackUserId, {
     teamMembers: 1,
     gitwaveGithubAppInstallationId: 1,
   });
 
-  const {teamMembers, gitwaveGithubAppInstallationId: installationId} = userData[0];
+  // const teamMemberGithubUserIdsResponse = await gitwaveUserData.getGithubUserIdsFromSlackUserIds(
+  //   teamDataResponse[0].teamMembers
+  // );
 
-  return graphql.callGhGraphql(
+  // const teamMemberGithubUserIds = teamMemberGithubUserIdsResponse.reduce(
+  //   (githubUserIds, userObj) => {
+  //     if (userObj.githubUserId) {
+  //       githubUserIds.push(userObj.githubUserId);
+  //     }
+  //     return githubUserIds;
+  //   },
+  //   []
+  // );
+
+  console.log('teamMemberGithubUserIds', githubUserId);
+
+  const installationId = teamDataResponse[0].gitwaveGithubAppInstallationId;
+
+  const response = await graphql.callGhGraphql(
     mutation.assignTeamMemberToIssueOrPR,
     {
       assignableId: elementNodeId,
-      assigneeIds: [teamMembers[slackUserId].githubUserData.id],
+      assigneeIds: [githubUserId],
     },
     installationId
   );
+
+  if (response.errorType) {
+    throw Error(response.errorType);
+  }
 }
 
-exports.TriageTeamData = {
+exports.gitwaveTeamData = {
   addTeamMembers,
   getCardsByColumn,
   associateTeamWithInstallation,
   setUserGithubUsername,
   setOrgLevelProject,
-  getGithubUsernameByUserId,
   getTeamRepoSubscriptions,
   getPendingReviewRequests,
   addReviewRequest,

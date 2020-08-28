@@ -3,7 +3,7 @@ const {AppHome, Modals} = require('../blocks');
 
 const {SafeAccess} = require('../helper-functions');
 const {updateDocument, findTriageTeamBySlackUser} = require('../db');
-const {getCardsByColumn} = require('../models');
+const {getCardsByColumn, gitwaveUserData} = require('../models');
 const {regExp} = require('../constants');
 
 /**
@@ -113,7 +113,6 @@ We only need the project board data so a projection is passed in as the second p
   const response = await findTriageTeamBySlackUser(userId, {
     orgLevelProjectBoard: 1,
     gitwaveGithubAppInstallationId: 1,
-    teamMembers: 1,
     internalTriageItems: 1,
   });
 
@@ -122,8 +121,13 @@ We only need the project board data so a projection is passed in as the second p
 
   const installationId = response[0].gitwaveGithubAppInstallationId;
 
-  const userGithubUsername =
-    response[0].teamMembers[userId].githubUserData.githubUsername;
+  const userGithubUsernameResponse = await gitwaveUserData.getGithubUsernamesFromSlackUserIds(
+    [userId]
+  );
+
+  const userGithubUsername = userGithubUsernameResponse[0].githubUsername;
+
+  console.log('userGithubUsername', userGithubUsername);
 
   const cardsResponse = await getCardsByColumn(selectedColumn.id, installationId);
 
@@ -149,6 +153,8 @@ We only need the project board data so a projection is passed in as the second p
     showOnlyDone,
     assignedToSlackUserId
   );
+
+  console.log('cardBlocks', cardBlocks);
 
   const homeView = AppHome.BaseAppHome('All', cardBlocks, selectedButton);
 
@@ -217,17 +223,24 @@ async function assignableTeamMembers(userId) {
     highlighting the name of the user who clicked on the select menu. The alternative to this method
     would be calling the users.identity method on Slack API for every user and getting their names that way. 
     Ideally if you go this route, modify the DB model so that the user's display name is stored there. */
+  // TODO change team members to be an array of slack user ids
+  const teamMemberGithubUsernames = await gitwaveUserData.getGithubUsernamesFromSlackUserIds(
+    teamMembers
+  );
 
-  const assignableUserArray = Object.keys(teamMembers).reduce(
-    (assignableUsers, slackUserId) => {
-      if (teamMembers[slackUserId].githubUserData.githubUsername !== null)
-        assignableUsers.push(`<@${slackUserId}>`);
+  const assignableUserIdsArray = teamMemberGithubUsernames.reduce(
+    (assignableUsers, teamMember) => {
+      if (teamMember.githubUsername !== null) {
+        assignableUsers.push(teamMember);
+      }
       return assignableUsers;
     },
     []
   );
 
-  return assignableUserArray;
+  console.log('assignableUsernamesArray', assignableUserIdsArray);
+
+  return assignableUserIdsArray;
 }
 
 exports.updateInternalTriageStatusInDb = updateInternalTriageStatusInDb;

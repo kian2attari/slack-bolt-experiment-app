@@ -1,4 +1,5 @@
-const {TriageTeamData} = require('./TriageTeamData');
+const {gitwaveTeamData} = require('./gitwaveTeamData');
+const {gitwaveUserData} = require('./gitwaveUserData');
 
 const {
   addTeamMembers,
@@ -6,7 +7,7 @@ const {
   associateTeamWithInstallation,
   setUserGithubUsername,
   setOrgLevelProject,
-  getGithubUsernameByUserId,
+
   getTeamRepoSubscriptions,
   getPendingReviewRequests,
   addReviewRequest,
@@ -19,14 +20,13 @@ const {
   getTeamTriageDutyAssignments,
   setTriageDutyAssignments,
   assignTeamMemberToIssueOrPR,
-} = TriageTeamData;
+} = gitwaveTeamData;
 
 exports.addTeamMembers = addTeamMembers;
 exports.getCardsByColumn = getCardsByColumn;
 exports.associateTeamWithInstallation = associateTeamWithInstallation;
 exports.setUserGithubUsername = setUserGithubUsername;
 exports.setOrgLevelProject = setOrgLevelProject;
-exports.getGithubUsernameByUserId = getGithubUsernameByUserId;
 exports.getTeamRepoSubscriptions = getTeamRepoSubscriptions;
 exports.getPendingReviewRequests = getPendingReviewRequests;
 exports.addReviewRequest = addReviewRequest;
@@ -39,3 +39,4 @@ exports.addLabelsToCard = addLabelsToCard;
 exports.getTeamTriageDutyAssignments = getTeamTriageDutyAssignments;
 exports.setTriageDutyAssignments = setTriageDutyAssignments;
 exports.assignTeamMemberToIssueOrPR = assignTeamMemberToIssueOrPR;
+exports.gitwaveUserData = gitwaveUserData;

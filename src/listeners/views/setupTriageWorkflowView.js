@@ -1,5 +1,9 @@
 const {Messages, Modals} = require('../../blocks');
-const {associateTeamWithInstallation} = require('../../models');
+const {
+  associateTeamWithInstallation,
+  gitwaveUserData: {addNewUsers},
+} = require('../../models');
+const {SafeAccess} = require('../../helper-functions');
 
 module.exports = app => {
   app.view('setup_triage_workflow_view', async ({ack, body, view, context}) => {
@@ -18,15 +22,30 @@ module.exports = app => {
     const selectedInternalTriageChannel =
       values.triage_channel_select_input.triage_channel.selected_channel;
 
-    const selectedGithubOrg =
-      values.github_org_input_block.github_org_select_input.selected_option;
-
-    const createNewTeamResult = await associateTeamWithInstallation(
-      selectedUsersArray,
-      selectedDiscussionChannel,
-      selectedInternalTriageChannel,
-      selectedGithubOrg
+    if (selectedDiscussionChannel === selectedInternalTriageChannel) {
+      // TODO Open a modal to tell the user they cant have the same channel for both
+      return;
+    }
+    // if this is null, that means it's an existing team being modified
+    const selectedGithubOrg = SafeAccess(
+      () => values.github_org_input_block.github_org_select_input.selected_option
     );
+    const createNewTeamResult = selectedGithubOrg
+      ? await associateTeamWithInstallation(
+          app,
+          selectedUsersArray,
+          selectedDiscussionChannel,
+          selectedInternalTriageChannel,
+          selectedGithubOrg
+        )
+      : await associateTeamWithInstallation(
+          app,
+          selectedUsersArray,
+          selectedDiscussionChannel,
+          selectedInternalTriageChannel,
+          selectedGithubOrg,
+          JSON.parse(view.private_metadata).gitwaveGithubAppInstallationId
+        );
 
     if (createNewTeamResult.result.n !== 1) {
       // TODO if the error is that the team already exists, explain this to the user
@@ -44,6 +63,7 @@ module.exports = app => {
     }
 
     try {
+      await addNewUsers(selectedUsersArray);
       // Message the creator of the team
       await app.client.chat.postMessage({
         token: context.botToken,

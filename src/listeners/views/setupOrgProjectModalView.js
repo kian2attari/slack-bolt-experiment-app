@@ -9,9 +9,7 @@ module.exports = app => {
 
     const user = body.user.id;
 
-    const dbUserFilter = {};
-
-    dbUserFilter[`teamMembers.${user}`] = {$exists: true};
+    const dbUserFilter = {teamMembers: user};
 
     const dbQuery = await findDocuments(dbUserFilter, {
       gitwaveGithubAppInstallationId: 1,

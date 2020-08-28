@@ -1,7 +1,12 @@
 const {connectToMongoCollection} = require('./dbConnection');
 
-async function updateDocument(filter, updateObj, updateOperator = '$set') {
-  const collection = await connectToMongoCollection();
+async function updateDocument(
+  filter,
+  updateObj,
+  updateOperator = '$set',
+  collectionName = 'gitwave_team_data'
+) {
+  const collection = await connectToMongoCollection(collectionName);
 
   const addNewOperation = {};
 
