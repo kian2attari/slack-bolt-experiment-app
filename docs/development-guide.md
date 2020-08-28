@@ -112,6 +112,10 @@ Now we need to create the GitHub app counterpart of GitWave that the Slack app w
 
 1.  **Note** this **Signing Secret** value. Set this up as the value of the `SLACK_SIGNING_SECRET` environment variable.
 
+1.  Go to **Features > App Home**
+
+1.  Enable the **Home Tab** under **_Show tabs_**
+
 1.  Go to **Features > Interactivity & Shortcuts**
 
 1.  Set the **Request URL** to: `https://<your_domain>/slack/events`. `your_domain` would depend on where you've hosted your GitWave app ex: `abasd12asdas.ngrok.io` or `gitwave-dev.herokuapp.com`.
