@@ -3,11 +3,27 @@ module.exports = {
     node: true,
   },
   parser: 'babel-eslint',
-  extends: ['airbnb-base', 'plugin:prettier/recommended'],
+  extends: ['airbnb-base', 'plugin:prettier/recommended', 'plugin:markdown/recommended'],
   parserOptions: {
     ecmaVersion: 11,
   },
-  plugins: ['node'],
+  plugins: ['node', 'markdown'],
+  overrides: [
+    {
+      // 2. Enable the Markdown processor for all .md files.
+      files: ['**/*.md', '**/*.markdown'],
+      processor: 'markdown/markdown',
+    },
+    // {
+    //   // 3. Optionally, customize the configuration ESLint uses for ```js
+    //   // fenced code blocks inside .md files.
+    //   files: ['**/*.md/*.js'],
+    //   // ...
+    //   rules: {
+    //     // ...
+    //   },
+    // },
+  ],
   rules: {
     'global-require': 'off',
     'no-use-before-define': ['error', {'functions': false}],

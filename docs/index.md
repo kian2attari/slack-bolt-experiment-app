@@ -6,7 +6,9 @@ layout: home
 title: Home
 nav_order: 1
 ---
+
 # GitWave
+
 {: .fs-9 }
 
 A Slack app that streamlines & supercharges your team's triaging flow!
@@ -18,20 +20,10 @@ A Slack app that streamlines & supercharges your team's triaging flow!
 
 ## Getting started
 
-
-
-
-
-
-
 ---
-
 
 ### License
 
 GitWave is distributed by an [MIT license](https://github.com/pmarsceill/just-the-docs/tree/master/LICENSE.txt).
 
 ### Contributing
-
-
-
