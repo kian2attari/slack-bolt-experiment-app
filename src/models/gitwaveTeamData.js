@@ -189,27 +189,34 @@ async function setUserGithubUsername(slackUserId, githubUsername) {
     orgAccount: 1,
   });
 
-  const {gitwaveGithubAppInstallationId: installationId} = dbQueryResponse[0];
+  try {
+    const {gitwaveGithubAppInstallationId: installationId} = dbQueryResponse[0];
 
-  const userData = await graphql.callGhGraphql(
-    query.getGithubUsernameData,
-    {
-      githubUsername,
-    },
-    installationId
-  );
+    const userData = await graphql.callGhGraphql(
+      query.getGithubUsernameData,
+      {
+        githubUsername,
+      },
+      installationId
+    );
 
-  console.log('userData ', userData);
+    console.log('userData ', userData);
 
-  const usernameData = userData.user;
+    const usernameData = userData.user;
 
-  const usernameUpdateObj = {
-    githubUserId: usernameData.id,
-    githubUsername: usernameData.login,
-    name: usernameData.name,
-  };
+    const usernameUpdateObj = {
+      githubUserId: usernameData.id,
+      githubUsername: usernameData.login,
+      name: usernameData.name,
+    };
 
-  await updateUserObj(slackUserId, usernameUpdateObj);
+    await updateUserObj(slackUserId, usernameUpdateObj);
+  } catch (error) {
+    console.error(error);
+    throw Error(
+      `Hey <@${slackUserId}>, You must be part of a triage team before you can map your github username! Create a team first with you in it via the \`Create/Edit triage team\` shortcut`
+    );
+  }
 }
 
 /**
