@@ -36,7 +36,9 @@ function untriagedCards({externalIssueCardArray, internalIssueCardArray}) {
         'type': 'section',
         'text': {
           'type': 'plain_text',
-          'text': `${trimString(cardData.body, 2500) || 'No body'} \n`,
+          'text': `${
+            trimString(cardData.body, 2500) || `This ${issueOrPr} has no body :shrug:`
+          } \n`,
         },
       },
       /* The GitHub GraphQL API needs both the issue ID and 

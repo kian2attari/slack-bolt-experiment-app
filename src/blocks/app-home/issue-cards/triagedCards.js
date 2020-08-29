@@ -104,7 +104,8 @@ function triagedCards(
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': trimString(cardData.body, 2500) || 'No body',
+          'text':
+            trimString(cardData.body, 2500) || `This ${issueOrPr} has no body :shrug:`,
         },
       },
       ...(showOnlyDone
