@@ -11,19 +11,21 @@ function untriagedCards({externalIssueCardArray, internalIssueCardArray}) {
     // Indicates whether the issue in question is closed
     const closedText = cardData.closed ? ':closed_lock_with_key:' : '';
 
+    const issueOrPr = typeof cardData.mergeable !== 'undefined' ? 'PR' : 'Issue';
+
     // TODO do not show cards that would have more than one label button highlighted aka issues with multiple triage labels
     return [
       {
         'type': 'section',
         'text': {
           'type': 'mrkdwn',
-          'text': `${closedText} *${cardData.repository.name}*: ${cardData.title}`,
+          'text': `${closedText} *${issueOrPr}* in *${cardData.repository.name}*: ${cardData.title}`,
         },
         'accessory': {
           'type': 'button',
           'text': {
             'type': 'plain_text',
-            'text': 'View Issue on GitHub',
+            'text': `View ${issueOrPr} on GitHub`,
             'emoji': true,
           },
           'url': cardData.url,
@@ -47,7 +49,7 @@ function untriagedCards({externalIssueCardArray, internalIssueCardArray}) {
         // "block_id": issueId,
         'text': {
           'type': 'mrkdwn',
-          'text': 'Triage this issue',
+          'text': `Triage this ${issueOrPr}`,
         },
       },
       // Passing in the id of the issue so that the label could be applied to said issue

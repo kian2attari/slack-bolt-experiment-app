@@ -24,10 +24,8 @@ async function openMapModalButton(app) {
       await getGithubUsernamesFromSlackUserIds([userSlackId])
     )[0];
 
-    const userSetGithubUsername = SafeAccess(
-      () => githubUsernameResponse.githubUsername,
-      ''
-    );
+    const userSetGithubUsername =
+      SafeAccess(() => githubUsernameResponse.githubUsername) || '';
 
     console.log('open_map_modal_button user_set_github_username', userSetGithubUsername);
 

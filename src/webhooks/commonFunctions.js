@@ -84,9 +84,11 @@ async function issueOrPrLabeled(req, res) {
 
   const {full_name: repoFullName} = req.repository;
 
-  const elementNodeId = req.issue.node_id;
+  const issueOrPr = req.issue || req.pull_request;
 
-  const currentIssueLabelsArray = req.issue.labels;
+  const elementNodeId = issueOrPr.node_id;
+
+  const currentIssueLabelsArray = issueOrPr.labels;
 
   const {name: labelName, description: labelDescription} = req.label;
 
@@ -98,17 +100,28 @@ async function issueOrPrLabeled(req, res) {
 
   if (labelName === 'untriaged') {
     console.log('project board id array', validProjectIds);
-    const variablesAssignIssueToProject = {
-      issueId: elementNodeId,
-      projectIds: validProjectIds,
-    };
+
+    const issueOrPrMutation = req.issue
+      ? graphql.callGhGraphql(
+          mutation.assignIssueToProject,
+          {
+            issueId: elementNodeId,
+            projectIds: validProjectIds,
+          },
+          installationId
+        )
+      : graphql.callGhGraphql(
+          mutation.assignPullRequestToProject,
+          {
+            pullRequestId: elementNodeId,
+            projectIds: validProjectIds,
+          },
+          installationId
+        );
+
+    await issueOrPrMutation;
 
     // REVIEW should i return the promise up to webhookEvents.js rather than awaiting it here and returning nothing?
-    await graphql.callGhGraphql(
-      mutation.assignIssueToProject,
-      variablesAssignIssueToProject,
-      installationId
-    );
 
     res.send();
   }

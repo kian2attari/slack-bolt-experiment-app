@@ -35,6 +35,7 @@ function triagedCards(
     const repoLabels = cardData.repository.labels.nodes;
     const cardId = cardData.id;
     const cardLabels = cardData.labels.nodes;
+    const issueOrPr = typeof cardData.mergeable !== 'undefined' ? 'PR' : 'Issue';
 
     const labelMapCallback = label => {
       return {
@@ -92,7 +93,7 @@ function triagedCards(
           'type': 'button',
           'text': {
             'type': 'plain_text',
-            'text': 'View Issue on GitHub',
+            'text': `View ${issueOrPr} on GitHub`,
             'emoji': true,
           },
           'url': cardData.url,
@@ -114,7 +115,7 @@ function triagedCards(
               // "block_id": issue_id,
               'text': {
                 'type': 'mrkdwn',
-                'text': 'Label this issue',
+                'text': `Label this ${issueOrPr}`,
               },
 
               'accessory': {
@@ -134,7 +135,7 @@ function triagedCards(
               'type': 'section',
               'text': {
                 'type': 'mrkdwn',
-                'text': 'Assign the issue',
+                'text': `Assign the ${issueOrPr}`,
               },
               'block_id': cardData.id,
               'accessory': {

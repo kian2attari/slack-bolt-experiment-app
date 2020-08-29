@@ -52,13 +52,13 @@ exports.githubEvent = (router, app) => {
     pullRequestActions.pullRequestReviewRequested(req, res, app)
   );
 
-  // github_event.on('pull_request.labeled', (req, res) =>
-  //   pull_request_actions.pull_request_labeled(req, res, app)
-  // );
+  githubEvent.on('pull_request.labeled', (req, res) =>
+    pullRequestActions.pullRequestLabeled(req, res, app)
+  );
 
-  // github_event.on('pull_request.unlabeled', (req, res) =>
-  //   pull_request_actions.pull_request_unlabeled(req, res, app)
-  // );
+  githubEvent.on('pull_request.labeled', (req, res) =>
+    pullRequestActions.pullRequestUnlabeled(req, res, app)
+  );
 
   // github_event.on('pull_request_review.submitted', (req, res) =>
   //   pull_request_review_actions.pull_request_review_submitted(req, res, app)
