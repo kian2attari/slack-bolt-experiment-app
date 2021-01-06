@@ -16,7 +16,7 @@
     "@octokit/auth-app": "^2.4.7",
     "@octokit/graphql": "^4.5.1",
     "@slack/bolt": "^2.1.1",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "cron": "^1.8.2",
     "express": "^4.17.1",
     "mongodb": "^3.5.9",
